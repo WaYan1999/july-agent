@@ -1,23 +1,11 @@
-import { redirect } from '@/next/navigation'
+import AppList from '@/app/components/explore/app-list'
 
 type AppsPageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
-const Apps = async ({ searchParams }: AppsPageProps) => {
-  const resolvedSearchParams = await searchParams
-  const urlSearchParams = new URLSearchParams()
-  Object.entries(resolvedSearchParams).forEach(([key, value]) => {
-    if (value === undefined)
-      return
-    if (Array.isArray(value)) {
-      value.forEach(item => urlSearchParams.append(key, item))
-      return
-    }
-    urlSearchParams.set(key, value)
-  })
-  const queryString = urlSearchParams.toString()
-  redirect(queryString ? `/?${queryString}` : '/')
+const Apps = (_props: AppsPageProps) => {
+  return <AppList />
 }
 
 export default Apps

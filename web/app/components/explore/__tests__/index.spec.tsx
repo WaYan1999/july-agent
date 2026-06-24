@@ -66,17 +66,17 @@ describe('Explore', () => {
       expect(screen.getByText('child')).toBeInTheDocument()
     })
 
-    it('should not render the legacy explore sidebar on desktop', () => {
+    it('should render the explore sidebar on desktop', () => {
       render((
         <Explore>
           <div>child</div>
         </Explore>
       ))
 
-      expect(screen.queryByText('explore.sidebar.title')).not.toBeInTheDocument()
+      expect(screen.getByText('explore.sidebar.title')).toBeInTheDocument()
     })
 
-    it('should keep the legacy explore sidebar on mobile', () => {
+    it('should render the explore sidebar on mobile', () => {
       mockMediaType = MediaType.mobile
 
       render((

@@ -94,7 +94,7 @@ describe('SideBar', () => {
     it('should render discovery link', () => {
       renderSideBar()
 
-      expect(screen.getByText('explore.sidebar.title')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'explore.sidebar.title' })).toHaveAttribute('href', '/explore/apps')
     })
 
     it('should expose an accessible name for the discovery link when the text is hidden', () => {

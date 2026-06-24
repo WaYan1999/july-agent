@@ -28,6 +28,7 @@ type AgentDetailTopProps = {
 
 type AgentDetailSectionProps = {
   expand?: boolean
+  orientation?: 'vertical' | 'horizontal'
 }
 
 type AgentDetailNavItem = {
@@ -169,6 +170,7 @@ export function AgentDetailTop({
 
 export function AgentDetailSection({
   expand = true,
+  orientation = 'vertical',
 }: AgentDetailSectionProps) {
   const { t } = useTranslation('agentV2')
   const pathname = usePathname()
@@ -190,10 +192,17 @@ export function AgentDetailSection({
   const agent = agentQuery.data
   const imageUrl = (agent?.icon_type === 'image' || agent?.icon_type === 'link') ? agent.icon : undefined
   const iconType = (imageUrl ? 'image' : agent?.icon_type) as AgentIconType | null | undefined
+  const isHorizontal = orientation === 'horizontal'
 
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-col', expand ? 'px-2 pb-2' : 'pb-2')}>
-      {!expand && (
+    <div className={cn(
+      'flex min-h-0 flex-1',
+      isHorizontal
+        ? 'items-center gap-3 overflow-hidden px-3 py-1'
+        : cn('flex-col', expand ? 'px-2 pb-2' : 'pb-2'),
+    )}
+    >
+      {!isHorizontal && !expand && (
         <div className="flex w-full shrink-0 justify-center px-3.5 pt-0.5 pb-[3px]">
           <Divider
             type="horizontal"
@@ -202,7 +211,7 @@ export function AgentDetailSection({
           />
         </div>
       )}
-      <div className={cn('py-2', expand && '-mx-1')}>
+      <div className={cn(isHorizontal ? 'w-60 shrink-0' : cn('py-2', expand && '-mx-1'))}>
         <div className={cn(
           'flex h-13 items-center rounded-xl py-1.5 pr-2 pl-1.5',
           !expand && 'justify-center',
@@ -234,23 +243,34 @@ export function AgentDetailSection({
           </div>
         </div>
       </div>
-      <div className={cn(expand ? 'px-3 py-0.5' : 'px-1 py-0.5')}>
-        <Divider
-          type="horizontal"
-          bgStyle={expand ? 'gradient' : 'solid'}
-          className={cn(
-            'my-0 h-px',
-            expand
-              ? 'bg-linear-to-r from-divider-subtle to-background-gradient-mask-transparent'
-              : 'bg-divider-subtle',
-          )}
-        />
-      </div>
-      <nav className={cn('flex flex-col gap-y-0.5 py-2', expand ? 'px-1' : 'px-3')} aria-label={t('agentDetail.navigationLabel')}>
+      {!isHorizontal && (
+        <div className={cn(expand ? 'px-3 py-0.5' : 'px-1 py-0.5')}>
+          <Divider
+            type="horizontal"
+            bgStyle={expand ? 'gradient' : 'solid'}
+            className={cn(
+              'my-0 h-px',
+              expand
+                ? 'bg-linear-to-r from-divider-subtle to-background-gradient-mask-transparent'
+                : 'bg-divider-subtle',
+            )}
+          />
+        </div>
+      )}
+      <nav
+        className={cn(
+          'min-w-0',
+          isHorizontal
+            ? 'flex flex-1 items-center gap-1 overflow-x-auto py-1'
+            : cn('flex flex-col gap-y-0.5 py-2', expand ? 'px-1' : 'px-3'),
+        )}
+        aria-label={t('agentDetail.navigationLabel')}
+      >
         {navigation.map(item => (
           <NavLink
             key={item.href}
             mode={expand ? 'expand' : 'collapse'}
+            orientation={orientation}
             iconMap={{ selected: item.activeIcon, normal: item.icon }}
             name={t(item.labelKey)}
             href={item.href}

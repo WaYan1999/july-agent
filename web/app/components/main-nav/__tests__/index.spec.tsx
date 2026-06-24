@@ -380,7 +380,7 @@ describe('MainNav', () => {
 
     expect(screen.getAllByText(Plan.team)).toHaveLength(1)
     expect(screen.getByRole('button', { name: 'common.account.account' })).not.toHaveTextContent(Plan.team)
-    expect(screen.getByRole('link', { name: /common.mainNav.home/ })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: /common.menus.apps/ })).toHaveAttribute('href', '/apps')
     expect(screen.getByRole('link', { name: /common.menus.roster/ })).toHaveAttribute('href', '/roster')
     expect(screen.getByRole('link', { name: /common.menus.datasets/ })).toHaveAttribute('href', '/datasets')
@@ -418,24 +418,28 @@ describe('MainNav', () => {
     expect(screen.queryByRole('link', { name: /common.menus.deployments/ })).not.toBeInTheDocument()
   })
 
-  it('aligns the global navigation spacing with the main sidebar design', () => {
+  it('renders the global navigation as a top navigation bar', () => {
     mockInstalledApps = [createInstalledApp()]
 
     renderMainNav()
 
+    const topNavigation = screen.getByRole('banner')
+    expect(topNavigation).toHaveClass('w-full', 'flex-col')
+    expect(topNavigation).not.toHaveClass('w-60', 'w-16', 'w-[248px]')
+
     const logoLink = screen.getByLabelText('Dify')
     expect(logoLink).not.toHaveClass('px-2')
-    expect(logoLink.parentElement).toHaveClass('pt-3', 'pr-2', 'pb-2', 'pl-4')
+    expect(logoLink.parentElement).toHaveClass('h-14', 'px-4')
 
-    const homeLink = screen.getByRole('link', { name: /common.mainNav.home/ })
-    expect(homeLink.closest('nav')).toHaveClass('flex', 'flex-col', 'gap-px', 'p-2')
-    expect(homeLink).toHaveClass('h-8', 'w-full', 'rounded-[10px]', 'px-2', 'py-1.5')
+    const homeLink = screen.getByRole('link', { name: /common.menus.explore/ })
+    expect(homeLink.closest('nav')).toHaveClass('flex', 'items-center', 'justify-center', 'overflow-x-auto')
+    expect(homeLink).toHaveClass('h-8', 'rounded-[10px]', 'px-2', 'py-1.5')
+    expect(homeLink).not.toHaveClass('w-full')
 
-    const webAppsButton = screen.getByRole('button', { name: 'explore.sidebar.webApps' })
-    expect(webAppsButton.parentElement).toHaveClass('py-1', 'pr-2', 'pl-2')
+    expect(screen.queryByRole('button', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
 
     const helpButton = screen.getByRole('button', { name: 'common.mainNav.help.openMenu' })
-    expect(helpButton.parentElement).toHaveClass('shrink-0', 'rounded-full', 'p-1')
+    expect(helpButton.parentElement).toHaveClass('flex', 'shrink-0', 'items-center')
   })
 
   it('keeps the global navigation account section expanded on home routes', () => {
@@ -463,7 +467,7 @@ describe('MainNav', () => {
 
     const environmentTag = screen.getByText('common.environment.testing')
     expect(environmentTag).toBeInTheDocument()
-    expect(environmentTag.closest('.relative.z-30')).toHaveClass('mt-auto', 'shrink-0')
+    expect(environmentTag.closest('[data-main-nav-env]')).toHaveClass('relative', 'z-30', 'shrink-0')
   })
 
   it('does not reserve environment tag space when the environment is not shown', () => {
@@ -471,7 +475,7 @@ describe('MainNav', () => {
 
     expect(screen.queryByText('common.environment.testing')).not.toBeInTheDocument()
     expect(screen.queryByText('common.environment.development')).not.toBeInTheDocument()
-    expect(container.querySelector('.relative.z-30')).not.toBeInTheDocument()
+    expect(container.querySelector('[data-main-nav-env]')).not.toBeInTheDocument()
   })
 
   it('hides the environment tag when app detail navigation is collapsed', () => {
@@ -488,7 +492,7 @@ describe('MainNav', () => {
     fireEvent.click(screen.getByTestId('app-detail-toggle'))
 
     expect(screen.queryByText('common.environment.testing')).not.toBeInTheDocument()
-    expect(container.querySelector('.relative.z-30')).not.toBeInTheDocument()
+    expect(container.querySelector('[data-main-nav-env]')).not.toBeInTheDocument()
   })
 
   it('shows the user education badge in the account popup without adding the workspace plan there', async () => {
@@ -525,7 +529,7 @@ describe('MainNav', () => {
 
     renderMainNav()
 
-    expect(screen.getByRole('link', { name: /common.mainNav.home/ })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: /common.menus.apps/ })).toHaveAttribute('href', '/apps')
     expect(screen.queryByRole('link', { name: /common.menus.roster/ })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /common.menus.datasets/ })).toHaveAttribute('href', '/datasets')
@@ -551,7 +555,7 @@ describe('MainNav', () => {
 
     renderMainNav({ branding: { enabled: false }, enable_app_deploy: true })
 
-    expect(screen.getByRole('link', { name: /common.mainNav.home/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /common.menus.apps/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /common.menus.roster/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /common.menus.datasets/ })).toBeInTheDocument()
@@ -569,7 +573,7 @@ describe('MainNav', () => {
     expect(datasetsLink.className).toContain('bg-[linear-gradient(98.077deg')
     expect(datasetsLink).toHaveClass(activeEdgeClassName)
     expect(datasetsLink).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: /common.mainNav.home/ })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).not.toHaveAttribute('aria-current')
   })
 
   it('keeps Studio active on snippets routes', () => {
@@ -580,7 +584,7 @@ describe('MainNav', () => {
     const studioLink = screen.getByRole('link', { name: /common.menus.apps/ })
     expect(studioLink).toHaveClass(activeEdgeClassName)
     expect(studioLink).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: /common.mainNav.home/ })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).not.toHaveAttribute('aria-current')
   })
 
   it('hides the main menu on snippet detail routes while keeping account settings available', () => {
@@ -588,10 +592,10 @@ describe('MainNav', () => {
 
     renderMainNav()
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
     expect(screen.queryByLabelText('Dify')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'common.mainNav.workspace.openMenu' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /common.mainNav.home/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /common.menus.explore/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /common.menus.apps/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'common.account.account' })).toBeInTheDocument()
@@ -607,13 +611,25 @@ describe('MainNav', () => {
     expect(screen.getByTestId('app-detail-section')).toBeInTheDocument()
     expect(screen.getByTestId('app-detail-top')).toHaveAttribute('data-expand', 'true')
     expect(screen.getByTestId('app-detail-section')).toHaveAttribute('data-expand', 'true')
-    expect(screen.getByRole('complementary')).toHaveClass('w-[248px]')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
-    expect(screen.getByRole('complementary')).toHaveClass('bg-background-body')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
+    expect(screen.getByRole('banner')).toHaveClass('border-b')
+    expect(screen.getByRole('banner')).toHaveClass('bg-background-body')
     expect(screen.queryByRole('button', { name: 'common.mainNav.workspace.openMenu' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /common.mainNav.home/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /common.menus.explore/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /common.menus.apps/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
+  })
+
+  it('keeps workflow app routes on the legacy left detail navigation', () => {
+    mockPathname = '/app/app-1/workflow'
+
+    renderMainNav()
+
+    const sidebar = screen.getByTestId('app-detail-top').closest('aside')
+    expect(sidebar).toHaveClass('h-full', 'shrink-0', 'w-[248px]')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.getByTestId('app-detail-section')).toHaveAttribute('data-expand', 'true')
+    expect(screen.queryByRole('link', { name: /common.menus.apps/ })).not.toBeInTheDocument()
   })
 
   it('keeps app detail store when rendering app detail navigation', () => {
@@ -642,9 +658,8 @@ describe('MainNav', () => {
     renderMainNav()
     fireEvent.click(screen.getByTestId('app-detail-toggle'))
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16')
-    expect(screen.getByRole('complementary')).not.toHaveClass('transition-none')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
+    expect(screen.getByRole('banner')).not.toHaveClass('transition-none')
     expect(screen.getByTestId('app-detail-top')).toHaveAttribute('data-expand', 'false')
     expect(screen.getByTestId('app-detail-section')).toHaveAttribute('data-expand', 'false')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
@@ -657,7 +672,7 @@ describe('MainNav', () => {
     fireEvent.click(screen.getByTestId('app-detail-toggle'))
     fireEvent.mouseEnter(screen.getByTestId('app-detail-top').parentElement!)
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16', 'overflow-visible')
+    expect(screen.getByRole('banner')).toHaveClass('w-full', 'overflow-visible')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
     expect(screen.getAllByTestId('app-detail-top')).toHaveLength(1)
     expect(screen.getByTestId('app-detail-top')).toHaveAttribute('data-expand', 'true')
@@ -672,8 +687,8 @@ describe('MainNav', () => {
     fireEvent.mouseEnter(screen.getByTestId('app-detail-top').parentElement!)
     fireEvent.click(screen.getByTestId('app-detail-toggle'))
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-[248px]', 'transition-none')
-    expect(screen.getByRole('complementary')).not.toHaveClass('overflow-visible')
+    expect(screen.getByRole('banner')).toHaveClass('w-full', 'transition-none')
+    expect(screen.getByRole('banner')).not.toHaveClass('overflow-visible')
     expect(screen.getByTestId('app-detail-top')).toHaveAttribute('data-expand', 'true')
     expect(screen.getByTestId('app-detail-section')).toHaveAttribute('data-expand', 'true')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('expand')
@@ -688,11 +703,11 @@ describe('MainNav', () => {
     expect(screen.getByTestId('dataset-detail-section')).toBeInTheDocument()
     expect(screen.getByTestId('dataset-detail-top')).toHaveAttribute('data-expand', 'true')
     expect(screen.getByTestId('dataset-detail-section')).toHaveAttribute('data-expand', 'true')
-    expect(screen.getByRole('complementary')).toHaveClass('w-[248px]')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
-    expect(screen.getByRole('complementary')).toHaveClass('bg-background-body')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
+    expect(screen.getByRole('banner')).toHaveClass('border-b')
+    expect(screen.getByRole('banner')).toHaveClass('bg-background-body')
     expect(screen.queryByRole('button', { name: 'common.mainNav.workspace.openMenu' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /common.mainNav.home/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /common.menus.explore/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /common.menus.datasets/ })).not.toBeInTheDocument()
   })
 
@@ -702,8 +717,7 @@ describe('MainNav', () => {
     renderMainNav()
     fireEvent.click(screen.getByTestId('dataset-detail-toggle'))
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
     expect(screen.getByTestId('dataset-detail-top')).toHaveAttribute('data-expand', 'false')
     expect(screen.getByTestId('dataset-detail-section')).toHaveAttribute('data-expand', 'false')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
@@ -716,7 +730,7 @@ describe('MainNav', () => {
     fireEvent.click(screen.getByTestId('dataset-detail-toggle'))
     fireEvent.mouseEnter(screen.getByTestId('dataset-detail-top').parentElement!)
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16', 'overflow-visible')
+    expect(screen.getByRole('banner')).toHaveClass('w-full', 'overflow-visible')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
     expect(screen.getAllByTestId('dataset-detail-top')).toHaveLength(1)
     expect(screen.getByTestId('dataset-detail-top')).toHaveAttribute('data-expand', 'true')
@@ -732,9 +746,9 @@ describe('MainNav', () => {
     expect(screen.getByTestId('agent-detail-section')).toBeInTheDocument()
     expect(screen.getByTestId('agent-detail-top')).toHaveAttribute('data-expand', 'true')
     expect(screen.getByTestId('agent-detail-section')).toHaveAttribute('data-expand', 'true')
-    expect(screen.getByRole('complementary')).toHaveClass('w-[248px]')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
-    expect(screen.getByRole('complementary')).toHaveClass('bg-background-body')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
+    expect(screen.getByRole('banner')).toHaveClass('border-b')
+    expect(screen.getByRole('banner')).toHaveClass('bg-background-body')
     expect(screen.queryByRole('button', { name: 'common.mainNav.workspace.openMenu' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /common.menus.roster/ })).not.toBeInTheDocument()
   })
@@ -759,11 +773,11 @@ describe('MainNav', () => {
     expect(screen.getByTestId('deployment-detail-section')).toBeInTheDocument()
     expect(screen.getByTestId('deployment-detail-top')).toHaveAttribute('data-expand', 'true')
     expect(screen.getByTestId('deployment-detail-section')).toHaveAttribute('data-expand', 'true')
-    expect(screen.getByRole('complementary')).toHaveClass('w-[248px]')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
-    expect(screen.getByRole('complementary')).toHaveClass('bg-background-body')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
+    expect(screen.getByRole('banner')).toHaveClass('border-b')
+    expect(screen.getByRole('banner')).toHaveClass('bg-background-body')
     expect(screen.queryByRole('button', { name: 'common.mainNav.workspace.openMenu' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /common.mainNav.home/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /common.menus.explore/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /common.menus.deployments/ })).not.toBeInTheDocument()
   })
 
@@ -773,8 +787,7 @@ describe('MainNav', () => {
     renderMainNav()
     fireEvent.click(screen.getByTestId('agent-detail-toggle'))
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
     expect(screen.getByTestId('agent-detail-top')).toHaveAttribute('data-expand', 'false')
     expect(screen.getByTestId('agent-detail-section')).toHaveAttribute('data-expand', 'false')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
@@ -786,8 +799,7 @@ describe('MainNav', () => {
     renderMainNav({ branding: { enabled: false }, enable_app_deploy: true })
     fireEvent.click(screen.getByTestId('deployment-detail-toggle'))
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16')
-    expect(screen.getByRole('complementary')).toHaveClass('p-1')
+    expect(screen.getByRole('banner')).toHaveClass('w-full')
     expect(screen.getByTestId('deployment-detail-top')).toHaveAttribute('data-expand', 'false')
     expect(screen.getByTestId('deployment-detail-section')).toHaveAttribute('data-expand', 'false')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
@@ -824,7 +836,7 @@ describe('MainNav', () => {
     fireEvent.click(screen.getByTestId('agent-detail-toggle'))
     fireEvent.mouseEnter(screen.getByTestId('agent-detail-top').parentElement!)
 
-    expect(screen.getByRole('complementary')).toHaveClass('w-16', 'overflow-visible')
+    expect(screen.getByRole('banner')).toHaveClass('w-full', 'overflow-visible')
     expect(localStorage.getItem(DETAIL_SIDEBAR_STORAGE_KEY)).toBe('collapse')
     expect(screen.getAllByTestId('agent-detail-top')).toHaveLength(1)
     expect(screen.getByTestId('agent-detail-top')).toHaveAttribute('data-expand', 'true')
@@ -872,7 +884,7 @@ describe('MainNav', () => {
 
     renderMainNav()
 
-    const homeLink = screen.getByRole('link', { name: /common.mainNav.home/ })
+    const homeLink = screen.getByRole('link', { name: /common.menus.explore/ })
 
     expect(homeLink).toHaveClass(
       'backdrop-blur-[5px]',
@@ -883,18 +895,23 @@ describe('MainNav', () => {
     expect(homeLink.className).toContain('var(--color-components-main-nav-glass-surface-first)')
   })
 
-  it('keeps Home active on the legacy explore apps route only', () => {
+  it('keeps Explore active on explore content routes only', () => {
     mockPathname = '/explore/apps'
 
     const { rerender } = renderMainNav()
 
-    const homeLink = screen.getByRole('link', { name: /common.mainNav.home/ })
+    const homeLink = screen.getByRole('link', { name: /common.menus.explore/ })
     expect(homeLink).toHaveAttribute('aria-current', 'page')
+
+    mockPathname = '/explore/installed/installed-1'
+    rerender(<JotaiProvider><MainNav /></JotaiProvider>)
+
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).toHaveAttribute('aria-current', 'page')
 
     mockPathname = '/installed/installed-1'
     rerender(<JotaiProvider><MainNav /></JotaiProvider>)
 
-    expect(screen.getByRole('link', { name: /common.mainNav.home/ })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: /common.menus.explore/ })).not.toHaveAttribute('aria-current')
   })
 
   it('opens goto anything from the search button', () => {
@@ -1058,139 +1075,5 @@ describe('MainNav', () => {
 
     expect(screen.getByText('common.mainNav.workspace.settings')).toBeInTheDocument()
     expect(screen.queryByText('common.mainNav.workspace.inviteMembers')).not.toBeInTheDocument()
-  })
-
-  it('filters installed web apps and renders installed app navigation link', () => {
-    mockInstalledApps = [
-      createInstalledApp({ id: 'installed-1', app: { ...createInstalledApp().app, name: 'Alpha App' } }),
-      createInstalledApp({ id: 'installed-2', app: { ...createInstalledApp().app, name: 'Beta Tool' } }),
-    ]
-
-    renderMainNav()
-
-    fireEvent.click(screen.getByRole('button', { name: 'common.operation.search' }))
-    fireEvent.change(screen.getByPlaceholderText('common.mainNav.webApps.searchPlaceholder'), {
-      target: { value: 'beta' },
-    })
-
-    expect(screen.queryByText('Alpha App')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Beta Tool' })).toHaveAttribute('href', '/installed/installed-2')
-  })
-
-  it('renders web app skeleton rows while installed apps are loading', () => {
-    mockInstalledAppsPending = true
-
-    renderMainNav()
-
-    expect(screen.getByRole('region', { name: 'explore.sidebar.webApps' })).toHaveAttribute('aria-busy', 'true')
-    expect(screen.queryByRole('button', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'common.operation.search' })).not.toBeInTheDocument()
-    expect(screen.queryByText('common.loading')).not.toBeInTheDocument()
-    expect(screen.queryByText('Alpha App')).not.toBeInTheDocument()
-  })
-
-  it('hides the installed web apps section when no web apps are available', () => {
-    renderMainNav()
-
-    expect(screen.queryByRole('button', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
-    expect(screen.queryByText('explore.sidebar.noApps.title')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'common.operation.search' })).not.toBeInTheDocument()
-  })
-
-  it('separates pinned and unpinned installed web apps', () => {
-    mockInstalledApps = [
-      createInstalledApp({ id: 'installed-1', is_pinned: true, app: { ...createInstalledApp().app, name: 'Pinned App' } }),
-      createInstalledApp({ id: 'installed-2', is_pinned: false, app: { ...createInstalledApp().app, name: 'Unpinned App' } }),
-    ]
-
-    renderMainNav()
-
-    expect(screen.getByText('Pinned App')).toBeInTheDocument()
-    expect(screen.getByText('Unpinned App')).toBeInTheDocument()
-    expect(screen.getByTestId('divider')).toBeInTheDocument()
-  })
-
-  it('keeps long installed web app names truncated in the main nav item', () => {
-    const longName = 'A very long installed web app name that should stay on one line and truncate'
-    mockInstalledApps = [
-      createInstalledApp({ id: 'installed-1', app: { ...createInstalledApp().app, name: longName } }),
-    ]
-
-    renderMainNav()
-
-    expect(screen.getByText(longName)).toHaveClass('truncate')
-  })
-
-  it('virtualizes large installed web app lists', async () => {
-    const offsetHeightSpy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(320)
-    const offsetWidthSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(240)
-    mockInstalledApps = Array.from({ length: 100 }, (_, index) => (
-      createInstalledApp({
-        id: `installed-${index}`,
-        app: {
-          ...createInstalledApp().app,
-          id: `app-${index}`,
-          name: `Web App ${index}`,
-        },
-      })
-    ))
-
-    try {
-      renderMainNav()
-
-      expect(await screen.findByText('Web App 0')).toBeInTheDocument()
-      expect(screen.queryByText('Web App 99')).not.toBeInTheDocument()
-    }
-    finally {
-      offsetHeightSpy.mockRestore()
-      offsetWidthSpy.mockRestore()
-    }
-  })
-
-  it('collapses and expands installed web apps from the section arrow', () => {
-    mockInstalledApps = [createInstalledApp()]
-
-    renderMainNav()
-
-    const webAppsButton = screen.getByRole('button', { name: 'explore.sidebar.webApps' })
-    expect(webAppsButton).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText('Alpha App')).toBeInTheDocument()
-
-    fireEvent.click(webAppsButton)
-
-    expect(webAppsButton).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText('Alpha App')).not.toBeInTheDocument()
-
-    fireEvent.click(webAppsButton)
-
-    expect(webAppsButton).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText('Alpha App')).toBeInTheDocument()
-  })
-
-  it('updates pin status and reuses the existing delete confirmation for installed web apps', async () => {
-    mockInstalledApps = [createInstalledApp()]
-    mockUninstall.mockResolvedValue(undefined)
-    mockUpdatePinStatus.mockResolvedValue(undefined)
-
-    renderMainNav()
-
-    fireEvent.mouseEnter(screen.getByText('Alpha App'))
-    fireEvent.click(screen.getByRole('button', { name: 'common.operation.more' }))
-    fireEvent.click(await screen.findByText('explore.sidebar.action.pin'))
-
-    await waitFor(() => {
-      expect(mockUpdatePinStatus).toHaveBeenCalledWith({ appId: 'installed-1', isPinned: true })
-    })
-
-    fireEvent.mouseEnter(screen.getByText('Alpha App'))
-    fireEvent.click(screen.getByRole('button', { name: 'common.operation.more' }))
-    fireEvent.click(await screen.findByText('explore.sidebar.action.delete'))
-    fireEvent.click(await screen.findByText('common.operation.confirm'))
-
-    await waitFor(() => {
-      expect(mockUninstall).toHaveBeenCalledWith('installed-1')
-      expect(mockToastSuccess).toHaveBeenCalledWith('common.api.remove')
-    })
   })
 })

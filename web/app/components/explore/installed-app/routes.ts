@@ -1,9 +1,9 @@
 export const buildInstalledAppPath = (appId: string) => {
-  return `/installed/${appId}`
+  return `/explore/installed/${appId}`
 }
 
 export const buildLegacyInstalledAppPath = (appId: string) => {
-  return `/explore/installed/${appId}`
+  return `/installed/${appId}`
 }
 
 export const isInstalledAppPath = (pathname: string, appId?: string) => {

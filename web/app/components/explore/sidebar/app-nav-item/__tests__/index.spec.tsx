@@ -42,7 +42,7 @@ describe('AppNavItem', () => {
 
       const link = screen.getByRole('link', { name: 'My App' })
 
-      expect(link).toHaveAttribute('href', '/installed/app-123')
+      expect(link).toHaveAttribute('href', '/explore/installed/app-123')
     })
 
     it('should only show the row focus ring when the app link receives focus', () => {

@@ -3,8 +3,8 @@ import { buildInstalledAppPath, buildLegacyInstalledAppPath, isInstalledAppPath 
 
 describe('installed app routes', () => {
   it('builds the canonical and legacy installed app paths', () => {
-    expect(buildInstalledAppPath('installed-1')).toBe('/installed/installed-1')
-    expect(buildLegacyInstalledAppPath('installed-1')).toBe('/explore/installed/installed-1')
+    expect(buildInstalledAppPath('installed-1')).toBe('/explore/installed/installed-1')
+    expect(buildLegacyInstalledAppPath('installed-1')).toBe('/installed/installed-1')
   })
 
   it('matches canonical and legacy installed app routes', () => {

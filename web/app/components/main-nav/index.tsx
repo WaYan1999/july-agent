@@ -25,9 +25,8 @@ import AccountSection from './components/account-section'
 import HelpMenu from './components/help-menu'
 import MainNavLink from './components/nav-link'
 import { MainNavSearchButton } from './components/search-button'
-import WebAppsSection from './components/web-apps-section'
 import { WorkspaceCard } from './components/workspace-card'
-import { isMainNavRouteVisible, MAIN_NAV_ROUTES } from './routes'
+import { isMainNavRouteVisible, isWorkflowAppRoute, MAIN_NAV_ROUTES } from './routes'
 import { useDetailSidebarMode } from './storage'
 
 const DATASET_COLLECTION_ROUTES = new Set(['create', 'create-from-pipeline', 'connect'])
@@ -92,6 +91,7 @@ const MainNav = ({
   const showEnvTag = langGeniusVersionInfo.current_env === 'TESTING' || langGeniusVersionInfo.current_env === 'DEVELOPMENT'
   const canUseAppDeploy = isCurrentWorkspaceEditor && systemFeatures.enable_app_deploy
   const showAppDetailNavigation = !isCurrentWorkspaceDatasetOperator && pathname.startsWith('/app/')
+  const showLegacyAppDetailNavigation = showAppDetailNavigation && isWorkflowAppRoute(pathname)
   const showDatasetDetailNavigation = isDatasetDetailPathname(pathname)
   const showAgentDetailNavigation = agentV2Enabled && !isCurrentWorkspaceDatasetOperator && isAgentDetailPathname(pathname)
   const showDeploymentDetailNavigation = canUseAppDeploy && !isCurrentWorkspaceDatasetOperator && isDeploymentDetailPathname(pathname)
@@ -111,9 +111,6 @@ const MainNav = ({
   const detailNavigationTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isDetailNavigationHoverPreviewOpen = isCollapsedDetailNavigation && detailNavigationHoverPreviewOpen
   const detailNavigationVisibleExpanded = detailNavigationExpanded || isDetailNavigationHoverPreviewOpen
-  const bottomNavigationExpanded = showSnippetDetailBottomNavigation
-    ? false
-    : !showDetailNavigation || detailNavigationVisibleExpanded
   const handleToggleDetailNavigation = useCallback(() => {
     if (isDetailNavigationHoverPreviewOpen) {
       if (detailNavigationTransitionTimerRef.current)
@@ -213,137 +210,190 @@ const MainNav = ({
     )
   }
 
+  const renderDetailTop = () => {
+    if (showAppDetailNavigation) {
+      return (
+        <AppDetailTop
+          expand={detailNavigationVisibleExpanded}
+          onToggle={handleToggleDetailNavigation}
+        />
+      )
+    }
+
+    if (showDatasetDetailNavigation) {
+      return (
+        <DatasetDetailTop
+          expand={detailNavigationVisibleExpanded}
+          onToggle={handleToggleDetailNavigation}
+        />
+      )
+    }
+
+    if (showAgentDetailNavigation) {
+      return (
+        <AgentDetailTop
+          expand={detailNavigationVisibleExpanded}
+          onToggle={handleToggleDetailNavigation}
+        />
+      )
+    }
+
+    return (
+      <DeploymentDetailTop
+        expand={detailNavigationVisibleExpanded}
+        onToggle={handleToggleDetailNavigation}
+      />
+    )
+  }
+
+  const renderDetailSection = () => {
+    if (showAppDetailNavigation)
+      return <AppDetailSection expand={detailNavigationVisibleExpanded} orientation="horizontal" />
+
+    if (showDatasetDetailNavigation)
+      return <DatasetDetailSection expand={detailNavigationVisibleExpanded} orientation="horizontal" />
+
+    if (showAgentDetailNavigation)
+      return <AgentDetailSection expand={detailNavigationVisibleExpanded} orientation="horizontal" />
+
+    return <DeploymentDetailSection expand={detailNavigationVisibleExpanded} orientation="horizontal" />
+  }
+
+  if (showLegacyAppDetailNavigation) {
+    const bottomNavigationExpanded = detailNavigationVisibleExpanded
+
+    return (
+      <aside
+        className={cn(
+          'relative flex h-full shrink-0',
+          detailNavigationTransitionDisabled ? 'transition-none' : 'transition-all',
+          isDetailNavigationHoverPreviewOpen ? 'overflow-visible' : 'overflow-hidden',
+          detailNavigationExpanded ? 'w-[248px] bg-background-body p-1' : 'w-16 bg-background-body p-1',
+          className,
+        )}
+      >
+        <div
+          className={cn(
+            'flex min-h-0 flex-1 flex-col',
+            isDetailNavigationHoverPreviewOpen
+              ? 'absolute top-1 bottom-1 left-1 z-40 w-60 overflow-hidden rounded-lg border border-divider-subtle bg-components-panel-bg shadow-lg'
+              : 'overflow-hidden rounded-lg bg-components-panel-bg',
+            detailNavigationVisibleExpanded ? 'w-60' : 'w-14',
+          )}
+          onMouseEnter={isCollapsedDetailNavigation ? openDetailNavigationHoverPreview : undefined}
+          onMouseLeave={isCollapsedDetailNavigation ? closeDetailNavigationHoverPreview : undefined}
+        >
+          <div className="flex min-h-0 flex-1 flex-col">
+            <AppDetailTop
+              expand={detailNavigationVisibleExpanded}
+              onToggle={handleToggleDetailNavigation}
+            />
+            <AppDetailSection expand={detailNavigationVisibleExpanded} />
+            {showEnvTag && detailNavigationVisibleExpanded && (
+              <div className="relative z-30 mt-auto shrink-0 px-3 pb-2">
+                <EnvNav />
+              </div>
+            )}
+          </div>
+          <div className={cn(
+            !bottomNavigationExpanded
+              ? 'flex w-full shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 pt-1 pb-3'
+              : 'flex w-60 items-center justify-between bg-components-panel-bg py-3 pr-1 pl-3',
+          )}
+          >
+            {!bottomNavigationExpanded
+              ? (
+                  <>
+                    <SecondarySidebarHelpMenu triggerClassName="mb-2" />
+                    <AccountSection compact />
+                  </>
+                )
+              : (
+                  <>
+                    <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+                      <AccountSection />
+                    </div>
+                    <div className="flex shrink-0 items-center justify-center rounded-full p-1">
+                      <SecondarySidebarHelpMenu />
+                    </div>
+                  </>
+                )}
+          </div>
+        </div>
+      </aside>
+    )
+  }
+
   return (
-    <aside
+    <header
       className={cn(
-        'relative flex h-full shrink-0',
+        'relative z-30 flex w-full shrink-0 flex-col border-b border-divider-subtle bg-background-body',
         detailNavigationTransitionDisabled ? 'transition-none' : 'transition-all',
         isDetailNavigationHoverPreviewOpen ? 'overflow-visible' : 'overflow-hidden',
-        showDetailNavigation
-          ? detailNavigationExpanded
-            ? 'w-[248px] bg-background-body p-1'
-            : 'w-16 bg-background-body p-1'
-          : showSnippetDetailBottomNavigation
-            ? 'w-16 bg-background-body p-1'
-            : 'w-60 flex-col',
-        'bg-background-body',
         className,
       )}
     >
-      <div
-        className={cn(
-          'flex min-h-0 flex-1 flex-col',
-          showDetailNavigation && (
-            isDetailNavigationHoverPreviewOpen
-              ? 'absolute top-1 bottom-1 left-1 z-40 w-60 overflow-hidden rounded-lg border border-divider-subtle bg-components-panel-bg shadow-lg'
-              : 'overflow-hidden rounded-lg bg-components-panel-bg'
-          ),
-          showDetailNavigation && (detailNavigationVisibleExpanded ? 'w-60' : 'w-14'),
-        )}
-        onMouseEnter={isCollapsedDetailNavigation ? openDetailNavigationHoverPreview : undefined}
-        onMouseLeave={isCollapsedDetailNavigation ? closeDetailNavigationHoverPreview : undefined}
-      >
-        <div className="flex min-h-0 flex-1 flex-col">
-          {showDetailNavigation
-            ? showAppDetailNavigation
-              ? (
-                  <AppDetailTop
-                    expand={detailNavigationVisibleExpanded}
-                    onToggle={handleToggleDetailNavigation}
-                  />
-                )
-              : showDatasetDetailNavigation
-                ? (
-                    <DatasetDetailTop
-                      expand={detailNavigationVisibleExpanded}
-                      onToggle={handleToggleDetailNavigation}
-                    />
-                  )
-                : showAgentDetailNavigation
-                  ? (
-                      <AgentDetailTop
-                        expand={detailNavigationVisibleExpanded}
-                        onToggle={handleToggleDetailNavigation}
-                      />
-                    )
-                  : (
-                      <DeploymentDetailTop
-                        expand={detailNavigationVisibleExpanded}
-                        onToggle={handleToggleDetailNavigation}
-                      />
-                    )
-            : showSnippetDetailBottomNavigation
-              ? null
-              : (
-                  <>
-                    <div className="flex items-center justify-between pt-3 pr-2 pb-2 pl-4">
-                      {renderLogo()}
-                      <MainNavSearchButton />
-                    </div>
-                    <div className="p-2">
-                      <WorkspaceCard />
-                    </div>
-                  </>
-                )}
-          {showDetailNavigation
-            ? showAppDetailNavigation
-              ? <AppDetailSection expand={detailNavigationVisibleExpanded} />
-              : showDatasetDetailNavigation
-                ? <DatasetDetailSection expand={detailNavigationVisibleExpanded} />
-                : showAgentDetailNavigation
-                  ? <AgentDetailSection expand={detailNavigationVisibleExpanded} />
-                  : <DeploymentDetailSection expand={detailNavigationVisibleExpanded} />
-            : showSnippetDetailBottomNavigation
-              ? null
-              : (
-                  <>
-                    <nav className="flex flex-col gap-px p-2">
-                      {navItems.map(item => (
-                        <MainNavLink key={item.href} item={item} pathname={pathname} />
-                      ))}
-                    </nav>
-                    {!isCurrentWorkspaceDatasetOperator && <WebAppsSection />}
-                  </>
-                )}
-          {showEnvTag && !showSnippetDetailBottomNavigation && detailNavigationVisibleExpanded && (
-            <div className="relative z-30 mt-auto shrink-0 px-3 pb-2">
-              <EnvNav />
+      {showDetailNavigation
+        ? (
+            <div
+              className={cn(
+                'flex min-h-0 w-full flex-col bg-components-panel-bg',
+                isDetailNavigationHoverPreviewOpen && 'shadow-lg',
+              )}
+              onMouseEnter={isCollapsedDetailNavigation ? openDetailNavigationHoverPreview : undefined}
+              onMouseLeave={isCollapsedDetailNavigation ? closeDetailNavigationHoverPreview : undefined}
+            >
+              <div className="flex h-12 min-w-0 shrink-0 items-center gap-2 px-4">
+                <div className="min-w-0 flex-1">
+                  {renderDetailTop()}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {detailNavigationVisibleExpanded && <SecondarySidebarHelpMenu />}
+                  <AccountSection compact={!detailNavigationVisibleExpanded} />
+                </div>
+              </div>
+              <div className={cn(
+                'min-h-0 w-full',
+                detailNavigationVisibleExpanded ? 'h-14' : 'h-0 overflow-hidden',
+              )}
+              >
+                {renderDetailSection()}
+              </div>
             </div>
-          )}
-        </div>
-        <div className={cn(
-          !bottomNavigationExpanded
-            ? 'flex w-full shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 pt-1 pb-3'
-            : cn(
-                'flex w-60 items-center justify-between py-3 pr-1 pl-3',
-                showDetailNavigation
-                  ? 'bg-components-panel-bg'
-                  : 'bg-gradient-to-b from-background-body-transparent to-background-body to-50% backdrop-blur-[2px]',
-              ),
-        )}
-        >
-          {!bottomNavigationExpanded
-            ? (
-                <>
-                  <SecondarySidebarHelpMenu triggerClassName="mb-2" />
-                  <AccountSection compact />
-                </>
-              )
-            : (
-                <>
-                  <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-                    <AccountSection />
-                  </div>
-                  {(!showDetailNavigation || detailNavigationVisibleExpanded) && (
-                    <div className="flex shrink-0 items-center justify-center rounded-full p-1">
-                      {showDetailNavigation ? <SecondarySidebarHelpMenu /> : <HelpMenu />}
+          )
+        : showSnippetDetailBottomNavigation
+          ? (
+              <div className="flex h-12 w-full items-center justify-end gap-2 px-4">
+                <SecondarySidebarHelpMenu />
+                <AccountSection compact />
+              </div>
+            )
+          : (
+              <div className="flex h-14 min-w-0 items-center gap-3 px-4">
+                {renderLogo()}
+                <div className="w-56 shrink-0">
+                  <WorkspaceCard />
+                </div>
+                <nav className="flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto">
+                  {navItems.map(item => (
+                    <MainNavLink key={item.href} item={item} pathname={pathname} orientation="horizontal" />
+                  ))}
+                </nav>
+                <div className="flex shrink-0 items-center gap-2">
+                  <MainNavSearchButton />
+                  {showEnvTag && (
+                    <div className="relative z-30 shrink-0" data-main-nav-env>
+                      <EnvNav />
                     </div>
                   )}
-                </>
-              )}
-        </div>
-      </div>
-    </aside>
+                  <div className="flex shrink-0 items-center justify-center">
+                    <HelpMenu />
+                  </div>
+                  <AccountSection />
+                </div>
+              </div>
+            )}
+    </header>
   )
 }
 

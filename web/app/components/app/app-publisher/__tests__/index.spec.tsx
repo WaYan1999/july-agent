@@ -448,7 +448,7 @@ describe('AppPublisher', () => {
     await waitFor(() => {
       expect(mockOpenAsyncWindow).toHaveBeenCalledTimes(1)
       expect(mockFetchInstalledAppList).toHaveBeenCalledWith('app-1')
-      expect(openedUrl).toBe('/installed/installed-1')
+      expect(openedUrl).toBe('/explore/installed/installed-1')
       expect(sectionProps.actions?.appURL).toBe(`https://example.com${basePath}/chat/token-1`)
     })
   })

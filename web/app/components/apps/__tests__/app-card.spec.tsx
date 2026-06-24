@@ -1651,7 +1651,7 @@ describe('AppCard', () => {
 
       await waitFor(() => {
         expect(exploreService.fetchInstalledAppList).toHaveBeenCalledWith(mockApp.id)
-        expect(openedUrl).toBe('/installed/installed-1')
+        expect(openedUrl).toBe('/explore/installed/installed-1')
       })
     })
 

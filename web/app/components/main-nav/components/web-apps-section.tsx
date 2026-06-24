@@ -74,7 +74,13 @@ type WebAppListRow
     kind: 'separator'
   }
 
-const WebAppsSectionContent = () => {
+type WebAppsSectionProps = {
+  orientation?: 'vertical' | 'horizontal'
+}
+
+const WebAppsSectionContent = ({
+  orientation = 'vertical',
+}: WebAppsSectionProps) => {
   const { t } = useTranslation()
   const pathname = usePathname()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -117,7 +123,8 @@ const WebAppsSectionContent = () => {
       return rows
     })
   }, [filteredApps])
-  const shouldVirtualize = webAppRows.length > virtualizationThreshold
+  const isHorizontal = orientation === 'horizontal'
+  const shouldVirtualize = !isHorizontal && webAppRows.length > virtualizationThreshold
 
   const rowVirtualizer = useVirtualizer({
     count: webAppRows.length,
@@ -175,11 +182,23 @@ const WebAppsSectionContent = () => {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div
+      data-main-nav-web-apps={isHorizontal ? '' : undefined}
+      className={cn(
+        'flex min-h-0 flex-col',
+        isHorizontal
+          ? 'w-full shrink-0 border-t border-divider-subtle px-4 py-1'
+          : 'flex-1',
+      )}
+    >
       {isPending
         ? <WebAppsHeaderSkeleton />
         : (
-            <div className="flex items-center justify-between py-1 pr-2 pl-2">
+            <div className={cn(
+              'flex items-center justify-between',
+              isHorizontal ? 'shrink-0 py-1 pr-3 pl-0' : 'py-1 pr-2 pl-2',
+            )}
+            >
               <button
                 type="button"
                 aria-expanded={appsExpanded}
@@ -218,15 +237,23 @@ const WebAppsSectionContent = () => {
         </div>
       )}
       {appsExpanded && (
-        <ScrollAreaRoot className="relative min-h-0 flex-1 overflow-hidden overscroll-contain">
+        <ScrollAreaRoot className={cn(
+          'relative min-h-0 overflow-hidden overscroll-contain',
+          isHorizontal ? 'h-9 flex-1' : 'flex-1',
+        )}
+        >
           <ScrollAreaViewport
             ref={scrollRef}
             aria-busy={isPending}
             aria-label={t('sidebar.webApps', { ns: 'explore' })}
-            className="overflow-x-hidden"
+            className={isHorizontal ? 'overflow-y-hidden' : 'overflow-x-hidden'}
             role="region"
           >
-            <ScrollAreaContent className="w-full max-w-full min-w-0! px-2">
+            <ScrollAreaContent className={cn(
+              'max-w-full min-w-0!',
+              isHorizontal ? 'h-full px-0' : 'w-full px-2',
+            )}
+            >
               {isPending && (
                 <WebAppsSkeleton />
               )}
@@ -236,7 +263,12 @@ const WebAppsSectionContent = () => {
                 </div>
               )}
               {!isPending && webAppRows.length > 0 && !shouldVirtualize && (
-                <div className="space-y-0.5 pb-2">
+                <div className={cn(
+                  isHorizontal
+                    ? 'flex items-center gap-1 pb-0 [&>div]:w-48 [&>div]:shrink-0'
+                    : 'space-y-0.5 pb-2',
+                )}
+                >
                   {webAppRows.map(row => (
                     <Fragment key={row.key}>
                       {renderRow(row)}
@@ -271,7 +303,10 @@ const WebAppsSectionContent = () => {
               )}
             </ScrollAreaContent>
           </ScrollAreaViewport>
-          <ScrollAreaScrollbar className="data-[orientation=vertical]:my-1 data-[orientation=vertical]:me-1">
+          <ScrollAreaScrollbar
+            orientation={isHorizontal ? 'horizontal' : 'vertical'}
+            className="data-[orientation=horizontal]:mx-1 data-[orientation=horizontal]:mb-0.5 data-[orientation=vertical]:my-1 data-[orientation=vertical]:me-1"
+          >
             <ScrollAreaThumb />
           </ScrollAreaScrollbar>
         </ScrollAreaRoot>
@@ -300,14 +335,16 @@ const WebAppsSectionContent = () => {
   )
 }
 
-const WebAppsSection = () => {
+const WebAppsSection = ({
+  orientation = 'vertical',
+}: WebAppsSectionProps) => {
   const { workspacePermissionKeys } = useAppContext()
   const canAccessAppLibrary = hasPermission(workspacePermissionKeys, 'app_library.access')
 
   if (!canAccessAppLibrary)
     return null
 
-  return <WebAppsSectionContent />
+  return <WebAppsSectionContent orientation={orientation} />
 }
 
 export default WebAppsSection

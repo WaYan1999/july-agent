@@ -66,10 +66,12 @@ const renderNavDivider = (key: string, expand: boolean) => (
 
 type AppDetailSectionProps = {
   expand?: boolean
+  orientation?: 'vertical' | 'horizontal'
 }
 
 const AppDetailSection = ({
   expand = true,
+  orientation = 'vertical',
 }: AppDetailSectionProps) => {
   const { t } = useTranslation()
   const pathname = usePathname()
@@ -153,12 +155,19 @@ const AppDetailSection = ({
   if (!appDetail)
     return null
 
+  const isHorizontal = orientation === 'horizontal'
   const hasLogsNavigation = navigation.some(isLogsNavItem)
   const hasAnnotationsNavigation = navigation.some(isAnnotationsNavItem)
 
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-col', expand ? 'px-2 pb-2' : 'pb-2')}>
-      {!expand && (
+    <div className={cn(
+      'flex min-h-0 flex-1',
+      isHorizontal
+        ? 'items-center gap-3 overflow-hidden px-3 py-1'
+        : cn('flex-col', expand ? 'px-2 pb-2' : 'pb-2'),
+    )}
+    >
+      {!isHorizontal && !expand && (
         <div className="flex w-full shrink-0 justify-center px-3.5 pt-0.5 pb-[3px]">
           <Divider
             type="horizontal"
@@ -167,13 +176,19 @@ const AppDetailSection = ({
           />
         </div>
       )}
-      <div className="px-1 py-2">
+      <div className={cn(isHorizontal ? 'w-60 shrink-0' : 'px-1 py-2')}>
         <AppInfoView
           expand={expand}
           actions={appInfoActions}
         />
       </div>
-      <nav className={cn('flex flex-col gap-y-0.5 py-1', expand ? 'px-1' : 'px-3')}>
+      <nav className={cn(
+        'min-w-0',
+        isHorizontal
+          ? 'flex flex-1 items-center gap-1 overflow-x-auto py-1'
+          : cn('flex flex-col gap-y-0.5 py-1', expand ? 'px-1' : 'px-3'),
+      )}
+      >
         {navigation.map((item) => {
           const shouldRenderDividerBefore = isLogsNavItem(item) || (!hasLogsNavigation && isAnnotationsNavItem(item))
           const shouldRenderDividerAfter = hasAnnotationsNavigation ? isAnnotationsNavItem(item) : isLogsNavItem(item)
@@ -183,6 +198,7 @@ const AppDetailSection = ({
               {shouldRenderDividerBefore && renderNavDivider(`${item.href}-before`, expand)}
               <NavLink
                 mode={expand ? 'expand' : 'collapse'}
+                orientation={orientation}
                 iconMap={{ selected: item.selectedIcon, normal: item.icon }}
                 name={item.name}
                 href={item.href}

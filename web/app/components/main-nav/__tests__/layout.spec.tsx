@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import MainNavLayout from '../layout'
 
+let mockPathname = '/'
+
 vi.mock('@/app/components/header', () => ({
   default: () => <div data-testid="desktop-header">Header</div>,
 }))
@@ -17,12 +19,17 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('../index', () => ({
-  default: ({ className }: { className?: string }) => <aside className={className} data-testid="main-nav">MainNav</aside>,
+  default: ({ className }: { className?: string }) => <header className={className} data-testid="main-nav">MainNav</header>,
+}))
+
+vi.mock('@/next/navigation', () => ({
+  usePathname: () => mockPathname,
 }))
 
 describe('MainNavLayout', () => {
   beforeEach(() => {
     localStorage.clear()
+    mockPathname = '/'
   })
 
   it('renders desktop main nav instead of the desktop header', () => {
@@ -39,6 +46,33 @@ describe('MainNavLayout', () => {
     expect(screen.getByTestId('main-nav')).toBeInTheDocument()
     expect(screen.queryByTestId('header-wrapper')).not.toBeInTheDocument()
     expect(screen.queryByTestId('desktop-header')).not.toBeInTheDocument()
+  })
+
+  it('stacks the top navigation above the main content', () => {
+    const { container } = render(<MainNavLayout><div>content</div></MainNavLayout>)
+
+    const shell = container.firstElementChild
+    const nav = screen.getByTestId('main-nav')
+    const main = screen.getByRole('main')
+
+    expect(shell).toHaveClass('flex-col')
+    expect(nav.compareDocumentPosition(main)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(main).toHaveClass('min-h-0', 'grow', 'overflow-hidden')
+  })
+
+  it('keeps workflow app pages on the legacy side navigation layout', () => {
+    mockPathname = '/app/app-1/workflow'
+
+    const { container } = render(<MainNavLayout><div>workflow content</div></MainNavLayout>)
+
+    const shell = container.firstElementChild
+    const nav = screen.getByTestId('main-nav')
+    const main = screen.getByRole('main')
+
+    expect(shell).not.toHaveClass('flex-col')
+    expect(nav.compareDocumentPosition(main)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(main).toHaveClass('min-w-0', 'grow', 'overflow-hidden')
+    expect(main).toHaveTextContent('workflow content')
   })
 
   it('renders one main landmark as the skip navigation target', () => {

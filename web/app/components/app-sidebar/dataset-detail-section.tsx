@@ -34,10 +34,12 @@ const getDatasetIdFromPathname = (pathname: string) => {
 
 type DatasetDetailSectionProps = {
   expand?: boolean
+  orientation?: 'vertical' | 'horizontal'
 }
 
 const DatasetDetailSection = ({
   expand = true,
+  orientation = 'vertical',
 }: DatasetDetailSectionProps) => {
   const { t } = useTranslation()
   const pathname = usePathname()
@@ -118,6 +120,8 @@ const DatasetDetailSection = ({
   if (!datasetRes)
     return null
 
+  const isHorizontal = orientation === 'horizontal'
+
   return (
     <DatasetDetailContext.Provider value={{
       indexingTechnique: datasetRes.indexing_technique,
@@ -125,8 +129,14 @@ const DatasetDetailSection = ({
       mutateDatasetRes,
     }}
     >
-      <div className={cn('flex min-h-0 flex-1 flex-col', expand ? 'px-2 pb-2' : 'pb-2')}>
-        {!expand && (
+      <div className={cn(
+        'flex min-h-0 flex-1',
+        isHorizontal
+          ? 'items-center gap-3 overflow-hidden px-3 py-1'
+          : cn('flex-col', expand ? 'px-2 pb-2' : 'pb-2'),
+      )}
+      >
+        {!isHorizontal && !expand && (
           <div className="flex w-full shrink-0 justify-center px-3.5 pt-0.5 pb-[3px]">
             <Divider
               type="horizontal"
@@ -135,14 +145,21 @@ const DatasetDetailSection = ({
             />
           </div>
         )}
-        <div className="py-2">
+        <div className={cn(isHorizontal ? 'w-60 shrink-0' : 'py-2')}>
           <DatasetInfo expand={expand} />
         </div>
-        <nav className={cn('mt-3 flex flex-col gap-y-0.5 pb-2', expand ? 'px-1' : 'px-3')}>
+        <nav className={cn(
+          'min-w-0',
+          isHorizontal
+            ? 'flex flex-1 items-center gap-1 overflow-x-auto py-1'
+            : cn('mt-3 flex flex-col gap-y-0.5 pb-2', expand ? 'px-1' : 'px-3'),
+        )}
+        >
           {navigation.map(item => (
             <NavLink
               key={item.href}
               mode={expand ? 'expand' : 'collapse'}
+              orientation={orientation}
               iconMap={{ selected: item.selectedIcon, normal: item.icon }}
               name={item.name}
               href={item.href}
@@ -151,7 +168,7 @@ const DatasetDetailSection = ({
             />
           ))}
         </nav>
-        {datasetACLCapabilities.canEdit && (
+        {!isHorizontal && datasetACLCapabilities.canEdit && (
           <div className="mt-auto shrink-0">
             <ExtraInfo
               relatedApps={relatedApps}

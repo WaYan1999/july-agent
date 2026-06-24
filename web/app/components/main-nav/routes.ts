@@ -24,12 +24,19 @@ function isPathUnderRoute(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`)
 }
 
+export function isWorkflowAppRoute(pathname: string) {
+  const cleanPathname = pathname.split(/[?#]/)[0] ?? ''
+  const [section, appId, subPage, ...rest] = cleanPathname.split('/').filter(Boolean)
+
+  return section === 'app' && !!appId && subPage === 'workflow' && rest.length === 0
+}
+
 export const MAIN_NAV_ROUTES = [
   {
     key: 'home',
     href: '/',
-    labelKey: 'mainNav.home',
-    active: (path: string) => path === '/' || path === '/explore/apps',
+    labelKey: 'menus.explore',
+    active: (path: string) => path === '/' || path === '/explore/apps' || isPathUnderRoute(path, '/explore/installed'),
     icon: 'i-custom-vender-main-nav-home',
     activeIcon: 'i-custom-vender-main-nav-home-active',
     visibility: 'all',

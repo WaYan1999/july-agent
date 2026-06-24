@@ -32,11 +32,13 @@ const NavIcon = ({
 type MainNavLinkProps = {
   item: MainNavItem
   pathname: string
+  orientation?: 'vertical' | 'horizontal'
 }
 
 const MainNavLink = ({
   item,
   pathname,
+  orientation = 'vertical',
 }: MainNavLinkProps) => {
   const activated = item.active(pathname)
 
@@ -47,6 +49,7 @@ const MainNavLink = ({
       title={item.label}
       className={cn(
         navItemClassName,
+        orientation === 'horizontal' ? 'w-auto shrink-0' : 'w-full',
         activated ? activeNavItemClassName : inactiveNavItemClassName,
       )}
     >
