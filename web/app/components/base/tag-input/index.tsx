@@ -85,7 +85,7 @@ const TagInput = ({ items, onChange, disableAdd, disableRemove, customizedConfir
             className={cn(!isInWorkflow && 'max-w-[300px]', isInWorkflow && 'max-w-[146px]', 'grid overflow-hidden rounded-md py-1 system-xs-regular after:invisible after:col-start-1 after:row-start-1 after:whitespace-pre after:content-[attr(data-input-value)]', isSpecialMode && 'border border-transparent px-1.5', focused && isSpecialMode && 'border-dashed border-divider-deep')}
           >
             <input
-              className={cn('col-start-1 row-start-1 w-full min-w-0 appearance-none text-text-primary caret-[#295EFF] outline-hidden placeholder:text-text-placeholder group-hover/tag-add:placeholder:text-text-secondary', isSpecialMode ? 'bg-transparent' : '', inputClassName)}
+              className={cn('col-start-1 row-start-1 w-full min-w-0 appearance-none text-text-primary caret-text-accent outline-hidden placeholder:text-text-placeholder group-hover/tag-add:placeholder:text-text-secondary', isSpecialMode ? 'bg-transparent' : '', inputClassName)}
               onFocus={() => setFocused(true)}
               onBlur={handleBlur}
               value={value}

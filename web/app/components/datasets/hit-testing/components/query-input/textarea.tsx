@@ -23,7 +23,7 @@ const Textarea = ({
     )}
     >
       <textarea
-        className="h-full w-full resize-none border-none bg-transparent system-md-regular text-text-secondary caret-[#295EFF] placeholder:text-components-input-text-placeholder focus-visible:outline-hidden"
+        className="h-full w-full resize-none border-none bg-transparent system-md-regular text-text-secondary caret-text-accent placeholder:text-components-input-text-placeholder focus-visible:outline-hidden"
         value={text}
         onChange={handleTextChange}
         placeholder={t('input.placeholder', { ns: 'datasetHitTesting' }) as string}

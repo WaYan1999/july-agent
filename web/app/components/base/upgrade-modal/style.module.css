@@ -18,11 +18,11 @@
   border: 0.5px solid transparent;
   background:
     linear-gradient(180deg, var(--color-components-avatar-bg-mask-stop-0, rgba(255, 255, 255, 0.12)) 0%, var(--color-components-avatar-bg-mask-stop-100, rgba(255, 255, 255, 0.08)) 100%),
-    var(--color-util-colors-blue-brand-blue-brand-500, #296dff);
+    var(--color-util-colors-blue-brand-blue-brand-500, #CC7D5E);
 }
 
 .highlight {
-  background: linear-gradient(97deg, var(--color-components-input-border-active-prompt-1, rgba(11, 165, 236, 0.95)) -4%, var(--color-components-input-border-active-prompt-2, rgba(21, 90, 239, 0.95)) 45%);
+  background: linear-gradient(97deg, var(--color-components-input-border-active-prompt-1, #CC7D5E) -4%, var(--color-components-input-border-active-prompt-2, #A86145) 45%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

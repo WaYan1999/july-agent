@@ -96,7 +96,7 @@ export const DescriptionInput = memo(({
         onBlur={handleBlur}
         className={`
           w-full resize-none appearance-none bg-transparent text-xs
-          leading-[18px] text-text-primary caret-[#295EFF]
+          leading-[18px] text-text-primary caret-text-accent
           outline-hidden placeholder:text-text-quaternary
         `}
         placeholder={t('common.addDescription', { ns: 'workflow' }) || ''}

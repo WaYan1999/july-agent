@@ -195,11 +195,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, srcs }) => {
     data.forEach((value, index) => {
       let color
       if (index * barWidth <= playedWidth)
-        color = theme === Theme.light ? '#296DFF' : '#84ABFF'
+        color = theme === Theme.light ? '#A86145' : '#CC7D5E'
       else if ((index * barWidth / width) * duration <= hoverTime)
-        color = theme === Theme.light ? 'rgba(21,90,239,.40)' : 'rgba(200, 206, 218, 0.28)'
+        color = theme === Theme.light ? 'rgba(204, 125, 94, 0.40)' : 'rgba(204, 125, 94, 0.35)'
       else
-        color = theme === Theme.light ? 'rgba(21,90,239,.20)' : 'rgba(200, 206, 218, 0.14)'
+        color = theme === Theme.light ? 'rgba(204, 125, 94, 0.20)' : 'rgba(204, 125, 94, 0.18)'
       const barHeight = value * height
       const rectX = index * barWidth
       const rectY = (height - barHeight) / 2

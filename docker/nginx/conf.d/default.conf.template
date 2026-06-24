@@ -40,7 +40,7 @@ server {
     }
 
     location /explore {
-      proxy_pass http://web:3000;
+      proxy_pass http://web:3030;
       include proxy.conf;
     }
 
@@ -51,7 +51,7 @@ server {
     }
 
     location / {
-      proxy_pass http://web:3000;
+      proxy_pass http://web:3030;
       include proxy.conf;
     }
 

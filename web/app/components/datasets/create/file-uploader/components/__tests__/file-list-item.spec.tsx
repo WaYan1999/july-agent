@@ -165,8 +165,8 @@ describe('FileListItem', () => {
       render(<FileListItem {...defaultProps} fileItem={fileItem} />)
 
       const pieChart = screen.getByTestId('pie-chart')
-      expect(pieChart).toHaveAttribute('data-stroke', '#296dff')
-      expect(pieChart).toHaveAttribute('data-fill', '#296dff')
+      expect(pieChart).toHaveAttribute('data-stroke', '#A86145')
+      expect(pieChart).toHaveAttribute('data-fill', '#A86145')
     })
 
     it('should use correct chart color for dark theme', () => {
@@ -175,8 +175,8 @@ describe('FileListItem', () => {
       render(<FileListItem {...defaultProps} fileItem={fileItem} />)
 
       const pieChart = screen.getByTestId('pie-chart')
-      expect(pieChart).toHaveAttribute('data-stroke', '#5289ff')
-      expect(pieChart).toHaveAttribute('data-fill', '#5289ff')
+      expect(pieChart).toHaveAttribute('data-stroke', '#CC7D5E')
+      expect(pieChart).toHaveAttribute('data-fill', '#CC7D5E')
     })
   })
 

@@ -70,7 +70,7 @@ export default defineConfig(({ mode }) => {
             exclude: ['@tanstack/react-query'],
           },
           server: {
-            port: 3000,
+            port: 3030,
           },
           ssr: {
             // SyntaxError: Named export not found. The requested module is a CommonJS module, which may not support all module.exports as named exports

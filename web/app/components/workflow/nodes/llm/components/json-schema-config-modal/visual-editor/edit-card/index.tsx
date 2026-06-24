@@ -268,7 +268,7 @@ const EditCard: FC<EditCardProps> = ({
         <div className={cn('flex', isAdvancedEditing ? 'p-2 pt-1' : 'px-2 pb-1')}>
           <input
             value={currentFields.description}
-            className="h-4 w-full p-0 system-xs-regular text-text-tertiary caret-[#295EFF] outline-hidden placeholder:system-xs-regular placeholder:text-text-placeholder"
+            className="h-4 w-full p-0 system-xs-regular text-text-tertiary caret-text-accent outline-hidden placeholder:system-xs-regular placeholder:text-text-placeholder"
             placeholder={t('nodes.llm.jsonSchema.descriptionPlaceholder', { ns: 'workflow' })}
             onChange={handleDescriptionChange}
             onBlur={handleDescriptionBlur}

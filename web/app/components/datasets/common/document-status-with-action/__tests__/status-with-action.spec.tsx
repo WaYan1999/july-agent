@@ -150,7 +150,7 @@ describe('StatusWithAction', () => {
     it('should apply info gradient background', () => {
       const { container } = render(<StatusWithAction type="info" description="Info" />)
       const gradientDiv = container.querySelector('.opacity-40')
-      expect(gradientDiv?.className).toContain('rgba(11,165,236,0.25)')
+      expect(gradientDiv?.className).toContain('rgba(204,125,94,0.25)')
     })
   })
 

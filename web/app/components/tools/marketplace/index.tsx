@@ -68,7 +68,7 @@ const Marketplace = ({
           />
         )}
         <div className={cn('pt-4 pb-3', marketplaceFrameClassName)}>
-          <div className="bg-linear-to-r from-[rgba(11,165,236,0.95)] to-[rgba(21,90,239,0.95)] bg-clip-text title-2xl-semi-bold text-transparent">
+          <div className="bg-[linear-gradient(92deg,var(--color-components-input-border-active-prompt-1,#CC7D5E)_0%,var(--color-components-input-border-active-prompt-2,#A86145)_99.21%)] bg-clip-text title-2xl-semi-bold text-transparent">
             {t('marketplace.moreFrom', { ns: 'plugin' })}
           </div>
           <div className="flex items-center text-center body-md-regular text-text-tertiary">

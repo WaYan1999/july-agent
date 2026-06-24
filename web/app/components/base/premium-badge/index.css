@@ -8,11 +8,11 @@
   &.premium-badge-blue:hover {
     @apply bg-util-colors-blue-blue-300;
     background-image:
-      linear-gradient(90deg, #296dffe6 0%, #004aebe6 100%),
+      linear-gradient(90deg, rgb(184 111 83 / 0.90) 0%, rgb(150 84 59 / 0.90) 100%),
       linear-gradient(
         135deg,
         var(--color-premium-badge-border-highlight-color) 0%,
-        #00329e 100%
+        #7A422F 100%
       );
   }
   &.premium-badge-indigo:hover {
@@ -59,20 +59,20 @@
 @utility premium-badge-blue {
   @apply bg-util-colors-blue-blue-200;
   background-image:
-    linear-gradient(90deg, #5289ffe6 0%, #155aefe6 100%),
+    linear-gradient(90deg, rgb(204 125 94 / 0.90) 0%, rgb(168 97 69 / 0.90) 100%),
     linear-gradient(
       135deg,
       var(--color-premium-badge-border-highlight-color) 0%,
-      #155aef 100%
+      #A86145 100%
     );
   &.pb-allow-hover:hover {
     @apply bg-util-colors-blue-blue-300;
     background-image:
-      linear-gradient(90deg, #296dffe6 0%, #004aebe6 100%),
+      linear-gradient(90deg, rgb(184 111 83 / 0.90) 0%, rgb(150 84 59 / 0.90) 100%),
       linear-gradient(
         135deg,
         var(--color-premium-badge-border-highlight-color) 0%,
-        #00329e 100%
+        #7A422F 100%
       );
   }
 }

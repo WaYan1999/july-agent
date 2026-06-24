@@ -177,7 +177,7 @@ export const env = createEnv({
      * Disable Next.js Telemetry (https://nextjs.org/telemetry)
      */
     NEXT_TELEMETRY_DISABLED: coercedBoolean.optional(),
-    PORT: coercedNumber.default(3000),
+    PORT: coercedNumber.default(3030),
     /**
      * The timeout for the text generation in millisecond
      */

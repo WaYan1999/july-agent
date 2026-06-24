@@ -152,7 +152,7 @@ const CSVUploader: FC<Props> = ({ file, updateFile }) => {
     initialUpload(currentFile)
   }
   const { theme } = useTheme()
-  const chartColor = useMemo(() => theme === Theme.dark ? '#5289ff' : '#296dff', [theme])
+  const chartColor = useMemo(() => theme === Theme.dark ? '#CC7D5E' : '#A86145', [theme])
   useEffect(() => {
     dropRef.current?.addEventListener('dragenter', handleDragEnter)
     dropRef.current?.addEventListener('dragover', handleDragOver)

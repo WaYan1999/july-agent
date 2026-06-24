@@ -270,7 +270,7 @@ const Description = ({
         paddingBottom,
       }}
     >
-      <div className="absolute inset-0 bg-[#0033ff]" />
+      <div className="absolute inset-0 bg-saas-dify-blue-static" />
       <div
         className="absolute inset-0 bg-no-repeat opacity-80 mix-blend-lighten"
         style={{

@@ -85,7 +85,7 @@ const PluginCategoryPageContent = ({
       {dragging && (
         <div
           className="absolute inset-0 m-0.5 rounded-2xl border-2 border-dashed border-components-dropzone-border-accent
-            bg-[rgba(21,90,239,0.14)] p-2"
+            bg-state-accent-active-alt p-2"
         />
       )}
       {currentFile && (

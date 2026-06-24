@@ -94,7 +94,7 @@ const main = async () => {
   await copyAllDirs(standaloneRoot)
 
   // Start server
-  const port = process.env.pnpm_config_port || process.env.PORT || '3000'
+  const port = process.env.pnpm_config_port || process.env.PORT || '3030'
   const host = process.env.pnpm_config_host || process.env.HOSTNAME || '0.0.0.0'
 
   console.info(`Starting server on ${host}:${port}`)
