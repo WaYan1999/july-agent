@@ -23,7 +23,7 @@ import { AppModeEnum } from '@/types/app'
 import MainNav from '../index'
 import { DETAIL_SIDEBAR_STORAGE_KEY } from '../storage'
 
-const activeEdgeClassName = 'before:pointer-events-none'
+const activeTextClassName = 'text-components-main-nav-nav-button-text-active'
 
 const { mockIsAgentV2Enabled, mockSwitchWorkspace, mockToastSuccess, hotkeyRegistrations } = vi.hoisted(() => ({
   mockSwitchWorkspace: vi.fn(),
@@ -432,8 +432,8 @@ describe('MainNav', () => {
     expect(logoLink.parentElement).toHaveClass('h-14', 'px-4')
 
     const homeLink = screen.getByRole('link', { name: /common.menus.explore/ })
-    expect(homeLink.closest('nav')).toHaveClass('flex', 'items-center', 'justify-center', 'overflow-x-auto')
-    expect(homeLink).toHaveClass('h-8', 'rounded-[10px]', 'px-2', 'py-1.5')
+    expect(homeLink.closest('nav')).toHaveClass('relative', 'flex', 'items-center', 'justify-center', 'overflow-x-auto', 'rounded-xl', 'border')
+    expect(homeLink).toHaveClass('h-8', 'rounded-lg', 'px-2.5', 'py-1.5')
     expect(homeLink).not.toHaveClass('w-full')
 
     expect(screen.queryByRole('button', { name: 'explore.sidebar.webApps' })).not.toBeInTheDocument()
@@ -570,8 +570,7 @@ describe('MainNav', () => {
     renderMainNav()
 
     const datasetsLink = screen.getByRole('link', { name: /common.menus.datasets/ })
-    expect(datasetsLink.className).toContain('bg-[linear-gradient(98.077deg')
-    expect(datasetsLink).toHaveClass(activeEdgeClassName)
+    expect(datasetsLink).toHaveClass(activeTextClassName)
     expect(datasetsLink).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: /common.menus.explore/ })).not.toHaveAttribute('aria-current')
   })
@@ -582,7 +581,7 @@ describe('MainNav', () => {
     renderMainNav()
 
     const studioLink = screen.getByRole('link', { name: /common.menus.apps/ })
-    expect(studioLink).toHaveClass(activeEdgeClassName)
+    expect(studioLink).toHaveClass(activeTextClassName)
     expect(studioLink).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: /common.menus.explore/ })).not.toHaveAttribute('aria-current')
   })
@@ -866,7 +865,7 @@ describe('MainNav', () => {
     renderMainNav()
 
     const marketplaceLink = screen.getByRole('link', { name: /common.mainNav.marketplace/ })
-    expect(marketplaceLink).toHaveClass(activeEdgeClassName)
+    expect(marketplaceLink).toHaveClass(activeTextClassName)
   })
 
   it('marks roster active on roster routes', () => {
@@ -875,11 +874,11 @@ describe('MainNav', () => {
     renderMainNav()
 
     const rosterLink = screen.getByRole('link', { name: /common.menus.roster/ })
-    expect(rosterLink).toHaveClass(activeEdgeClassName)
+    expect(rosterLink).toHaveClass(activeTextClassName)
     expect(rosterLink).toHaveAttribute('aria-current', 'page')
   })
 
-  it('applies the Figma glass active state to the Home route', () => {
+  it('applies the lightweight sliding active state to the Home route', () => {
     mockPathname = '/'
 
     renderMainNav()
@@ -887,12 +886,10 @@ describe('MainNav', () => {
     const homeLink = screen.getByRole('link', { name: /common.menus.explore/ })
 
     expect(homeLink).toHaveClass(
-      'backdrop-blur-[5px]',
-      'text-saas-dify-blue-inverted',
-      activeEdgeClassName,
-      'after:border-components-main-nav-glass-edge-highlight-first',
+      'rounded-lg',
+      activeTextClassName,
     )
-    expect(homeLink.className).toContain('var(--color-components-main-nav-glass-surface-first)')
+    expect(homeLink.closest('nav')?.querySelector('[data-main-nav-active-indicator]')).toHaveClass('bg-state-accent-active', 'transition-[transform,width,opacity]')
   })
 
   it('keeps Explore active on explore content routes only', () => {

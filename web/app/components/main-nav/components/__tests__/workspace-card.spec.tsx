@@ -257,7 +257,8 @@ describe('WorkspaceCard', () => {
 
     const panel = await screen.findByRole('dialog', { name: 'Solar Studio' })
     expect(panel).toBeInTheDocument()
-    expect(panel).toHaveClass('w-[280px]')
+    expect(panel).toHaveClass('w-[260px]', 'max-w-[calc(100vw-24px)]')
+    expect(within(panel).queryByText(Plan.sandbox)).not.toBeInTheDocument()
     expect(within(panel).getByRole('button', { name: 'common.mainNav.workspace.settings' })).toBeInTheDocument()
     expect(within(panel).getByRole('button', { name: 'common.mainNav.workspace.inviteMembers' })).toBeInTheDocument()
     expect(within(panel).getByText('common.userProfile.workspace')).toBeInTheDocument()
@@ -265,7 +266,7 @@ describe('WorkspaceCard', () => {
     expect(within(panel).getByRole('button', { name: 'common.operation.search' })).toBeInTheDocument()
     const workspaceItem = within(panel).getByRole('button', { name: 'Evan Workspace' })
     expect(workspaceItem).toBeInTheDocument()
-    expect(workspaceItem.parentElement).toHaveClass('max-h-[240px]', 'overflow-y-auto')
+    expect(workspaceItem.parentElement).toHaveClass('max-h-[224px]', 'overflow-y-auto')
   })
 
   it('filters workspace switcher options from the search action', async () => {

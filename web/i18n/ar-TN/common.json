@@ -310,7 +310,7 @@
   "menus.datasets": "المعرفة",
   "menus.datasetsTips": "قريباً: استيراد بيانات النص الخاصة بك أو كتابة البيانات في الوقت الفعلي عبر Webhook لتحسين سياق LLM.",
   "menus.deployments": "عمليات النشر",
-  "menus.explore": "استكشاف",
+  "menus.explore": "ساحة الاستكشاف",
   "menus.exploreMarketplace": "استكشاف السوق",
   "menus.newApp": "تطبيق جديد",
   "menus.newDataset": "إنشاء معرفة",

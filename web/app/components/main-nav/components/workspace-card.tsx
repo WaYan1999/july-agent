@@ -29,8 +29,8 @@ import { WorkspaceIcon, WorkspaceMenuItemContent } from './workspace-menu-conten
 import WorkspacePlanBadge from './workspace-plan-badge'
 import { WorkspaceSwitcher } from './workspace-switcher'
 
-const workspaceMenuTriggerHeight = 36
-const workspaceMenuAlignOffset = -28
+const workspaceMenuSideOffset = 8
+const workspaceMenuAlignOffset = 0
 const workspaceCardSkeletonClassName = 'animate-pulse rounded bg-text-quaternary opacity-20 motion-reduce:animate-none'
 const workspacePlans = new Set<string>(Object.values(Plan))
 
@@ -161,7 +161,6 @@ function WorkspaceCardTrigger({
 
 function WorkspaceMenuHeader({
   name,
-  status,
   showInviteMembers,
   settingsLabel,
   inviteMembersLabel,
@@ -169,7 +168,6 @@ function WorkspaceMenuHeader({
   onInviteMembers,
 }: {
   name: string
-  status: ReactNode
   showInviteMembers: boolean
   settingsLabel: ReactNode
   inviteMembersLabel: ReactNode
@@ -177,15 +175,9 @@ function WorkspaceMenuHeader({
   onInviteMembers: () => void
 }) {
   return (
-    <div className="p-1">
-      <div className="rounded-xl border-[0.5px] border-components-panel-border bg-linear-to-b from-background-section-burn to-background-section pb-2">
-        <div className="flex h-16 items-center gap-2 px-3">
-          <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-1">
-            <PopoverTitle className="w-full min-w-0 truncate text-base/5 font-medium text-text-primary" title={name}>{name}</PopoverTitle>
-            {status}
-          </div>
-          <WorkspaceIcon name={name} className="h-9 w-9 shrink-0" />
-        </div>
+    <div className="p-1.5 pb-1">
+      <PopoverTitle className="sr-only">{name}</PopoverTitle>
+      <div className="rounded-lg border-[0.5px] border-components-panel-border bg-linear-to-b from-background-section-burn to-background-section py-1">
         <button
           type="button"
           className="flex h-8 w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-1 text-left outline-hidden hover:bg-state-base-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:ring-inset"
@@ -284,13 +276,12 @@ export function WorkspaceCard() {
         />
         <PopoverContent
           placement="bottom-start"
-          sideOffset={-workspaceMenuTriggerHeight}
+          sideOffset={workspaceMenuSideOffset}
           alignOffset={workspaceMenuAlignOffset}
-          popupClassName="w-[280px] overflow-hidden bg-components-panel-bg-blur! p-0! backdrop-blur-[5px]"
+          popupClassName="w-[260px] max-w-[calc(100vw-24px)] overflow-hidden bg-components-panel-bg-blur! p-0! backdrop-blur-[5px]"
         >
           <WorkspaceMenuHeader
             name={currentWorkspace.name}
-            status={renderWorkspaceStatus()}
             showInviteMembers={showInviteMembers}
             settingsLabel={t('mainNav.workspace.settings', { ns: 'common' })}
             inviteMembersLabel={t('mainNav.workspace.inviteMembers', { ns: 'common' })}

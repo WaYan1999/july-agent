@@ -18,7 +18,7 @@ import { WorkspaceIcon, WorkspaceMenuItemContent } from './workspace-menu-conten
 const workspaceSwitchActionButtonClassName = 'flex shrink-0 items-center justify-center rounded-md p-0.5 text-text-tertiary outline-hidden hover:bg-state-base-hover hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-state-accent-solid'
 const workspaceSwitchActionIconWrapClassName = 'flex size-5 shrink-0 items-center justify-center'
 const workspaceSwitchActionIconClassName = 'size-3.5 shrink-0'
-const workspaceSwitchListClassName = 'max-h-[240px] overflow-y-auto overscroll-contain scroll-py-1'
+const workspaceSwitchListClassName = 'max-h-[224px] overflow-y-auto overscroll-contain scroll-py-1'
 const workspaceSwitchI18nKey = (key: string) => key as 'mainNav.workspace.settings'
 type WorkspaceSort = 'lastOpened' | 'createdAt'
 

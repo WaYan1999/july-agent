@@ -310,7 +310,7 @@
   "menus.datasets": "Знання",
   "menus.datasetsTips": "СКОРО:  імпортуйте власні текстові дані або пишіть дані в реальному часі через Webhook для покращення контексту LLM.",
   "menus.deployments": "Розгортання",
-  "menus.explore": "Досліджувати",
+  "menus.explore": "Площа досліджень",
   "menus.exploreMarketplace": "Дізнайтеся більше про Marketplace",
   "menus.newApp": "Нова програма",
   "menus.newDataset": "Створити знання",

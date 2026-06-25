@@ -129,13 +129,27 @@ describe('AppCard', () => {
 
       expect(cardButton).toHaveAttribute('type', 'button')
       expect(cardButton).toHaveClass('cursor-pointer', 'focus-visible:ring-2', 'focus-visible:ring-inset')
+      expect(cardButton.parentElement).toHaveClass(
+        'transition-[transform,box-shadow,border-color]',
+        'hover:-translate-y-0.5',
+        'has-[button:focus-visible]:-translate-y-0.5',
+        'motion-reduce:transform-none',
+        'motion-reduce:transition-none',
+      )
     })
 
-    it('should not render hover action buttons in explore mode', () => {
+    it('should render the preview affordance for clickable cloud cards', () => {
       renderComponent({ canCreate: true, isExplore: true })
 
       expect(screen.queryByText('explore.appCard.addToWorkspace')).not.toBeInTheDocument()
-      expect(screen.queryByText('explore.appCard.try')).not.toBeInTheDocument()
+      const previewAffordance = screen.getByText('explore.appCard.try').closest('[aria-hidden="true"]')
+
+      expect(previewAffordance).toHaveClass(
+        'opacity-0',
+        'group-hover:opacity-100',
+        'motion-reduce:transition-none',
+      )
+      expect(previewAffordance).not.toHaveClass('group-focus-within:opacity-100')
     })
 
     it('should make the app card clickable outside cloud edition when create is allowed', () => {
@@ -143,6 +157,8 @@ describe('AppCard', () => {
       renderComponent({ canCreate: true, isExplore: true })
 
       expect(screen.getByRole('button', { name: 'Sample App' })).toHaveClass('cursor-pointer')
+      expect(screen.getByText('explore.appCard.addToWorkspace')).toBeInTheDocument()
+      expect(screen.queryByText('explore.appCard.try')).not.toBeInTheDocument()
     })
 
     it('should not make the app card clickable outside cloud edition when create is not allowed', () => {
@@ -150,6 +166,7 @@ describe('AppCard', () => {
       renderComponent({ canCreate: false, isExplore: true })
 
       expect(screen.queryByRole('button', { name: 'Sample App' })).not.toBeInTheDocument()
+      expect(screen.queryByText('explore.appCard.addToWorkspace')).not.toBeInTheDocument()
     })
   })
 

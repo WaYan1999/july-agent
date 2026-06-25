@@ -109,6 +109,12 @@ const MainNav = ({
   const [detailNavigationTransitionDisabled, setDetailNavigationTransitionDisabled] = useState(false)
   const closeDetailNavigationHoverPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const detailNavigationTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const globalNavRef = useRef<HTMLElement | null>(null)
+  const [activeIndicatorStyle, setActiveIndicatorStyle] = useState({
+    visible: false,
+    width: 0,
+    x: 0,
+  })
   const isDetailNavigationHoverPreviewOpen = isCollapsedDetailNavigation && detailNavigationHoverPreviewOpen
   const detailNavigationVisibleExpanded = detailNavigationExpanded || isDetailNavigationHoverPreviewOpen
   const handleToggleDetailNavigation = useCallback(() => {
@@ -187,6 +193,40 @@ const MainNav = ({
       icon: route.icon,
       activeIcon: route.activeIcon,
     })), [agentV2Enabled, canUseAppDeploy, isCurrentWorkspaceDatasetOperator, systemFeatures.enable_marketplace, t])
+
+  useEffect(() => {
+    const nav = globalNavRef.current
+
+    if (!nav)
+      return
+
+    const updateActiveIndicator = () => {
+      const activeLink = nav.querySelector<HTMLAnchorElement>('a[aria-current="page"]')
+
+      if (!activeLink) {
+        setActiveIndicatorStyle(previous => previous.visible ? { ...previous, visible: false } : previous)
+        return
+      }
+
+      setActiveIndicatorStyle({
+        visible: true,
+        width: activeLink.offsetWidth,
+        x: activeLink.offsetLeft,
+      })
+    }
+
+    updateActiveIndicator()
+
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updateActiveIndicator)
+    resizeObserver?.observe(nav)
+    nav.querySelectorAll('a').forEach(link => resizeObserver?.observe(link))
+    window.addEventListener('resize', updateActiveIndicator)
+
+    return () => {
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', updateActiveIndicator)
+    }
+  }, [navItems, pathname])
 
   const renderLogo = () => {
     const appTitle = systemFeatures.branding.enabled && systemFeatures.branding.application_title ? systemFeatures.branding.application_title : 'Dify'
@@ -374,11 +414,26 @@ const MainNav = ({
                 <div className="w-56 shrink-0">
                   <WorkspaceCard />
                 </div>
-                <nav className="flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto">
-                  {navItems.map(item => (
-                    <MainNavLink key={item.href} item={item} pathname={pathname} orientation="horizontal" />
-                  ))}
-                </nav>
+                <div className="flex min-w-0 flex-1 justify-center">
+                  <nav
+                    ref={globalNavRef}
+                    className="relative flex min-w-0 max-w-full items-center justify-center gap-1 overflow-x-auto rounded-xl border border-divider-subtle bg-components-panel-bg p-1 shadow-xs shadow-shadow-shadow-4"
+                  >
+                    <div
+                      aria-hidden
+                      data-main-nav-active-indicator
+                      className="pointer-events-none absolute top-1 bottom-1 left-0 z-0 rounded-lg border border-divider-subtle bg-state-accent-active transition-[transform,width,opacity] duration-200 ease-out motion-reduce:transition-none"
+                      style={{
+                        opacity: activeIndicatorStyle.visible ? 1 : 0,
+                        transform: `translateX(${activeIndicatorStyle.x}px)`,
+                        width: activeIndicatorStyle.width,
+                      }}
+                    />
+                    {navItems.map(item => (
+                      <MainNavLink key={item.href} item={item} pathname={pathname} orientation="horizontal" />
+                    ))}
+                  </nav>
+                </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <MainNavSearchButton />
                   {showEnvTag && (

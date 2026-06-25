@@ -31,6 +31,9 @@ const AppCard = ({
   const { app: appBasicInfo } = app
   const canViewApp = IS_CLOUD_EDITION
   const isClickable = isExplore && (canViewApp || canCreate)
+  const affordanceLabel = canViewApp
+    ? t('appCard.try', { ns: 'explore' })
+    : t('appCard.addToWorkspace', { ns: 'explore' })
   const handleTryApp = () => {
     trackEvent('preview_template', {
       template_id: app.app_id,
@@ -55,7 +58,7 @@ const AppCard = ({
     <div
       className={cn(
         'group relative col-span-1 flex h-35.5 flex-col overflow-hidden rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-on-panel-item-bg pb-3 text-left shadow-xs shadow-shadow-shadow-3',
-        isClickable && 'cursor-pointer',
+        isClickable && 'cursor-pointer transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-divider-deep hover:shadow-md has-[button:focus-visible]:-translate-y-0.5 has-[button:focus-visible]:border-divider-deep has-[button:focus-visible]:shadow-md motion-reduce:transform-none motion-reduce:transition-none',
       )}
     >
       {isClickable && (
@@ -100,6 +103,15 @@ const AppCard = ({
           {app.description}
         </div>
       </div>
+      {isClickable && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3 bottom-3 z-0 flex translate-y-1 items-center gap-1 rounded-lg bg-background-section px-2 py-1 system-xs-medium text-text-secondary opacity-0 shadow-xs shadow-shadow-shadow-3 transition-[transform,opacity] duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transform-none motion-reduce:transition-none"
+        >
+          <span>{affordanceLabel}</span>
+          <span className="i-ri-arrow-right-line size-3.5 shrink-0" />
+        </div>
+      )}
     </div>
   )
 }

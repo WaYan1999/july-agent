@@ -338,7 +338,7 @@
   "menus.datasets": "ナレッジ",
   "menus.datasetsTips": "近日公開：独自のテキストデータをインポートするか、Webhook を介してリアルタイムにデータを記述して LLM コンテキストを強化します。",
   "menus.deployments": "デプロイ",
-  "menus.explore": "探索",
+  "menus.explore": "探索広場",
   "menus.exploreMarketplace": "マーケットプレイスを探索する",
   "menus.newApp": "新しいアプリ",
   "menus.newDataset": "ナレッジの作成",

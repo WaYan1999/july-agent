@@ -310,7 +310,7 @@
   "menus.datasets": "Wiedza",
   "menus.datasetsTips": "NADCHODZI: Importuj swoje własne dane tekstowe lub wpisuj dane w czasie rzeczywistym przez Webhook, aby wzmocnić kontekst LLM.",
   "menus.deployments": "Wdrożenia",
-  "menus.explore": "Eksploruj",
+  "menus.explore": "Plac eksploracji",
   "menus.exploreMarketplace": "Zapoznaj się z Marketplace",
   "menus.newApp": "Nowa aplikacja",
   "menus.newDataset": "Utwórz Wiedzę",
