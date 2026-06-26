@@ -1241,6 +1241,30 @@ class CeleryScheduleTasksConfig(BaseSettings):
         description="Enable scheduled workflow run cleanup task",
         default=False,
     )
+    ENABLE_SKILL_CRAWLER_SYNC_TASK: bool = Field(
+        description="Enable scheduled synchronization of Skill library data from crawler server",
+        default=False,
+    )
+    SKILL_CRAWLER_API_URL: str = Field(
+        description="Base URL of the crawler server used for Skill library synchronization",
+        default="",
+    )
+    SKILL_CRAWLER_API_TOKEN: str = Field(
+        description="Bearer token for calling the crawler server Skill synchronization API",
+        default="",
+    )
+    SKILL_CRAWLER_SYNC_INTERVAL_MINUTES: PositiveInt = Field(
+        description="Interval in minutes for scheduled Skill crawler synchronization",
+        default=60,
+    )
+    SKILL_CRAWLER_SYNC_DAYS_BACK: PositiveInt = Field(
+        description="How many days back the scheduled Skill crawler synchronization window should pull",
+        default=1,
+    )
+    SKILL_CRAWLER_SYNC_SNAPSHOT_DIR: str = Field(
+        description="Local directory for raw Skill crawler synchronization JSON snapshots",
+        default="storage/skill-crawler-sync",
+    )
     ENABLE_CLEAN_OAUTH_ACCESS_TOKENS_TASK: bool = Field(
         description="Enable scheduled cleanup of revoked/expired OAuth access-token rows past retention.",
         default=True,

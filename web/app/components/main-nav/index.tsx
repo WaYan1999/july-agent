@@ -417,7 +417,7 @@ const MainNav = ({
                 <div className="flex min-w-0 flex-1 justify-center">
                   <nav
                     ref={globalNavRef}
-                    className="relative flex min-w-0 max-w-full items-center justify-center gap-1 overflow-x-auto rounded-xl border border-divider-subtle bg-components-panel-bg p-1 shadow-xs shadow-shadow-shadow-4"
+                    className="relative flex max-w-full min-w-0 items-center justify-center gap-1 overflow-x-auto rounded-xl border border-divider-subtle bg-components-panel-bg p-1 shadow-xs shadow-shadow-shadow-4"
                   >
                     <div
                       aria-hidden

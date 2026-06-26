@@ -19,6 +19,10 @@ export const API_PREFIX = getStringConfig(
   env.NEXT_PUBLIC_API_PREFIX,
   'http://localhost:5001/console/api',
 )
+export const ADMIN_API_PREFIX = getStringConfig(
+  env.NEXT_PUBLIC_ADMIN_API_PREFIX,
+  'http://localhost:5001/admin/api',
+)
 export const PUBLIC_API_PREFIX = getStringConfig(
   env.NEXT_PUBLIC_PUBLIC_API_PREFIX,
   'http://localhost:5001/api',

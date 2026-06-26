@@ -14,7 +14,7 @@
 
 - 探索广场新增 Skills 技能库入口和 `/explore/skills` 页面。
 - 技能列表支持搜索、分类筛选、标签展示、排序和分页或增量加载。
-- 技能卡片展示名称、描述、作者、来源类型、资源类型、标签、安装量或下载量；卡片不展示审计状态徽标。
+- 技能卡片展示名称、描述、作者、来源类型、资源类型、标签、安装量和 GitHub Stars；卡片不展示审计状态徽标。
 - 点击卡片在右侧内容区打开布局内全屏详情窗口。
 - 详情窗口展示安装命令、复制安装命令、README/SKILL.md 预览、来源信息、审计信息、版本信息、下载按钮。
 - 兼容三种首期资源形态：
@@ -91,7 +91,7 @@
 - 资源类型：ZIP、MD、Remote。
 - 分类角标。
 - 标签，最多展示 3 个，超出显示数量。
-- 下载量或安装量。
+- 安装量和 GitHub Stars。
 - 不展示审计状态徽标，避免列表卡片信息过载；审计状态只在详情窗口和后台中展示。
 
 ### 详情窗口
@@ -122,9 +122,9 @@
 
 - 安装命令代码块，带复制按钮。
 - README/SKILL.md Markdown 预览，长内容限制高度并滚动。
-- 来源信息：source_type、source_url、repository_url。
+- 来源信息：source_type、source_url。
 - 审计信息：audit_status、audit_notes、checksum_sha256、published_at。
-- 版本信息：version、package_filename、package_size。
+- 版本信息：package_filename、package_size。
 - 标签和分类。
 
 错误处理：
@@ -186,16 +186,13 @@
 
 - 来源类型：GitHub、上传、Markdown、外部。
 - 来源 URL。
-- 仓库 URL。
 - 安装命令。
 - 兼容平台，首期可用字符串数组。
 
 资源与版本：
 
-- 版本号，默认 `1.0.0`。
 - 内容类型：ZIP 技能包、单 Markdown、远程引用。
 - 上传 ZIP 或 MD 文件。
-- README Markdown，可自动提取后手动编辑。
 - SKILL Markdown，可自动提取后手动编辑。
 
 发布与审计：
@@ -236,14 +233,14 @@ ZIP 技能包：
 单 Markdown：
 
 - 允许扩展名 `.md` 或 `.markdown`。
-- 上传后保存到 `UploadFile`，同时读取文本写入 `skill_versions.skill_markdown` 或 `readme_markdown`。
+- 上传后保存到 `UploadFile`，同时读取文本写入 `skill_versions.skill_markdown`。
 - 详情窗口直接展示 Markdown 预览。
 - 支持下载原始 MD。
 
 远程引用：
 
 - 不要求上传文件。
-- 必须填写来源 URL 或仓库 URL。
+- 必须填写来源 URL。
 - 安装命令必填。
 - README 可以手动填写或后续由同步任务补齐，首期不做自动同步。
 
@@ -262,9 +259,8 @@ ZIP 技能包：
 - `name`: 字符串。
 - `description`: 文本。
 - `author_name`: 字符串，可空。
-- `source_type`: 枚举，`github`、`upload`、`markdown`、`external`。
+- `source_type`: 枚举，`github`、`markdown`、`zip`、`official`、`other`。
 - `source_url`: 字符串，可空。
-- `repository_url`: 字符串，可空。
 - `install_command`: 文本，可空；远程引用型必填。
 - `icon`: 字符串，可空。
 - `icon_background`: 字符串，可空。
@@ -272,8 +268,8 @@ ZIP 技能包：
 - `publication_status`: 枚举，`draft`、`published`、`unlisted`、`archived`。
 - `audit_status`: 枚举，`pending`、`passed`、`failed`、`manual`。
 - `audit_notes`: 文本，可空。
-- `download_count`: 整数，默认 0。
 - `install_count`: 整数，默认 0。
+- `github_stars`: 整数，默认 0。
 - `position`: 整数，默认 0。
 - `published_at`: 时间，可空。
 - `created_by`: 字符串，可空。
@@ -297,9 +293,7 @@ ZIP 技能包：
 
 - `id`: UUID，主键。
 - `skill_id`: UUID，外键。
-- `version`: 字符串。
 - `content_type`: 枚举，`zip_package`、`markdown_file`、`remote_reference`。
-- `readme_markdown`: 文本，可空。
 - `skill_markdown`: 文本，可空。
 - `package_filename`: 字符串，可空。
 - `package_size`: 整数，可空。
@@ -311,7 +305,6 @@ ZIP 技能包：
 
 约束：
 
-- 同一个 `skill_id` 下 `version` 唯一。
 - 同一个 `skill_id` 只能有一个 `is_latest = true`，如果数据库不支持部分唯一索引，则在 service 层保证。
 
 ### skill_assets
@@ -405,7 +398,7 @@ ZIP 技能包：
 - 只允许下载已发布 Skill 的 latest version 资源。
 - ZIP 返回 ZIP，Markdown 返回 MD。
 - 远程引用型没有本地文件时返回 404 或禁用下载入口。
-- 成功下载后增加 `download_count`。
+- 成功下载后增加 `install_count`。
 
 `POST /console/api/explore/skills/{id}/copy-events`
 

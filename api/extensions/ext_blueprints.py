@@ -27,6 +27,7 @@ def _apply_cors_once(bp, /, **cors_kwargs):
 def init_app(app: DifyApp):
     # register blueprint routers
 
+    from controllers.admin import bp as admin_bp
     from controllers.console import bp as console_app_bp
     from controllers.files import bp as files_bp
     from controllers.inner_api import bp as inner_api_bp
@@ -98,6 +99,16 @@ def init_app(app: DifyApp):
         expose_headers=list(EXPOSED_HEADERS),
     )
     app.register_blueprint(console_app_bp)
+
+    _apply_cors_once(
+        admin_bp,
+        resources={r"/*": {"origins": dify_config.CONSOLE_CORS_ALLOW_ORIGINS}},
+        supports_credentials=True,
+        allow_headers=list(AUTHENTICATED_HEADERS),
+        methods=["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"],
+        expose_headers=list(EXPOSED_HEADERS),
+    )
+    app.register_blueprint(admin_bp)
 
     _apply_cors_once(
         files_bp,

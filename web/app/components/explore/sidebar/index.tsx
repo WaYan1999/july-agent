@@ -35,6 +35,7 @@ const SideBar = () => {
   const segments = useSelectedLayoutSegments()
   const lastSegment = segments.slice(-1)[0]
   const isDiscoverySelected = pathname === '/' || lastSegment === 'apps'
+  const isSkillsSelected = lastSegment === 'skills'
   const { data, isPending } = useGetInstalledApps()
   const installedApps = data?.installed_apps ?? []
   const { mutateAsync: uninstallApp, isPending: isUninstalling } = useUninstallApp()
@@ -98,6 +99,19 @@ const SideBar = () => {
             <span aria-hidden="true" className="i-ri-apps-fill size-3.5 text-components-avatar-shape-fill-stop-100" />
           </div>
           {!isMobile && !isFold && <div className={cn('truncate', isDiscoverySelected ? 'system-sm-semibold text-components-menu-item-text-active' : 'system-sm-regular text-components-menu-item-text')}>{t('sidebar.title', { ns: 'explore' })}</div>}
+        </Link>
+      </div>
+
+      <div className={cn('mt-1', isSkillsSelected ? 'text-text-accent' : 'text-text-tertiary')}>
+        <Link
+          href="/explore/skills"
+          aria-label={isMobile || isFold ? t('skills.navTitle', { ns: 'explore' }) : undefined}
+          className={cn(isSkillsSelected ? 'bg-state-base-active' : 'hover:bg-state-base-hover', 'flex h-8 items-center gap-2 rounded-lg px-1 mobile:w-fit mobile:justify-center pc:w-full pc:justify-start')}
+        >
+          <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-components-icon-bg-indigo-solid">
+            <span aria-hidden="true" className="i-ri-flashlight-fill size-3.5 text-components-avatar-shape-fill-stop-100" />
+          </div>
+          {!isMobile && !isFold && <div className={cn('truncate', isSkillsSelected ? 'system-sm-semibold text-components-menu-item-text-active' : 'system-sm-regular text-components-menu-item-text')}>{t('skills.navTitle', { ns: 'explore' })}</div>}
         </Link>
       </div>
 

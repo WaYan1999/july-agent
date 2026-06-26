@@ -106,8 +106,16 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# 本地环境文件（保留示例模板）
 .env
+.env.*
+*.env
+*.env.*
+!.env.example
+!.env.*.example
+!*.env.example
+!*.env.*.example
+!*.example.env
 .env-local
 .venv
 env/
@@ -235,6 +243,11 @@ mise.toml
 # AI Assistant
 .roo/
 /.claude/worktrees/
+.superpowers/
+.run/
+.dev-logs/
+.uv-cache/
+.ruff_cache/
 api/.env.backup
 /clickzetta
 

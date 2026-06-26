@@ -121,6 +121,7 @@ from .explore import (
     parameter,
     recommended_app,
     saved_message,
+    skills,
     trial,
 )
 from .snippets import snippet_workflow, snippet_workflow_draft_variable
@@ -218,6 +219,7 @@ __all__ = [
     "saved_message",
     "setup",
     "site",
+    "skills",
     "snippet_workflow",
     "snippet_workflow_draft_variable",
     "snippets",

@@ -110,6 +110,20 @@ from .provider import (
     TenantDefaultModel,
     TenantPreferredModelProvider,
 )
+from .skill import (
+    Skill,
+    SkillAsset,
+    SkillAssetType,
+    SkillAuditStatus,
+    SkillCategory,
+    SkillCategoryBinding,
+    SkillContentType,
+    SkillPublicationStatus,
+    SkillSourceType,
+    SkillTag,
+    SkillTagBinding,
+    SkillVersion,
+)
 from .snippet import CustomizedSnippet, SnippetType
 from .source import DataSourceApiKeyAuthBinding, DataSourceOauthBinding
 from .task import CeleryTask, CeleryTaskSet
@@ -239,6 +253,18 @@ __all__ = [
     "RecommendedApp",
     "SavedMessage",
     "Site",
+    "Skill",
+    "SkillAsset",
+    "SkillAssetType",
+    "SkillAuditStatus",
+    "SkillCategory",
+    "SkillCategoryBinding",
+    "SkillContentType",
+    "SkillPublicationStatus",
+    "SkillSourceType",
+    "SkillTag",
+    "SkillTagBinding",
+    "SkillVersion",
     "SnippetType",
     "Tag",
     "TagBinding",

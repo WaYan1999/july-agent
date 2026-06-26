@@ -39,6 +39,10 @@ const clientSchema = {
    */
   NEXT_PUBLIC_API_PREFIX: z.string().optional(),
   /**
+   * The isolated system admin API prefix. This must not point to console APIs.
+   */
+  NEXT_PUBLIC_ADMIN_API_PREFIX: z.string().optional(),
+  /**
    * The base path for the application
    */
   NEXT_PUBLIC_BASE_PATH: z.string().regex(/^\/.*[^/]$/).or(z.literal('')).default(''),
@@ -189,6 +193,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ALLOW_INLINE_STYLES: isServer ? process.env.NEXT_PUBLIC_ALLOW_INLINE_STYLES : getRuntimeEnvFromBody('allowInlineStyles'),
     NEXT_PUBLIC_ALLOW_UNSAFE_DATA_SCHEME: isServer ? process.env.NEXT_PUBLIC_ALLOW_UNSAFE_DATA_SCHEME : getRuntimeEnvFromBody('allowUnsafeDataScheme'),
     NEXT_PUBLIC_AMPLITUDE_API_KEY: isServer ? process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY : getRuntimeEnvFromBody('amplitudeApiKey'),
+    NEXT_PUBLIC_ADMIN_API_PREFIX: isServer ? process.env.NEXT_PUBLIC_ADMIN_API_PREFIX : getRuntimeEnvFromBody('adminApiPrefix'),
     NEXT_PUBLIC_API_PREFIX: isServer ? process.env.NEXT_PUBLIC_API_PREFIX : getRuntimeEnvFromBody('apiPrefix'),
     NEXT_PUBLIC_BASE_PATH: isServer ? process.env.NEXT_PUBLIC_BASE_PATH : getRuntimeEnvFromBody('basePath'),
     NEXT_PUBLIC_BATCH_CONCURRENCY: isServer ? process.env.NEXT_PUBLIC_BATCH_CONCURRENCY : getRuntimeEnvFromBody('batchConcurrency'),
