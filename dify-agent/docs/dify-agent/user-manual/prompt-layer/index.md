@@ -1,7 +1,7 @@
 # Prompt layer
 
 The prompt layer provides the current run's system and user prompt fragments. In
-Dify Agent request bodies it is a regular `RunLayerSpec` with type id
+July Agent request bodies it is a regular `RunLayerSpec` with type id
 `plain.prompt`.
 
 Use it for:
@@ -18,7 +18,7 @@ Use it for:
 | `user` | `str` or `list[str]` | Current user-message fragments for the run. |
 | `suffix` | `str` or `list[str]` | System prompt fragments collected after prefix content. |
 
-All fields default to an empty list. Dify Agent rejects a create-run request when
+All fields default to an empty list. July Agent rejects a create-run request when
 the effective user prompt is empty or whitespace-only.
 
 ## Basic usage

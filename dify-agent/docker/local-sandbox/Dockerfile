@@ -1,4 +1,4 @@
-# Local sandbox image for shellctl-managed Dify Agent workspaces.
+# Local sandbox image for shellctl-managed July Agent workspaces.
 #
 # Build this from the dify-agent package root:
 #   docker build -f docker/local-sandbox/Dockerfile -t dify-agent-local-sandbox:local .

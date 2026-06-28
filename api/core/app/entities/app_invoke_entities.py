@@ -76,7 +76,7 @@ def build_dify_run_context(
     extra_context: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
-    Build graph run_context with the reserved Dify runtime payload.
+    Build graph run_context with the reserved July runtime payload.
 
     `extra_context` can carry user-defined context keys. The reserved `_dify`
     payload is always overwritten by this function to keep one canonical source.

@@ -142,7 +142,7 @@ class ImportTargetResolver:
 
 
 class MigrationImportService:
-    """Apply package resources using Dify service APIs and structured reporting."""
+    """Apply package resources using July service APIs and structured reporting."""
 
     target_resolver: ImportTargetResolver
 

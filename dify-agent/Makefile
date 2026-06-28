@@ -5,9 +5,9 @@ PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 .PHONY: help serve dev check fix typecheck test update-examples docs docs-serve
 
 help:
-	@echo "Dify agent targets:"
-	@echo "  make serve          - Run the Dify Agent server"
-	@echo "  make dev            - Run the Dify Agent server with reload"
+	@echo "July agent targets:"
+	@echo "  make serve          - Run the July Agent server"
+	@echo "  make dev            - Run the July Agent server with reload"
 	@echo "  make check           - Run Ruff for dify-agent"
 	@echo "  make fix             - Format and fix Ruff issues"
 	@echo "  make typecheck       - Run basedpyright for src, examples, and tests"

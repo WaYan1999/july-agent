@@ -6,11 +6,11 @@ import * as z from 'zod'
 import { zPostWorkflowGenerateBody, zPostWorkflowGenerateResponse } from './zod.gen'
 
 /**
- * Generate a Dify workflow graph from natural language
+ * Generate a July workflow graph from natural language
  */
 export const post = oc
   .route({
-    description: 'Generate a Dify workflow graph from natural language',
+    description: 'Generate a July workflow graph from natural language',
     inputStructure: 'detailed',
     method: 'POST',
     operationId: 'postWorkflowGenerate',

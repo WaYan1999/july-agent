@@ -95,7 +95,7 @@ class DatasourceOauthTenantParamConfig(TypeBase):
 
 
 class OAuthAccessToken(TypeBase):
-    """Device-flow bearer. account_id NOT NULL ⇒ dfoa_ (Dify account,
+    """Device-flow bearer. account_id NOT NULL ⇒ dfoa_ (July account,
     subject_issuer = "dify:account" sentinel); account_id NULL +
     subject_issuer = verified IdP issuer ⇒ dfoe_ (external SSO, EE-only).
     subject_issuer is non-NULL for all rows the app writes — Postgres

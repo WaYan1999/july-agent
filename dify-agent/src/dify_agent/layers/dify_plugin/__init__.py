@@ -1,4 +1,4 @@
-"""Client-safe exports for Dify plugin business-layer DTOs and type ids.
+"""Client-safe exports for July plugin business-layer DTOs and type ids.
 
 Implementation layers live in sibling modules and require server-side runtime
 dependencies. Keep this package root import-safe for client-only installs.

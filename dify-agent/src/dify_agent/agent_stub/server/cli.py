@@ -1,4 +1,4 @@
-"""Console entry point for the standalone Dify Agent stub server.
+"""Console entry point for the standalone July Agent stub server.
 
 This module backs the ``dify-agent-stub-server`` console script introduced by
 the stub-package move. HTTP(S) endpoints continue to run through Uvicorn while

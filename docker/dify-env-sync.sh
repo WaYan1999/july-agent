@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ================================================================
-# Dify Environment Variables Synchronization Script
+# July Environment Variables Synchronization Script
 #
 # Features:
 # - Synchronize latest settings from .env.example to .env
@@ -434,7 +434,7 @@ show_statistics() {
 # Main execution function
 # Orchestrates the complete synchronization process in the correct order
 main() {
-    log_info "=== Dify Environment Variables Synchronization Script ==="
+    log_info "=== July Environment Variables Synchronization Script ==="
     log_info "Execution started: $(date)"
 
     # Check prerequisites

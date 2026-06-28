@@ -41,7 +41,7 @@ const Datasets = ({
   const showDatasetSkeleton = !isFetchingNextPage && (isLoading || (isPlaceholderData && isFetching && datasets.length === 0))
 
   useEffect(() => {
-    document.title = `${t('knowledge', { ns: 'dataset' })} - Dify`
+    document.title = `${t('knowledge', { ns: 'dataset' })} - July`
   }, [t])
 
   useEffect(() => {

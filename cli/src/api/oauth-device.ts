@@ -136,7 +136,7 @@ export class DeviceFlowApi {
 function versionSkew(): HttpClientError {
   return new HttpClientError({
     code: ErrorCode.UnsupportedEndpoint,
-    message: 'this Dify host does not implement the OAuth device flow',
+    message: 'this July host does not implement the OAuth device flow',
     httpStatus: 404,
   })
 }

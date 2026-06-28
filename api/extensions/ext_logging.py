@@ -1,4 +1,4 @@
-"""Logging extension for Dify Flask application."""
+"""Logging extension for July Flask application."""
 
 import logging
 import os

@@ -52,7 +52,7 @@ The caller should handle this flow as follows:
 4. When resuming the workflow, start a second `agent run` on the same Agent node
    with the previous `session_snapshot`, matching composition, and
    `deferred_tool_results` keyed by the original tool call id.
-5. Keep the history layer active so Dify Agent can match the result to the
+5. Keep the history layer active so July Agent can match the result to the
    pending tool call stored in the previous run's message history.
 
 In other words, a human tool does not mean “pause this agent run until it is
@@ -71,7 +71,7 @@ assume that one `workflow run` has only one `agent run`.
 
 ## Agent run exit signals
 
-When an `agent run` ends, Dify Agent exits the layers that were entered by the
+When an `agent run` ends, July Agent exits the layers that were entered by the
 current run. Callers control whether each layer is suspended or deleted through
 `CreateRunRequest.on_exit`.
 

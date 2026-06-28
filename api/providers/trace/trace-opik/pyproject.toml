@@ -4,7 +4,7 @@ version = "0.0.1"
 dependencies = [
     "opik~=1.11.2",
 ]
-description = "Dify ops tracing provider (Opik)."
+description = "July ops tracing provider (Opik)."
 
 [tool.setuptools.packages.find]
 where = ["src"]

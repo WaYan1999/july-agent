@@ -13,7 +13,7 @@ import { useAppContext } from '@/context/app-context'
 import { useLocale } from '@/context/i18n'
 import { useProviderContext } from '@/context/provider-context'
 import { systemFeaturesQueryOptions } from '@/features/system-features/client'
-import { getAccessControlTemplateLanguage, LanguagesSupported } from '@/i18n-config/language'
+import { getAccessControlTemplateLanguage } from '@/i18n-config/language'
 import { useUpdateRolesOfMember } from '@/service/access-control/use-member-roles'
 import { useMembers } from '@/service/use-common'
 import { hasPermission } from '@/utils/permission'
@@ -121,7 +121,7 @@ const MembersPage = () => {
                     <div className="flex space-x-1">
                       <div>
                         {t('plansCommon.member', { ns: 'billing' })}
-                        {locale !== LanguagesSupported[1] && accounts.length > 1 && 's'}
+                        {locale !== 'zh-Hans' && accounts.length > 1 && 's'}
                       </div>
                       <div className="">{accounts.length}</div>
                       <div>/</div>
@@ -133,7 +133,7 @@ const MembersPage = () => {
                       <div>{accounts.length}</div>
                       <div>
                         {t('plansCommon.memberAfter', { ns: 'billing' })}
-                        {locale !== LanguagesSupported[1] && accounts.length > 1 && 's'}
+                        {locale !== 'zh-Hans' && accounts.length > 1 && 's'}
                       </div>
                     </div>
                   )}

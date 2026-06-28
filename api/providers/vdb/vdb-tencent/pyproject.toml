@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "tcvectordb~=2.1.0",
 ]
-description = "Dify vector store backend (dify-vdb-tencent)."
+description = "July vector store backend (dify-vdb-tencent)."
 
 [project.entry-points."dify.vector_backends"]
 tencent = "dify_vdb_tencent.tencent_vector:TencentVectorFactory"

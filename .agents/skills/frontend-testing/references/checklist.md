@@ -1,6 +1,6 @@
 # Test Generation Checklist
 
-Use this checklist when generating or reviewing tests for Dify frontend components.
+Use this checklist when generating or reviewing tests for July frontend components.
 
 ## Pre-Generation
 

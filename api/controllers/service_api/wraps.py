@@ -229,7 +229,7 @@ def cloud_edition_billing_knowledge_limit_check[**P, R](
                 if resource == "add_segment":
                     if features.billing.subscription.plan == CloudPlan.SANDBOX:
                         raise Forbidden(
-                            "To unlock this feature and elevate your Dify experience, please upgrade to a paid plan."
+                            "To unlock this feature and elevate your July experience, please upgrade to a paid plan."
                         )
                 else:
                     return view(*args, **kwargs)

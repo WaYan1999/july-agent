@@ -1,6 +1,6 @@
 """Validate and resolve the optional structured output layer.
 
-Dify Agent keeps structured output outside Agenton's prompt/tool aggregation.
+July Agent keeps structured output outside Agenton's prompt/tool aggregation.
 That means the request boundary must validate the public composition shape
 before entering Agenton, while the entered-run helper resolves a complete output
 contract containing the model-facing output type. The type itself carries the

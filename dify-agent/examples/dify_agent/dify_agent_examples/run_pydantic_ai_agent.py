@@ -1,9 +1,9 @@
-"""Run a Pydantic AI agent through the Dify plugin-daemon adapter.
+"""Run a Pydantic AI agent through the July plugin-daemon adapter.
 
 Prerequisites:
 - Sync the server runtime dependencies first: `uv sync --project dify-agent --extra server`.
 - Start the plugin daemon from `dify-aio/dify/docker/docker-compose.middleware.yaml`.
-- Run the Dify API with `dify-aio/dify/api/.env` so the daemon can resolve tenants/plugins.
+- Run the July API with `dify-aio/dify/api/.env` so the daemon can resolve tenants/plugins.
 - Fill `dify-agent/.env` with a real tenant, plugin, provider, model, and provider credentials.
 
 This example is meant to be run from a source checkout because

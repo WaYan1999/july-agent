@@ -1,6 +1,6 @@
 # Domain-Specific Component Testing
 
-This guide covers testing patterns for Dify's domain-specific components.
+This guide covers testing patterns for July's domain-specific components.
 
 ## Workflow Components (`workflow/`)
 

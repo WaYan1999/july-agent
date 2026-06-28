@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "weaviate-client==4.20.5",
 ]
-description = "Dify vector store backend (dify-vdb-weaviate)."
+description = "July vector store backend (dify-vdb-weaviate)."
 
 [project.entry-points."dify.vector_backends"]
 weaviate = "dify_vdb_weaviate.weaviate_vector:WeaviateVectorFactory"

@@ -1,4 +1,4 @@
-"""Client-safe DTOs for the Dify shell Agenton layer.
+"""Client-safe DTOs for the July shell Agenton layer.
 
 Server-only shellctl connection settings are injected by the runtime provider
 factory. Public config carries product-level Agent Soul settings that must affect
@@ -76,7 +76,7 @@ class DifyShellSandboxConfig(BaseModel):
 
 
 class DifyShellLayerConfig(LayerConfig):
-    """Public config for the shellctl-backed Dify shell layer."""
+    """Public config for the shellctl-backed July shell layer."""
 
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
 

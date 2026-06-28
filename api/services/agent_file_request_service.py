@@ -5,7 +5,7 @@ The dify-agent server calls this on behalf of a sandbox that needs to pull a
 context as a ``FileAccessScope``, rebuilds the graphon ``File`` from the mapping
 (reusing tenant/user access checks), and returns an internal signed download URL
 plus metadata — never the file bytes. The dify-agent server / sandbox then GETs
-the URL directly from Dify API.
+the URL directly from July API.
 """
 
 from __future__ import annotations

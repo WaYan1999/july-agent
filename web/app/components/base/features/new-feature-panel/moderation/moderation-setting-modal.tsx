@@ -14,7 +14,6 @@ import { ACCOUNT_SETTING_TAB } from '@/app/components/header/account-setting/con
 import { CustomConfigurationStatusEnum } from '@/app/components/header/account-setting/model-provider-page/declarations'
 import { useIntegrationsSetting } from '@/app/components/header/account-setting/use-integrations-setting'
 import { useDocLink, useLocale } from '@/context/i18n'
-import { LanguagesSupported } from '@/i18n-config/language'
 import { useCodeBasedExtensions, useModelProviders } from '@/service/use-common'
 import FormGeneration from './form-generation'
 import ModerationContent from './moderation-content'
@@ -231,19 +230,19 @@ const ModerationSettingModal: FC<ModerationSettingModalProps> = ({
     }
 
     if (currentLocaleData.type === 'keywords' && !currentLocaleData.config.keywords) {
-      toast.error(t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale !== LanguagesSupported[1] ? 'keywords' : '关键词' }))
+      toast.error(t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === 'zh-Hans' ? '关键词' : 'keywords' }))
       return
     }
 
     if (currentLocaleData.type === 'api' && !currentLocaleData.config.api_based_extension_id) {
-      toast.error(t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale !== LanguagesSupported[1] ? 'API Extension' : 'API 扩展' }))
+      toast.error(t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === 'zh-Hans' ? 'API 扩展' : 'API Extension' }))
       return
     }
 
     if (systemTypes.findIndex(t => t === currentLocaleData.type) < 0 && providerForSave?.form_schema) {
       for (let i = 0; i < providerForSave.form_schema.length; i++) {
         if (!currentLocaleData.config?.[providerForSave.form_schema[i]!.variable] && providerForSave.form_schema[i]!.required) {
-          toast.error(t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale !== LanguagesSupported[1] ? providerForSave.form_schema[i]!.label['en-US'] : providerForSave.form_schema[i]!.label['zh-Hans'] }))
+          toast.error(t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === 'zh-Hans' ? providerForSave.form_schema[i]!.label['zh-Hans'] : providerForSave.form_schema[i]!.label['en-US'] }))
           return
         }
       }

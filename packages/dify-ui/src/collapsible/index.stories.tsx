@@ -14,7 +14,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: 'Unstyled Base UI Collapsible primitive. The examples mirror the official Root, Trigger, and Panel anatomy, with presentation supplied at the call site using Dify UI tokens.',
+        component: 'Unstyled Base UI Collapsible primitive. The examples mirror the official Root, Trigger, and Panel anatomy, with presentation supplied at the call site using July UI tokens.',
       },
     },
   },

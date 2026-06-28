@@ -18,7 +18,7 @@ screen.getByLabelText(/password/i)
 screen.getByPlaceholderText('Search...')
 
 // 4. getByText - Non-interactive elements
-screen.getByText('Welcome to Dify')
+screen.getByText('Welcome to July')
 screen.getByText(/loading/i)
 
 // 5. getByDisplayValue - Current input value

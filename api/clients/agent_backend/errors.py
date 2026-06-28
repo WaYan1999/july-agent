@@ -1,4 +1,4 @@
-"""API-side errors for the Dify Agent backend integration.
+"""API-side errors for the July Agent backend integration.
 
 The wire protocol and low-level HTTP behaviour are owned by ``dify-agent``.
 This module only normalizes those client errors into the API backend's boundary
@@ -16,7 +16,7 @@ class AgentBackendError(Exception):
 
 
 class AgentBackendRequestBuildError(AgentBackendError):
-    """Raised when Dify product/workflow state cannot be mapped to a run request."""
+    """Raised when July product/workflow state cannot be mapped to a run request."""
 
 
 class AgentBackendTransportError(AgentBackendError):

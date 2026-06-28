@@ -1,7 +1,7 @@
 # Plugin tool layer
 
-The plugin tool layer exposes Dify plugin tools to the model. It is designed for
-Dify API to build after it has resolved a user's tool selections, plugin daemon
+The plugin tool layer exposes July plugin tools to the model. It is designed for
+July API to build after it has resolved a user's tool selections, plugin daemon
 declarations, credentials, and manual/runtime inputs.
 
 Unlike the plugin LLM layer, this layer may contain tools from multiple plugin
@@ -11,7 +11,7 @@ only tenant/user daemon context.
 
 ## Responsibilities
 
-Dify API prepares the tool config before submitting the run request:
+July API prepares the tool config before submitting the run request:
 
 - resolve the selected provider and tool name;
 - merge declared parameters with runtime parameters;
@@ -19,7 +19,7 @@ Dify API prepares the tool config before submitting the run request:
 - provide hidden/manual `runtime_parameters` and credentials;
 - choose the daemon `credential_type` for invocation.
 
-Dify Agent consumes that prepared config. At run time it validates required
+July Agent consumes that prepared config. At run time it validates required
 hidden inputs, applies defaults, casts invocation values, calls plugin daemon,
 and turns tool responses into model observations.
 
@@ -48,7 +48,7 @@ Each tool config has these fields:
 | `parameters` | `list[DifyPluginToolParameter]` | API-prepared effective parameter declarations used for validation, defaults, and casting. |
 | `parameters_json_schema` | `dict[str, JsonValue]` | API-prepared JSON schema shown to the model. |
 
-## Example: Dify API prepared Wikipedia tool
+## Example: July API prepared Wikipedia tool
 
 ```python {test="skip" lint="skip"}
 from dify_agent.layers.execution_context import DIFY_EXECUTION_CONTEXT_LAYER_TYPE_ID, DifyExecutionContextLayerConfig
@@ -61,9 +61,9 @@ from dify_agent.layers.dify_plugin import (
 from dify_agent.protocol import RunComposition, RunLayerSpec
 
 
-# Dify API side: resolve the selected tool into the API-side Tool runtime first,
+# July API side: resolve the selected tool into the API-side Tool runtime first,
 # for example with ToolManager.get_agent_tool_runtime(...). Then adapt its
-# effective ToolParameter objects at the protocol boundary. Dify Agent accepts
+# effective ToolParameter objects at the protocol boundary. July Agent accepts
 # both ToolParameter attribute objects and ToolParameter.model_dump(mode="json")
 # dictionaries, ignoring API-only fields such as label and human_description.
 tool_runtime = ToolManager.get_agent_tool_runtime(...)
@@ -115,9 +115,9 @@ composition = RunComposition(
 dependency field named `execution_context` to the composition layer named
 `execution_context`.
 
-## Notes for Dify API callers
+## Notes for July API callers
 
-- Do not ask Dify Agent to discover tool declarations. Resolve and prepare them
+- Do not ask July Agent to discover tool declarations. Resolve and prepare them
   in API before creating the run.
 - `parameters` should include all effective parameters, including hidden/manual
   ones needed for validation and default application.

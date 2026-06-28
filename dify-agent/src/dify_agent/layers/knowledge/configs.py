@@ -1,10 +1,10 @@
-"""Client-safe DTOs for the Dify knowledge-base Agenton layer.
+"""Client-safe DTOs for the July knowledge-base Agenton layer.
 
 The public layer config exposes only static retrieval controls: dataset ids,
 retrieval strategy, metadata filtering, and observation-size limits. The agent
 model itself should only ever see a single ``query`` tool argument; tenant/
 app/user context comes from the execution-context layer and the actual
-retrieval is delegated to the Dify API inner endpoint. Tool naming is not
+retrieval is delegated to the July API inner endpoint. Tool naming is not
 caller-configurable: the runtime always exposes the same stable knowledge-base
 search tool.
 """

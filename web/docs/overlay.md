@@ -36,7 +36,7 @@ code. Do not import raw Base UI overlays or legacy web overlays from
 
 ## Layering
 
-All body-portalled Dify UI overlays use `z-50`. Toast uses `z-60`. The app root
+All body-portalled July UI overlays use `z-50`. Toast uses `z-60`. The app root
 must keep an isolated stacking context.
 
 Do not add call-site z-index overrides such as `z-9999`. If an overlay is

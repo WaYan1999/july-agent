@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "holo-search-sdk==0.4.2",
 ]
-description = "Dify vector store backend (dify-vdb-hologres)."
+description = "July vector store backend (dify-vdb-hologres)."
 
 [project.entry-points."dify.vector_backends"]
 hologres = "dify_vdb_hologres.hologres_vector:HologresVectorFactory"

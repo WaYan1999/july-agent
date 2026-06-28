@@ -33,7 +33,7 @@ from dify_agent.agent_stub.protocol.agent_stub import AGENT_STUB_DRIVE_BASE_ENV_
 
 app = typer.Typer(
     add_completion=False,
-    help="Forward shell-visible dify-agent commands to the Dify Agent Stub server.",
+    help="Forward shell-visible dify-agent commands to the July Agent Stub server.",
     no_args_is_help=True,
 )
 file_app = typer.Typer(help="Upload or download workflow files through the Agent Stub.")

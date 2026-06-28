@@ -3,7 +3,7 @@
 The structured output layer makes the final answer follow a caller-provided JSON
 Schema. Add it when the client needs a JSON object instead of plain text.
 
-When present, Dify Agent exposes the schema to the model as a structured-output
+When present, July Agent exposes the schema to the model as a structured-output
 tool and validates the model response against the same schema.
 
 ## Layer contract
@@ -62,7 +62,7 @@ async for event in client.stream_events(run_id):
         structured_output = event.data.output
 ```
 
-If the `output` layer is omitted, Dify Agent keeps the default plain text output
+If the `output` layer is omitted, July Agent keeps the default plain text output
 contract.
 
 ## Schema limits

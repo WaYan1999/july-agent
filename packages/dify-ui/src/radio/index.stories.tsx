@@ -15,7 +15,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: 'Radio primitive built on Base UI. It preserves RadioGroup selection, hidden input, disabled, and form semantics while applying the Dify 16px radio design from Figma. Import from `@langgenius/dify-ui/radio` and place radios inside `RadioGroup` from `@langgenius/dify-ui/radio-group`.',
+        component: 'Radio primitive built on Base UI. It preserves RadioGroup selection, hidden input, disabled, and form semantics while applying the July 16px radio design from Figma. Import from `@langgenius/dify-ui/radio` and place radios inside `RadioGroup` from `@langgenius/dify-ui/radio-group`.',
       },
     },
   },
@@ -139,7 +139,7 @@ export const StateMatrix: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'The full visual matrix for Dify radio states. State styling comes from Base UI data attributes such as data-checked and data-disabled.',
+        story: 'The full visual matrix for July radio states. State styling comes from Base UI data attributes such as data-checked and data-disabled.',
       },
     },
   },

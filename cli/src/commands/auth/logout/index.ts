@@ -10,7 +10,7 @@ import { hostWithScheme, openAPIBase } from '@/util/host'
 import { runLogout } from './logout.js'
 
 export default class Logout extends DifyCommand {
-  static override description = 'Log out of the active Dify host'
+  static override description = 'Log out of the active July host'
 
   static override effect: CommandEffect = 'write'
 

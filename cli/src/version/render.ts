@@ -32,7 +32,7 @@ export function renderVersionText(report: VersionReport, opts: RenderOptions = {
   lines.push(`  Version:   ${client.version} (channel: ${client.channel})`)
   lines.push(`  Commit:    ${shortCommit(client.commit)} (built ${client.buildDate})`)
   lines.push(`  Platform:  ${client.platform}/${client.arch}`)
-  lines.push(`  Compat:    dify >=${compat.minDify}, <=${compat.maxDify}`)
+  lines.push(`  Compat:    July >=${compat.minDify}, <=${compat.maxDify}`)
   lines.push('')
 
   lines.push('Server:')

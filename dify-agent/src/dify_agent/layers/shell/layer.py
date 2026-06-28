@@ -1,4 +1,4 @@
-"""Shellctl-backed Dify shell layer.
+"""Shellctl-backed July shell layer.
 
 ``DifyShellLayer`` is a stateful pydantic-ai tool layer that exposes exactly
 ``shell_run``, ``shell_wait``, ``shell_input``, and ``shell_interrupt``. The
@@ -826,7 +826,7 @@ def _generate_session_id() -> str:
     time_component = int(time.time()) & _SESSION_TIME_HEX_MASK
     random_component = secrets.token_hex(1)
     if len(random_component) != _SESSION_RANDOM_HEX_LENGTH:
-        raise RuntimeError("Expected a one-byte random hex suffix for Dify shell session ids.")
+        raise RuntimeError("Expected a one-byte random hex suffix for July shell session ids.")
     return f"{time_component:05x}{random_component}"
 
 

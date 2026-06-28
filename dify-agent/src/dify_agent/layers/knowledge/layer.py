@@ -1,4 +1,4 @@
-"""Dify knowledge-base layer exposing one model-visible search tool.
+"""July knowledge-base layer exposing one model-visible search tool.
 
 The layer depends on ``DifyExecutionContextLayer`` for tenant/app/user/invoke
 identity, keeps retrieval controls in config only, and borrows a lifespan-owned
@@ -73,10 +73,10 @@ class DifyKnowledgeBaseLayer(PlainLayer[DifyKnowledgeBaseDeps, DifyKnowledgeBase
     @classmethod
     @override
     def from_config(cls, config: DifyKnowledgeBaseLayerConfig) -> Self:
-        """Reject construction without server-injected Dify API settings."""
+        """Reject construction without server-injected July API settings."""
         del config
         raise TypeError(
-            "DifyKnowledgeBaseLayer requires server-side Dify API settings and must use a provider factory."
+            "DifyKnowledgeBaseLayer requires server-side July API settings and must use a provider factory."
         )
 
     @classmethod
@@ -215,7 +215,7 @@ def _build_caller_context(execution_context: object) -> dict[str, str]:
     ]
     if missing_fields:
         joined_fields = ", ".join(missing_fields)
-        raise ValueError(f"Dify knowledge base layer requires execution context fields: {joined_fields}")
+        raise ValueError(f"July knowledge base layer requires execution context fields: {joined_fields}")
 
     normalized_tenant_id = cast(str, tenant_id).strip()
     normalized_user_id = cast(str, user_id).strip()

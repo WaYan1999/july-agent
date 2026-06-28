@@ -36,7 +36,7 @@ const EXTERNAL_HELP_TEXT = `difyctl: external-SSO bearer onboarding
 
   Most agents authenticate as a human account (see 'difyctl help account').
   External-SSO bearers (dfoe_) skip the human flow and exchange an upstream
-  identity for a Dify token. The CLI surfaces the same commands but a
+  identity for a July token. The CLI surfaces the same commands but a
   smaller dataset:
 
   1. Acquire a token through your SSO provider (out of band).

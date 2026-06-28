@@ -139,7 +139,7 @@ class EnterpriseService:
         user_type: str = "account",
     ) -> tuple[str, int]:
         """Mint a short-lived SSO id_token (or OAuth2 access_token) representing
-        the calling Dify user, audience-scoped to the given MCP server identifier.
+        the calling July user, audience-scoped to the given MCP server identifier.
 
         Used by MCPTool.invoke_remote_mcp_tool to stamp the
         X-Dify-SSO-Token header on outbound MCP requests when the

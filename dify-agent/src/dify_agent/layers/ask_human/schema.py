@@ -1,4 +1,4 @@
-"""Product-neutral schemas for the Dify ask-human deferred tool contract.
+"""Product-neutral schemas for the July ask-human deferred tool contract.
 
 These models describe the model-facing tool arguments and the later human result
 payload expected by resumed runs. Config-specific guardrails such as maximum

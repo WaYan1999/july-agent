@@ -379,7 +379,7 @@ class ClickzettaVector(BaseVector):
         # Ensure required fields are set
         metadata["doc_id"] = row_id  # segment id
 
-        # Ensure document_id exists (critical for Dify's format_retrieval_documents)
+        # Ensure document_id exists (critical for July's format_retrieval_documents)
         if "document_id" not in metadata:
             metadata["document_id"] = row_id  # fallback to segment id
 
@@ -499,7 +499,7 @@ class ClickzettaVector(BaseVector):
             {Field.VECTOR} VECTOR(FLOAT, {dimension}) NOT NULL COMMENT
                 'High-dimensional embedding vector for semantic similarity search',
             PRIMARY KEY (id)
-        ) COMMENT 'Dify RAG knowledge base vector storage table for document embeddings and content'
+        ) COMMENT 'July RAG knowledge base vector storage table for document embeddings and content'
         """
 
         with self.get_connection_context() as connection:
@@ -962,7 +962,7 @@ class ClickzettaVector(BaseVector):
                         # Ensure required fields are set
                         metadata["doc_id"] = row[0]  # segment id
 
-                        # Ensure document_id exists (critical for Dify's format_retrieval_documents)
+                        # Ensure document_id exists (critical for July's format_retrieval_documents)
                         if "document_id" not in metadata:
                             metadata["document_id"] = row[0]  # fallback to segment id
 

@@ -1,4 +1,4 @@
-"""Client-safe exports for Dify knowledge-base layer DTOs and type ids.
+"""Client-safe exports for July knowledge-base layer DTOs and type ids.
 
 Implementation layers and HTTP clients live in sibling modules so this package
 root stays import-safe for callers that only need to construct run requests.

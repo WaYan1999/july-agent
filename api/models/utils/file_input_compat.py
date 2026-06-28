@@ -150,7 +150,7 @@ def rebuild_serialized_graph_files_without_lookup(value: Any) -> Any:
     """Recursively rebuild serialized graph file payloads into `File` objects.
 
     `graphon` no longer accepts legacy serialized file mappings via
-    `model_validate_json()`. Dify keeps this recovery path at the model
+    `model_validate_json()`. July keeps this recovery path at the model
     boundary so historical JSON blobs remain readable without reintroducing
     global graph patches or test-local coercion.
     """

@@ -23,15 +23,15 @@ body:
 
   - type: input
     attributes:
-      label: Dify version
-      description: See about section in Dify console
+      label: July version
+      description: See about section in July console
     validations:
       required: true
 
   - type: dropdown
     attributes:
       label: Cloud or Self Hosted
-      description: How / Where was Dify installed from?
+      description: How / Where was July installed from?
       multiple: true
       options:
         - Cloud

@@ -122,7 +122,7 @@ _NODE_SNIPPETS: dict[str, str] = {
      "vision": {"enabled": false}}
 
     Prompt-writing rules for the user-message text:
-      * ``{{#node.var#}}`` placeholders are interpolated by Dify BEFORE the
+      * ``{{#node.var#}}`` placeholders are interpolated by July BEFORE the
         LLM sees them — at run time the model only sees the resolved value.
         So an instruction like "Translate this: {{#node1.text#}}" is read
         by the LLM as "Translate this: <the actual text>".
@@ -366,13 +366,13 @@ def build_node_config_cheatsheet(node_types: Iterable[str] | None = None) -> str
 NODE_CONFIG_CHEATSHEET = build_node_config_cheatsheet()
 
 
-_BASE_SYSTEM_PROMPT_HEAD = """You are a Dify workflow builder.
+_BASE_SYSTEM_PROMPT_HEAD = """You are a July workflow builder.
 
 You are given:
   1. A user instruction (what the workflow should do).
   2. A node plan from the planner (which nodes to use, in execution order).
 
-Your job: emit a complete Dify workflow graph as JSON. The graph will be written
+Your job: emit a complete July workflow graph as JSON. The graph will be written
 directly into a Studio draft, so it must be syntactically valid and structurally
 correct.
 
@@ -380,7 +380,7 @@ correct.
 
 1. The output is a single JSON object — no prose, no Markdown, no code fences.
 2. NODE IDs MUST USE ONLY ALPHANUMERICS + UNDERSCORES — never hyphens.
-   Dify's run-time placeholder regex (see ``variable_pool.VARIABLE_PATTERN``)
+   July's run-time placeholder regex (see ``variable_pool.VARIABLE_PATTERN``)
    is ``\\{\\{#([a-zA-Z0-9_]{1,50}(?:\\.[a-zA-Z_][a-zA-Z0-9_]{0,29}){1,10})#\\}\\}``,
    so any placeholder pointing at a hyphenated id (e.g. ``{{#node-1.text#}}``)
    silently fails to match at run time and the literal string survives into
@@ -398,8 +398,8 @@ correct.
    "parameter-extractor" nodes (provider, name, mode, completion_params).
 6. Reference upstream outputs with the literal placeholder syntax
    ``{{#<node-id>.<output-var>#}}`` — that's DOUBLE curly braces with ``#``
-   markers inside (matching Dify's runtime placeholder regex
-   ``\\{\\{#[^#]+#\\}\\}``). NEVER emit single-brace ``{#…#}`` — Dify will
+   markers inside (matching July's runtime placeholder regex
+   ``\\{\\{#[^#]+#\\}\\}``). NEVER emit single-brace ``{#…#}`` — July will
    not interpolate it, so the LLM at run time would see the literal
    placeholder string in its prompt and echo it back as output. Use
    ``["<node-id>", "<output-var>"]`` for ``value_selector`` /
@@ -415,7 +415,7 @@ correct.
 9. EVERY variable reference MUST resolve to a real, declared variable on the
    source node — never invent a variable name. Specifically:
    - ``{{#<node-id>.<var>#}}`` inside a prompt / ``answer`` / ``template-transform``
-     template (DOUBLE braces — single ``{#…#}`` is NOT a Dify placeholder
+     template (DOUBLE braces — single ``{#…#}`` is NOT a July placeholder
      and will NOT be substituted), AND ``["<node-id>", "<var>"]`` inside a
      ``value_selector`` /
      ``query_variable_selector`` / ``iterator_selector`` / ``output_selector`` /
@@ -661,7 +661,7 @@ def format_plan_block(plan_nodes: list[dict[str, Any]]) -> str:
     """
     Render the planner output as a numbered list the builder can quote.
 
-    Node IDs use no separator (``node1``, ``node2``, ...) because Dify's
+    Node IDs use no separator (``node1``, ``node2``, ...) because July's
     run-time placeholder regex requires ``[a-zA-Z0-9_]`` in the node-id
     slot — a hyphenated id like ``node-1`` would silently fail to match
     at run time and the literal ``{{#node-1.var#}}`` survives into the

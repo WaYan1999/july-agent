@@ -65,7 +65,7 @@ export const DocumentSelection: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Matches Dify table/list selection patterns such as documents, segments, annotations, and install bundle items: CheckboxGroup owns the selected ID array, allValues defines the current selectable page, and the parent checkbox provides select-all plus mixed state.',
+        story: 'Matches July table/list selection patterns such as documents, segments, annotations, and install bundle items: CheckboxGroup owns the selected ID array, allValues defines the current selectable page, and the parent checkbox provides select-all plus mixed state.',
       },
     },
   },
@@ -82,7 +82,7 @@ function DynamicFormFieldDemo() {
   return (
     <FieldRoot name="allowed_file_types" className="flex w-80 flex-col gap-2">
       <FieldDescription className="body-xs-regular text-text-tertiary">
-        This mirrors Dify dynamic form fields where checkbox options are controlled by schema and persisted as a string array.
+        This mirrors July dynamic form fields where checkbox options are controlled by schema and persisted as a string array.
       </FieldDescription>
       <FieldsetRoot
         render={(
@@ -114,7 +114,7 @@ export const DynamicFormField: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Matches Dify checkbox-list form usage in workflow node forms and base form rendering. Field and Fieldset provide group labeling; CheckboxGroup owns controlled array state.',
+        story: 'Matches July checkbox-list form usage in workflow node forms and base form rendering. Field and Fieldset provide group labeling; CheckboxGroup owns controlled array state.',
       },
     },
   },

@@ -1,6 +1,6 @@
-# Dify Node.js SDK
+# July Node.js SDK
 
-This is the Node.js SDK for the Dify API, which allows you to easily integrate Dify into your Node.js applications.
+This is the Node.js SDK for the July API, which allows you to easily integrate July into your Node.js applications.
 
 ## Install
 

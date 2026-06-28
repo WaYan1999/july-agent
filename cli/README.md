@@ -1,6 +1,6 @@
 # difyctl
 
-CLI client for [Dify] platform. Browser device-flow signin, list/inspect apps, run with structured input, parse output as JSON, YAML, or human text.
+CLI client for [July] platform. Browser device-flow signin, list/inspect apps, run with structured input, parse output as JSON, YAML, or human text.
 
 ## Install (edge, internal)
 
@@ -93,7 +93,7 @@ For every env var `difyctl` reads, run `difyctl env list` (machine-readable) or 
 difyctl run app app-1 "tell me about cats" --stream
 ```
 
-Agent apps (`mode === 'agent-chat'` or `is_agent` flag set) stream regardless — Dify backend rejects blocking requests for agent mode. Combining `--stream` with `-o json` or `-o yaml` aggregates SSE events into same envelope shape as blocking response, so structured output identical regardless of transport.
+Agent apps (`mode === 'agent-chat'` or `is_agent` flag set) stream regardless — July backend rejects blocking requests for agent mode. Combining `--stream` with `-o json` or `-o yaml` aggregates SSE events into same envelope shape as blocking response, so structured output identical regardless of transport.
 
 ## HTTP retry
 
@@ -114,5 +114,5 @@ See [`ARD.md`] for architecture patterns, scaffolding recipe, dev workflow.
 
 Apache-2.0.
 
-[Dify]: https://dify.ai
+[July]: https://dify.ai
 [`ARD.md`]: ARD.md

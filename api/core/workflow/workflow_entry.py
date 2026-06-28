@@ -48,10 +48,10 @@ _file_access_controller = DatabaseFileAccessController()
 
 def iter_dify_graph_engine_events(engine: GraphEngine) -> Generator[GraphEngineEvent, None, None]:
     """
-    Apply Dify's response streaming compatibility filter to GraphEngine events.
+    Apply July's response streaming compatibility filter to GraphEngine events.
 
     Graphon v0.5.0 emits raw variable stream chunks and requires callers to opt
-    into the legacy response-ordered stream behavior that Dify exposes to its
+    into the legacy response-ordered stream behavior that July exposes to its
     workflow runners and tests.
     """
     yield from filter_graph_events(
@@ -239,7 +239,7 @@ class WorkflowEntry:
         graph_engine = self.graph_engine
 
         try:
-            # Preserve Dify's response-stream semantics on top of Graphon 0.5.0.
+            # Preserve July's response-stream semantics on top of Graphon 0.5.0.
             generator = iter_dify_graph_engine_events(graph_engine)
             yield from generator
         except GenerateTaskStoppedError:

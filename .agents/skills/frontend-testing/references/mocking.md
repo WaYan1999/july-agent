@@ -1,4 +1,4 @@
-# Mocking Guide for Dify Frontend Tests
+# Mocking Guide for July Frontend Tests
 
 ## ⚠️ Important: What NOT to Mock
 

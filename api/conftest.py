@@ -1,4 +1,4 @@
-"""Global pytest hooks for Dify backend tests.
+"""Global pytest hooks for July backend tests.
 
 This root conftest is loaded before package-specific conftests, which lets tests opt
 into Docker-backed middleware before application modules read environment config.

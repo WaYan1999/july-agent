@@ -38,7 +38,7 @@ class RecommendedAppService:
     @classmethod
     def get_learn_dify_apps(cls, session: scoped_session, language: str) -> dict[str, Any]:
         """
-        Get database-backed recommended apps marked as Learn Dify.
+        Get database-backed recommended apps marked as Learn July.
         :param language: language
         :return:
         """

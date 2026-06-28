@@ -1,10 +1,10 @@
-"""Server-side Dify API client for Agent Stub drive endpoints.
+"""Server-side July API client for Agent Stub drive endpoints.
 
-The Agent Stub drive API is an HTTP-only control plane over the existing Dify
+The Agent Stub drive API is an HTTP-only control plane over the existing July
 agent drive inner APIs. Sandbox callers never send trusted tenant, agent, or
 user ids directly; this module receives an authenticated ``AgentStubPrincipal``,
 derives ``agent-<agent_id>`` from execution context, injects trusted identity
-fields into the Dify inner request, and normalizes transport, HTTP, JSON, and
+fields into the July inner request, and normalizes transport, HTTP, JSON, and
 schema failures into ``AgentStubDriveRequestError`` for the route layer.
 """
 
@@ -27,7 +27,7 @@ from dify_agent.layers.execution_context import DifyExecutionContextLayerConfig
 
 
 class AgentStubDriveRequestHandler(Protocol):
-    """Trusted control-plane bridge from sandbox drive calls to Dify inner APIs."""
+    """Trusted control-plane bridge from sandbox drive calls to July inner APIs."""
 
     async def get_manifest(
         self,
@@ -59,13 +59,13 @@ class AgentStubDriveRequestError(RuntimeError):
 
 @dataclass(slots=True)
 class DifyApiAgentStubDriveRequestHandler:
-    """Call Dify API inner drive endpoints on behalf of authenticated sandboxes.
+    """Call July API inner drive endpoints on behalf of authenticated sandboxes.
 
     Manifest requests require ``tenant_id`` and ``agent_id`` from execution
     context and forward query parameters to
     ``/inner/api/drive/agent-<agent_id>/manifest``. Commit requests additionally
     require ``user_id`` and post a raw JSON payload to
-    ``/inner/api/drive/agent-<agent_id>/commit``. Dify drive endpoints return
+    ``/inner/api/drive/agent-<agent_id>/commit``. July drive endpoints return
     raw ``{"items": [...]}`` payloads instead of plugin-style ``data`` envelopes,
     so this module validates the raw success payload directly.
     """
@@ -81,7 +81,7 @@ class DifyApiAgentStubDriveRequestHandler:
         prefix: str,
         include_download_url: bool,
     ) -> AgentStubDriveManifestResponse:
-        """Request one drive manifest from Dify's inner drive manifest endpoint."""
+        """Request one drive manifest from July's inner drive manifest endpoint."""
         execution_context = self._require_agent_context(principal.execution_context)
         payload = await self._get_inner_api(
             f"/inner/api/drive/{self._drive_ref(execution_context)}/manifest",
@@ -94,7 +94,7 @@ class DifyApiAgentStubDriveRequestHandler:
         try:
             return AgentStubDriveManifestResponse.model_validate(payload)
         except ValidationError as exc:
-            raise AgentStubDriveRequestError(502, "Dify API drive manifest response is invalid") from exc
+            raise AgentStubDriveRequestError(502, "July API drive manifest response is invalid") from exc
 
     async def commit(
         self,
@@ -102,7 +102,7 @@ class DifyApiAgentStubDriveRequestHandler:
         principal: AgentStubPrincipal,
         request: AgentStubDriveCommitRequest,
     ) -> AgentStubDriveCommitResponse:
-        """Commit one drive batch through Dify's inner drive commit endpoint."""
+        """Commit one drive batch through July's inner drive commit endpoint."""
         execution_context = self._require_user_context(self._require_agent_context(principal.execution_context))
         payload = await self._post_inner_api(
             f"/inner/api/drive/{self._drive_ref(execution_context)}/commit",
@@ -115,7 +115,7 @@ class DifyApiAgentStubDriveRequestHandler:
         try:
             return AgentStubDriveCommitResponse.model_validate(payload)
         except ValidationError as exc:
-            raise AgentStubDriveRequestError(502, "Dify API drive commit response is invalid") from exc
+            raise AgentStubDriveRequestError(502, "July API drive commit response is invalid") from exc
 
     def _require_agent_context(
         self, execution_context: DifyExecutionContextLayerConfig
@@ -148,9 +148,9 @@ class DifyApiAgentStubDriveRequestHandler:
                     headers={"X-Inner-Api-Key": self.inner_api_key},
                 )
             except httpx.TimeoutException as exc:
-                raise AgentStubDriveRequestError(504, "Dify API drive request timed out") from exc
+                raise AgentStubDriveRequestError(504, "July API drive request timed out") from exc
             except httpx.RequestError as exc:
-                raise AgentStubDriveRequestError(502, f"Dify API drive request failed: {exc}") from exc
+                raise AgentStubDriveRequestError(502, f"July API drive request failed: {exc}") from exc
         return self._normalize_payload(response)
 
     async def _post_inner_api(self, path: str, payload: Mapping[str, Any]) -> object:
@@ -163,9 +163,9 @@ class DifyApiAgentStubDriveRequestHandler:
                     headers={"X-Inner-Api-Key": self.inner_api_key},
                 )
             except httpx.TimeoutException as exc:
-                raise AgentStubDriveRequestError(504, "Dify API drive request timed out") from exc
+                raise AgentStubDriveRequestError(504, "July API drive request timed out") from exc
             except httpx.RequestError as exc:
-                raise AgentStubDriveRequestError(502, f"Dify API drive request failed: {exc}") from exc
+                raise AgentStubDriveRequestError(502, f"July API drive request failed: {exc}") from exc
         return self._normalize_payload(response)
 
     def _normalize_payload(self, response: httpx.Response) -> object:
@@ -180,7 +180,7 @@ class DifyApiAgentStubDriveRequestHandler:
         try:
             return response.json()
         except ValueError as exc:
-            raise AgentStubDriveRequestError(502, "Dify API drive request returned invalid JSON") from exc
+            raise AgentStubDriveRequestError(502, "July API drive request returned invalid JSON") from exc
 
 
 __all__ = [

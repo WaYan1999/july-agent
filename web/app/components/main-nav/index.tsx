@@ -12,7 +12,7 @@ import AppDetailTop from '@/app/components/app-sidebar/app-detail-top'
 import DatasetDetailSection from '@/app/components/app-sidebar/dataset-detail-section'
 import DatasetDetailTop from '@/app/components/app-sidebar/dataset-detail-top'
 import { useStore as useAppStore } from '@/app/components/app/store'
-import DifyLogo from '@/app/components/base/logo/dify-logo'
+import JulyLogo from '@/app/components/base/logo/dify-logo'
 import EnvNav from '@/app/components/header/env-nav'
 import { useAppContext } from '@/context/app-context'
 import { AgentDetailSection, AgentDetailTop } from '@/features/agent-v2/agent-detail/navigation'
@@ -229,7 +229,7 @@ const MainNav = ({
   }, [navItems, pathname])
 
   const renderLogo = () => {
-    const appTitle = systemFeatures.branding.enabled && systemFeatures.branding.application_title ? systemFeatures.branding.application_title : 'Dify'
+    const appTitle = systemFeatures.branding.enabled && systemFeatures.branding.application_title ? systemFeatures.branding.application_title : 'July'
 
     return (
       <Link
@@ -245,7 +245,7 @@ const MainNav = ({
                 alt=""
               />
             )
-          : <DifyLogo alt="" />}
+          : <JulyLogo alt="" />}
       </Link>
     )
   }

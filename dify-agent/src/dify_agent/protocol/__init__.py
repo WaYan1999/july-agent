@@ -1,4 +1,4 @@
-"""Public run-protocol exports shared by the Dify Agent server and clients.
+"""Public run-protocol exports shared by the July Agent server and clients.
 
 Stub-specific protocol DTOs live under ``dify_agent.agent_stub.protocol`` so the
 run API package boundary stays explicit.

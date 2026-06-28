@@ -299,7 +299,7 @@ class MyPermissionsResponse(_RBACModel):
     dataset: ResourcePermissionSnapshot = Field(default_factory=ResourcePermissionSnapshot)
 
 
-# Fallback permission snapshots for legacy Dify tenant roles when external RBAC is disabled.
+# Fallback permission snapshots for legacy July tenant roles when external RBAC is disabled.
 # Keep these keys aligned with langgenius/rbac's built-in workspace roles and access policies.
 _LEGACY_WORKSPACE_OWNER_KEYS: list[str] = [
     "workspace.member.manage",

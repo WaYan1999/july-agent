@@ -3,7 +3,7 @@ import { VarType } from '@/app/components/workflow/types'
 import { getMatchedSchemaType } from '../_base/components/variable/use-match-schema-type'
 
 /**
- * Workflow-as-tool and some internal APIs store Dify VarType strings (e.g. `array[string]`)
+ * Workflow-as-tool and some internal APIs store July VarType strings (e.g. `array[string]`)
  * in JSON Schema `type` instead of standard `{ type: 'array', items: { type: 'string' } }`.
  * Map those compact strings to VarType so downstream (e.g. Code node var picker) does not
  * fall back to `any` and get filtered out.

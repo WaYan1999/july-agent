@@ -1,8 +1,8 @@
-"""Public HTTP protocol schemas for the Dify Agent run API.
+"""Public HTTP protocol schemas for the July Agent run API.
 
 This module is the shared wire contract for the FastAPI server, runtime event
 producers, storage adapters, and Python client. Create-run requests expose a
-Dify-friendly ``composition.layers[].config`` shape so callers can describe one
+July-friendly ``composition.layers[].config`` shape so callers can describe one
 layer in one place; the server normalizes that public DTO into Agenton's
 state-only ``CompositorConfig`` plus node-name keyed per-run configs before
 calling ``Compositor.enter(configs=...)``. Session snapshots, deferred tool
@@ -75,7 +75,7 @@ class LayerExitSignals(BaseModel):
 
 
 class RunLayerSpec(BaseModel):
-    """Public graph node plus per-run layer config for one Dify Agent layer.
+    """Public graph node plus per-run layer config for one July Agent layer.
 
     ``name``/``type``/``deps``/``metadata`` are normalized into Agenton's
     provider-backed graph config. ``config`` is kept separate at the Agenton
@@ -121,7 +121,7 @@ class CreateRunRequest(BaseModel):
     explicitly request delete for one or more layers. Session snapshots do not
     preserve output-layer config, so resume requests that rely on structured
     output must include the same ``output`` layer in ``composition.layers[]`` to
-    keep snapshot compatibility and rebuild the output schema. Dify tenant,
+    keep snapshot compatibility and rebuild the output schema. July tenant,
     user, and run-correlation identifiers must be submitted through a
     ``dify.execution_context`` entry in ``composition.layers[]``; there is no
     parallel top-level ``execution_context`` request field. External deferred
@@ -161,7 +161,7 @@ class CancelRunRequest(BaseModel):
 
 
 def normalize_composition(composition: RunComposition) -> tuple[CompositorConfig, dict[str, LayerConfigInput]]:
-    """Split public Dify composition into Agenton's graph config and layer configs.
+    """Split public July composition into Agenton's graph config and layer configs.
 
     Returns:
         A ``CompositorConfig`` containing only graph fields and a node-name keyed

@@ -112,7 +112,7 @@ export const Infotip: Story = {
           '',
           'Base UI rule of thumb: *"If the trigger\'s purpose is to open the popup itself, it\'s a popover. If the trigger\'s purpose is unrelated to opening the popup, it\'s a tooltip."*',
           '',
-          'Hover, tap, or focus the `?` icon to open. In the Dify app, reach for `@/app/components/base/infotip` (`<Infotip aria-label={...}>{helpText}</Infotip>`) which wraps this pattern with consistent delays (300/200), typography, and `aria-label` plumbing.',
+          'Hover, tap, or focus the `?` icon to open. In the July app, reach for `@/app/components/base/infotip` (`<Infotip aria-label={...}>{helpText}</Infotip>`) which wraps this pattern with consistent delays (300/200), typography, and `aria-label` plumbing.',
         ].join('\n'),
       },
     },

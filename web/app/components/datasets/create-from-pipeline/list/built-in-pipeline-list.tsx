@@ -2,7 +2,6 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useLocale } from '@/context/i18n'
 import { systemFeaturesQueryOptions } from '@/features/system-features/client'
-import { LanguagesSupported } from '@/i18n-config/language'
 import { usePipelineTemplateList } from '@/service/use-pipeline'
 import CreateCard from './create-card'
 import TemplateCard from './template-card'
@@ -10,9 +9,9 @@ import TemplateCard from './template-card'
 const BuiltInPipelineList = () => {
   const locale = useLocale()
   const language = useMemo(() => {
-    if (['zh-Hans', 'ja-JP'].includes(locale))
+    if (locale === 'zh-Hans')
       return locale
-    return LanguagesSupported[0]
+    return 'en-US'
   }, [locale])
   const { data: enableMarketplace } = useSuspenseQuery({
     ...systemFeaturesQueryOptions(),

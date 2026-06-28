@@ -1,4 +1,4 @@
-"""Client-safe DTOs for the Dify drive declaration layer.
+"""Client-safe DTOs for the July drive declaration layer.
 
 The drive layer carries the runtime drive catalog plus the prompt-mentioned
 targets that must be pulled eagerly when the layer enters. It is still config

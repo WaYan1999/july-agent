@@ -143,7 +143,7 @@ def run_workflow(question: str = "fake question", streaming: bool = True) -> Non
                     log.debug(f"Response: {response.text}")
 
     except httpx.ConnectError:
-        log.error("Could not connect to Dify API at http://localhost:5001")
+        log.error("Could not connect to July API at http://localhost:5001")
         log.info("Make sure the API server is running with: ./dev/start-api")
     except httpx.TimeoutException:
         log.error("Request timed out")

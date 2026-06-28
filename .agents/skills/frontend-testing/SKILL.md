@@ -1,11 +1,11 @@
 ---
 name: frontend-testing
-description: Generate Vitest + React Testing Library tests for Dify frontend components, hooks, and utilities. Triggers on testing, spec files, coverage, Vitest, RTL, unit tests, integration tests, or write/review test requests.
+description: Generate Vitest + React Testing Library tests for July frontend components, hooks, and utilities. Triggers on testing, spec files, coverage, Vitest, RTL, unit tests, integration tests, or write/review test requests.
 ---
 
-# Dify Frontend Testing Skill
+# July Frontend Testing Skill
 
-This skill enables Codex to generate high-quality, comprehensive frontend tests for the Dify project following established conventions and best practices.
+This skill enables Codex to generate high-quality, comprehensive frontend tests for the July project following established conventions and best practices.
 
 > **⚠️ Authoritative Source**: This skill is derived from `web/docs/test.md`. Use Vitest mock/timer APIs (`vi.*`).
 
@@ -19,7 +19,7 @@ Apply this skill when the user:
 - Requests **test coverage** improvement
 - Uses `pnpm analyze-component` output as context
 - Mentions **testing**, **unit tests**, or **integration tests** for frontend code
-- Wants to understand **testing patterns** in the Dify codebase
+- Wants to understand **testing patterns** in the July codebase
 
 **Do NOT apply** when:
 

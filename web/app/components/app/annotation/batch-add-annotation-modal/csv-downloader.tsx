@@ -8,7 +8,6 @@ import {
 import { Download02 as DownloadIcon } from '@/app/components/base/icons/src/vender/solid/general'
 
 import { useLocale } from '@/context/i18n'
-import { LanguagesSupported } from '@/i18n-config/language'
 
 const CSV_TEMPLATE_QA_EN = [
   ['question', 'answer'],
@@ -28,7 +27,7 @@ const CSVDownload: FC = () => {
   const { CSVDownloader, Type } = useCSVDownloader()
 
   const getTemplate = () => {
-    return locale !== LanguagesSupported[1] ? CSV_TEMPLATE_QA_EN : CSV_TEMPLATE_QA_CN
+    return locale === 'zh-Hans' ? CSV_TEMPLATE_QA_CN : CSV_TEMPLATE_QA_EN
   }
 
   return (

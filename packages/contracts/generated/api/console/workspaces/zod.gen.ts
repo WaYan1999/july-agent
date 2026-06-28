@@ -1337,7 +1337,7 @@ export const zBuiltinToolAddPayload = z.object({
 /**
  * IdentityMode
  *
- * How Dify forwards the end-user's identity to an MCP server.
+ * How July forwards the end-user's identity to an MCP server.
  */
 export const zIdentityMode = z.enum(['idp_token', 'off'])
 

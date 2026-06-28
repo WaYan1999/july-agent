@@ -131,7 +131,7 @@ export default function DevicePage() {
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-semibold text-text-primary">Authorize Dify CLI</h1>
+            <h1 className="text-2xl font-semibold text-text-primary">Authorize July CLI</h1>
             <p className="mt-2 text-sm text-text-secondary">
               Enter the code shown in your terminal.
             </p>
@@ -194,7 +194,7 @@ export default function DevicePage() {
           <p className="text-sm text-text-secondary">Return to your terminal to continue.</p>
           <Divider className="my-3" />
           <Button variant="ghost" className="w-full" onClick={() => router.push('/')}>
-            Go to Dify console →
+            Go to July console →
           </Button>
         </div>
       )}

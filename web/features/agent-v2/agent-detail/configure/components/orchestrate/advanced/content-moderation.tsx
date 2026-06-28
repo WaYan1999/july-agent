@@ -12,6 +12,7 @@ import { useFeatures, useFeaturesStore } from '@/app/components/base/features/ho
 import { useLocale } from '@/context/i18n'
 import { useModalContext } from '@/context/modal-context'
 import { useAppFeatures, useSetAppFeatures } from '@/features/agent-v2/agent-composer/store-modules/app-features'
+import { getSupportedLocale } from '@/i18n-config/language'
 import { useCodeBasedExtensions } from '@/service/use-common'
 import { ConfigureSection } from '../common/section'
 import { useAgentOrchestrateReadOnly } from '../read-only-context'
@@ -89,7 +90,7 @@ function AgentContentModerationSettingsContent() {
     if (moderation?.type === 'api')
       return t('apiBasedExtension.selector.title', { ns: 'common' })
 
-    return codeBasedExtensionList?.data.find(item => item.name === moderation?.type)?.label[locale] || '-'
+    return codeBasedExtensionList?.data.find(item => item.name === moderation?.type)?.label[getSupportedLocale(locale)] || '-'
   }, [codeBasedExtensionList?.data, locale, moderation?.type, t])
 
   const enabledContent = useMemo(() => {

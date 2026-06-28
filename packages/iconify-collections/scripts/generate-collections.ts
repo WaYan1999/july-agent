@@ -238,13 +238,13 @@ async function main(): Promise<void> {
   await writeCollectionPackage(
     'custom-public',
     customPublicCollection,
-    'Dify Custom Public',
+    'July Custom Public',
     packageJson.version,
   )
   await writeCollectionPackage(
     'custom-vender',
     customVenderCollection,
-    'Dify Custom Vender',
+    'July Custom Vender',
     packageJson.version,
   )
 }

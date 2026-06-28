@@ -1,8 +1,8 @@
-"""Runtime execution for one scheduled Dify Agent run.
+"""Runtime execution for one scheduled July Agent run.
 
-The runner is storage-agnostic: it normalizes the public Dify composition into
+The runner is storage-agnostic: it normalizes the public July composition into
 Agenton's graph/config split, enters a fresh ``CompositorRun`` (or resumes one
-from a snapshot), renders the current Dify system prompts into temporary
+from a snapshot), renders the current July system prompts into temporary
 ``message_history``, runs pydantic-ai with either the current ``run.user_prompts``
 or deferred external tool results, emits stream events, applies request-level
 ``on_exit`` signals, and then publishes a terminal success or failure event. The
@@ -18,8 +18,8 @@ layer is active, the runtime also allows ``DeferredToolRequests`` output and
 publishes that deferred request through the normal ``run_succeeded`` event as
 ``deferred_tool_call`` instead of a final ``output``. Invalid structured outputs
 or invalid deferred-tool behavior still trigger normal retries/failures before
-Dify Agent emits success. Layers still never own the FastAPI lifespan-owned
-plugin daemon or Dify API inner HTTP clients. Successful terminal events contain
+July Agent emits success. Layers still never own the FastAPI lifespan-owned
+plugin daemon or July API inner HTTP clients. Successful terminal events contain
 both the JSON-safe final output or deferred tool call and the session snapshot;
 there are no separate output or snapshot events to correlate.
 """
@@ -153,7 +153,7 @@ class AgentRunRunner:
         execution errors so they become terminal failed runs rather than client
         validation responses. Structured output uses a resolved contract whose
         type itself encodes both the model-facing schema and the runtime
-        validation hooks, so invalid model outputs can be corrected before Dify
+        validation hooks, so invalid model outputs can be corrected before July
         Agent emits success.
         """
         try:
@@ -279,7 +279,7 @@ async def _resolve_run_tools(
     plugin_daemon_http_client: httpx.AsyncClient,
     dify_api_http_client: httpx.AsyncClient,
 ) -> list[PydanticAITool[object]]:
-    """Return the static compositor tools plus any Dify runtime tools."""
+    """Return the static compositor tools plus any July runtime tools."""
     resolved_tools = list(cast(list[PydanticAITool[object]], run.tools))
     for slot in run.slots.values():
         layer = slot.layer

@@ -1,4 +1,4 @@
-"""Client-safe exports for Dify ask-human layer DTOs and schema types.
+"""Client-safe exports for July ask-human layer DTOs and schema types.
 
 The runtime layer implementation lives in ``layer.py`` and imports server-side
  execution helpers. Keep this package root import-safe for client code that only

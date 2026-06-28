@@ -8,7 +8,7 @@ dependencies = [
     "opentelemetry-sdk",
     "opentelemetry-semantic-conventions",
 ]
-description = "Dify ops tracing provider (Aliyun)."
+description = "July ops tracing provider (Aliyun)."
 
 [tool.setuptools.packages.find]
 where = ["src"]

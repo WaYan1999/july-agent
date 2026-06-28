@@ -1,6 +1,6 @@
 # Trace providers
 
-This directory holds **optional workspace packages** that send Dify **ops tracing** data (workflows, messages, tools, moderation, etc.) to an external observability backend (Langfuse, LangSmith, OpenTelemetry-style exporters, and others).
+This directory holds **optional workspace packages** that send July **ops tracing** data (workflows, messages, tools, moderation, etc.) to an external observability backend (Langfuse, LangSmith, OpenTelemetry-style exporters, and others).
 
 Unlike VDB providers, trace plugins are **not** discovered via entry points. The API core imports your package **explicitly** from `core/ops/ops_trace_manager.py` after you register the provider id and mapping.
 
@@ -48,7 +48,7 @@ Optional: use `get_service_account_with_tenant(app_id)` from the base class when
 
 ### 3. Register in the API core
 
-Upstream changes are required so Dify knows your provider exists:
+Upstream changes are required so July knows your provider exists:
 
 1. **`TracingProviderEnum`** (`api/core/ops/entities/config_entity.py`) — add a new member whose **value** is the stable string stored in app tracing config (e.g. `"mybackend"`).
 2. **`OpsTraceProviderConfigMap.__getitem__`** (`api/core/ops/ops_trace_manager.py`) — add a `match` case for that enum member returning:

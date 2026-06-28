@@ -946,7 +946,7 @@ Performs a search query against a knowledge base to retrieve the most relevant c
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | Retrieval results. | **application/json**: [HitTestingResponse](#hittestingresponse)<br> |
-| 400 | - `dataset_not_initialized` : The dataset is still being initialized or indexing. Please wait a moment. - `provider_not_initialize` : No valid model provider credentials found. Please go to Settings -> Model Provider to complete your provider credentials. - `provider_quota_exceeded` : Your quota for Dify Hosted OpenAI has been exhausted. Please go to Settings -> Model Provider to complete your own provider credentials. - `model_currently_not_support` : Dify Hosted OpenAI trial currently not support the GPT-4 model. - `completion_request_error` : Completion request failed. - `invalid_param` : Invalid parameter value. |  |
+| 400 | - `dataset_not_initialized` : The dataset is still being initialized or indexing. Please wait a moment. - `provider_not_initialize` : No valid model provider credentials found. Please go to Settings -> Model Provider to complete your provider credentials. - `provider_quota_exceeded` : Your quota for July Hosted OpenAI has been exhausted. Please go to Settings -> Model Provider to complete your own provider credentials. - `model_currently_not_support` : July Hosted OpenAI trial currently not support the GPT-4 model. - `completion_request_error` : Completion request failed. - `invalid_param` : Invalid parameter value. |  |
 | 401 | Unauthorized - invalid API token |  |
 | 403 | `forbidden` : Insufficient permissions. |  |
 | 404 | `not_found` : Knowledge base not found. |  |
@@ -974,7 +974,7 @@ Performs a search query against a knowledge base to retrieve the most relevant c
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | Retrieval results. | **application/json**: [HitTestingResponse](#hittestingresponse)<br> |
-| 400 | - `dataset_not_initialized` : The dataset is still being initialized or indexing. Please wait a moment. - `provider_not_initialize` : No valid model provider credentials found. Please go to Settings -> Model Provider to complete your provider credentials. - `provider_quota_exceeded` : Your quota for Dify Hosted OpenAI has been exhausted. Please go to Settings -> Model Provider to complete your own provider credentials. - `model_currently_not_support` : Dify Hosted OpenAI trial currently not support the GPT-4 model. - `completion_request_error` : Completion request failed. - `invalid_param` : Invalid parameter value. |  |
+| 400 | - `dataset_not_initialized` : The dataset is still being initialized or indexing. Please wait a moment. - `provider_not_initialize` : No valid model provider credentials found. Please go to Settings -> Model Provider to complete your provider credentials. - `provider_quota_exceeded` : Your quota for July Hosted OpenAI has been exhausted. Please go to Settings -> Model Provider to complete your own provider credentials. - `model_currently_not_support` : July Hosted OpenAI trial currently not support the GPT-4 model. - `completion_request_error` : Completion request failed. - `invalid_param` : Invalid parameter value. |  |
 | 401 | Unauthorized - invalid API token |  |
 | 403 | `forbidden` : Insufficient permissions. |  |
 | 404 | `not_found` : Knowledge base not found. |  |

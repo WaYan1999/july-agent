@@ -262,7 +262,7 @@ def _generate_account(
                     )
                 )
             raise AccountRegisterError(description=("Invalid email or password"))
-        account_name = user_info.name or "Dify"
+        account_name = user_info.name or "July"
         interface_language = _preferred_interface_language(language)
         account = RegisterService.register(
             email=normalized_email,

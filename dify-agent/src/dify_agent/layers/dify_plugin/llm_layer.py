@@ -1,6 +1,6 @@
-"""Dify plugin LLM model layer.
+"""July plugin LLM model layer.
 
-This layer owns model capability resolution for Dify plugin-backed LLMs. It
+This layer owns model capability resolution for July plugin-backed LLMs. It
 depends on ``DifyExecutionContextLayer`` for shared daemon settings through
 Agenton's direct dependency binding and returns a Pydantic AI model adapter
 configured from the public LLM layer DTO. Runtime code supplies the FastAPI
@@ -30,7 +30,7 @@ class DifyPluginLLMDeps(LayerDeps):
 
 @dataclass(slots=True)
 class DifyPluginLLMLayer(PlainLayer[DifyPluginLLMDeps, DifyPluginLLMLayerConfig]):
-    """Layer that creates the Dify plugin-daemon Pydantic AI model."""
+    """Layer that creates the July plugin-daemon Pydantic AI model."""
 
     type_id: ClassVar[str | None] = DIFY_PLUGIN_LLM_LAYER_TYPE_ID
 

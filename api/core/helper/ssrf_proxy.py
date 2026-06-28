@@ -5,7 +5,7 @@ must go through network/proxy policy exactly as requested, such as HTTP Request
 nodes, provider/API integrations, auth discovery, or custom tool calls.
 
 Do not use this directly for "remote file" retrieval. File downloads, probes,
-and metadata checks should use `core.file.remote_fetcher` instead so Dify-signed
+and metadata checks should use `core.file.remote_fetcher` instead so July-signed
 file URLs can be resolved through DB + storage before falling back to this SSRF
 client.
 """

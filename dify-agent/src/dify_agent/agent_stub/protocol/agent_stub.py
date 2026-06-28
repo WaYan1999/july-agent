@@ -143,7 +143,7 @@ def agent_stub_drive_commit_url(base_url: str) -> str:
 
 
 def is_canonical_dify_file_reference(reference: str) -> bool:
-    """Return whether one string matches Dify's opaque file reference format."""
+    """Return whether one string matches July's opaque file reference format."""
     prefix = "dify-file-ref:"
     if not reference.startswith(prefix):
         return False
@@ -212,7 +212,7 @@ class AgentStubFileMapping(BaseModel):
         if not self.reference:
             raise ValueError("reference is required for non-remote file mappings")
         if not is_canonical_dify_file_reference(self.reference):
-            raise ValueError("reference must be a canonical Dify file reference")
+            raise ValueError("reference must be a canonical July file reference")
         if self.url is not None:
             raise ValueError("url is not allowed for non-remote file mappings")
         return self

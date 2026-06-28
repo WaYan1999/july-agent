@@ -17,9 +17,7 @@ export const useGetLanguage = () => {
   return getLanguage(locale)
 }
 export const useGetPricingPageLanguage = () => {
-  const locale = useLocale()
-
-  return getPricingPageLanguage(locale)
+  return getPricingPageLanguage()
 }
 
 export const defaultDocBaseUrl = 'https://docs.dify.ai'

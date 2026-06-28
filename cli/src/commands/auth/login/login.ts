@@ -119,7 +119,7 @@ function makeHostParser(insecure: boolean): (raw: string) => ParseResult<string>
 async function promptHost(io: IOStreams, insecure: boolean): Promise<string> {
   return promptText<string>({
     io,
-    label: 'Enter Dify host URL',
+    label: 'Enter July host URL',
     hint: insecure ? 'e.g. https://cloud.dify.ai or http://localhost' : 'e.g. https://your-dify.com',
     default: DEFAULT_HOST,
     acceptAsDefault: raw => /^y(?:es)?$/i.test(raw.trim()),
@@ -168,7 +168,7 @@ function accountEmail(s: PollSuccess): string {
     throw new BaseError({
       code: ErrorCode.NotLoggedIn,
       message: 'account has no email; cannot store credential',
-      hint: 'this Dify instance returned no email for the signed-in subject',
+      hint: 'this July instance returned no email for the signed-in subject',
     })
   }
   return email

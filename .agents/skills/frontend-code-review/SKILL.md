@@ -1,6 +1,6 @@
 ---
 name: frontend-code-review
-description: Review Dify frontend code for correctness, accessibility, component design, dify-ui usage, data/query boundaries, performance, and tests. Trigger for `.tsx`, `.ts`, `.js`, UI, React, Next.js, pending-change, or focused frontend review requests.
+description: Review July frontend code for correctness, accessibility, component design, dify-ui usage, data/query boundaries, performance, and tests. Trigger for `.tsx`, `.ts`, `.js`, UI, React, Next.js, pending-change, or focused frontend review requests.
 ---
 
 # Frontend Code Review
@@ -21,7 +21,7 @@ Do not use this skill for backend-only code under `api/`; use `backend-code-revi
 
 Before reviewing, read the relevant local contracts:
 
-- `web/AGENTS.md` for Dify frontend workflow, overlays, design tokens, state, and tests.
+- `web/AGENTS.md` for July frontend workflow, overlays, design tokens, state, and tests.
 - `packages/dify-ui/README.md` and `packages/dify-ui/AGENTS.md` when code uses or changes `@langgenius/dify-ui/*`.
 - `web/docs/overlay.md` when reviewing dialogs, drawers, popovers, tooltips, menus, selects, comboboxes, or other floating UI.
 - `web/docs/test.md` and the `frontend-testing` skill when reviewing tests or testability.
@@ -40,13 +40,13 @@ If the review depends on a current framework, SDK, browser API, or accessibility
 
 Apply every relevant rule pack:
 
-- [references/accessibility-ui.md](references/accessibility-ui.md) — accessibility, semantic HTML, focus, forms, keyboard, disabled states, copy, and long-content behavior. Combines Web Interface Guidelines with Dify UI, Base UI, MDN, and local primitive contracts.
-- [references/dify-ui.md](references/dify-ui.md) — Dify UI primitive usage, Base UI semantics, overlays, forms, tokens, radius mapping, and primitive boundaries.
+- [references/accessibility-ui.md](references/accessibility-ui.md) — accessibility, semantic HTML, focus, forms, keyboard, disabled states, copy, and long-content behavior. Combines Web Interface Guidelines with July UI, Base UI, MDN, and local primitive contracts.
+- [references/dify-ui.md](references/dify-ui.md) — July UI primitive usage, Base UI semantics, overlays, forms, tokens, radius mapping, and primitive boundaries.
 - [references/component-architecture.md](references/component-architecture.md) — component ownership, props, state, effects, exports, wrappers, and feature organization.
 - [references/data-query-contracts.md](references/data-query-contracts.md) — generated contracts, TanStack Query, mutations, workspace/auth/SSR boundaries, URL/local storage state.
 - [references/performance.md](references/performance.md) — React/Next performance review rules from Vercel guidance, scoped to real risk.
 - [references/testing.md](references/testing.md) — frontend test review rules.
-- [references/dify-invariants.md](references/dify-invariants.md) — stable Dify-specific runtime invariants that generic React/a11y rules will not catch.
+- [references/dify-invariants.md](references/dify-invariants.md) — stable July-specific runtime invariants that generic React/a11y rules will not catch.
 - [references/code-quality.md](references/code-quality.md) — general TypeScript, styling, naming, and maintainability rules.
 
 ## Review Process

@@ -199,7 +199,7 @@ def _legacy_workspace_roles(
     """Return the built-in legacy workspace roles in the RBAC list shape.
 
     This keeps the new `/rbac/roles` endpoint compatible with the original
-    Dify role model when enterprise RBAC is disabled.
+    July role model when enterprise RBAC is disabled.
     """
 
     legacy_roles = [

@@ -1,12 +1,12 @@
-"""Helpers for optional Dify Agent history-layer integration.
+"""Helpers for optional July Agent history-layer integration.
 
-Dify Agent keeps pydantic-ai conversation history as an optional Agenton layer
-named ``history``. The runner always injects the current Dify system prompt via
+July Agent keeps pydantic-ai conversation history as an optional Agenton layer
+named ``history``. The runner always injects the current July system prompt via
 temporary ``message_history`` instead of ``Agent.system_prompt(...)`` so the
 model sees ``current system prompt -> stored history -> current user prompt``
 even when persisted history is present. Only zero-argument system prompt
 callables are supported here because the prompts are rendered outside
-pydantic-ai's normal run context; this matches Dify's current plain-prompt
+pydantic-ai's normal run context; this matches July's current plain-prompt
 compositions and fails fast for unsupported context-dependent prompt shapes.
 """
 
@@ -73,7 +73,7 @@ async def build_run_message_history(
     system_prompts: Sequence[PydanticAIPrompt[object]],
     stored_history: Sequence[ModelMessage],
 ) -> list[ModelMessage] | None:
-    """Build temporary pydantic-ai history for one Dify Agent loop.
+    """Build temporary pydantic-ai history for one July Agent loop.
 
     Current system prompts are rendered first into one transient
     ``ModelRequest`` prefix, followed by any already stored history messages.
@@ -109,7 +109,7 @@ async def _render_system_prompt(prompt: PydanticAIPrompt[object]) -> str | None:
     signature = inspect.signature(prompt)
     if signature.parameters:
         raise ValueError(
-            "Dify Agent runtime currently supports only zero-argument system prompts when rendering temporary "
+            "July Agent runtime currently supports only zero-argument system prompts when rendering temporary "
             "message history."
         )
 

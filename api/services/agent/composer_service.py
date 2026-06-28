@@ -652,7 +652,7 @@ class AgentComposerService:
 
     @staticmethod
     def _workspace_dify_tools(*, tenant_id: str, user_id: str) -> list[dict[str, Any]]:
-        """Workspace Dify Plugin tools, same source as the tool selector.
+        """Workspace July Plugin tools, same source as the tool selector.
 
         A plugin-daemon outage must degrade the slash menu to an empty tools
         tab, not break the whole candidates endpoint.

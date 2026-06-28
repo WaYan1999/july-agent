@@ -9,7 +9,7 @@ on:
         required: false
 
       edition:
-        description: "Dify edition"
+        description: "July edition"
         type: choice
         required: false
         default: ee

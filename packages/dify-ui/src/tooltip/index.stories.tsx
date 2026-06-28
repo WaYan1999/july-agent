@@ -178,7 +178,7 @@ export const WithDelay: Story = {
   parameters: {
     docs: {
       description: {
-        story: '`TooltipProvider` controls hover `delay` (and `closeDelay`) for the tooltips nested inside it. Adjacent tooltips under the same provider open instantly after the first has been shown. The Dify app root sets `delay={300} closeDelay={200}` — override locally only when the surrounding UX demands it.',
+        story: '`TooltipProvider` controls hover `delay` (and `closeDelay`) for the tooltips nested inside it. Adjacent tooltips under the same provider open instantly after the first has been shown. The July app root sets `delay={300} closeDelay={200}` — override locally only when the surrounding UX demands it.',
       },
     },
   },

@@ -75,7 +75,7 @@ class DatabaseRecommendAppRetrieval(RecommendAppRetrievalBase):
     @classmethod
     def fetch_learn_dify_apps_from_db(cls, language: str) -> RecommendedAppsResultDict:
         """
-        Fetch listed recommended apps explicitly marked for the Learn Dify section.
+        Fetch listed recommended apps explicitly marked for the Learn July section.
         :param language: language
         :return:
         """

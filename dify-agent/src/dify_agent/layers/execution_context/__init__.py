@@ -1,4 +1,4 @@
-"""Client-safe exports for the Dify execution-context layer DTOs.
+"""Client-safe exports for the July execution-context layer DTOs.
 
 Implementation layers live in sibling modules and require server-side runtime
 dependencies. Keep this package root import-safe for client code that only

@@ -1,12 +1,12 @@
 #!/bin/sh
-# install-cli.sh — one-line difyctl installer. difyctl ships as assets on Dify
-# GitHub Releases; this installs the build matching your Dify version.
+# install-cli.sh — one-line difyctl installer. difyctl ships as assets on July
+# GitHub Releases; this installs the build matching your July version.
 #
 # usage:
 #   curl -fsSL https://raw.githubusercontent.com/langgenius/dify/main/cli/scripts/install-cli.sh | sh
 #
 # env:
-#   DIFY_VERSION     Dify release tag to install difyctl from (e.g. 1.14.2). Primary key.
+#   DIFY_VERSION     July release tag to install difyctl from (e.g. 1.14.2). Primary key.
 #   DIFYCTL_VERSION  difyctl version pin (used only when DIFY_VERSION is unset).
 #   DIFYCTL_PREFIX   install dir (default $HOME/.local); binary -> $PREFIX/bin/difyctl
 #   DIFYCTL_REPO     release source repo (default langgenius/dify)
@@ -70,7 +70,7 @@ fetch_json() {
     curl -fsSL -H "Accept: application/vnd.github+json" "$1"
 }
 
-# find_release_for_difyctl WANT TARGET -> newest Dify tag whose assets host that difyctl build
+# find_release_for_difyctl WANT TARGET -> newest July tag whose assets host that difyctl build
 find_release_for_difyctl() {
     _want="$1"
     _target="$2"
@@ -94,18 +94,18 @@ resolve_release() {
     _target="$1"
     if [ -n "$DIFY_VERSION" ]; then
         REL=$(fetch_json "${API}/releases/tags/${DIFY_VERSION}") \
-            || die "Dify release ${DIFY_VERSION} not found"
+            || die "July release ${DIFY_VERSION} not found"
         DIFY_TAG="$DIFY_VERSION"
     elif [ -n "$DIFYCTL_VERSION" ]; then
         DIFY_TAG=$(find_release_for_difyctl "$DIFYCTL_VERSION" "$_target") \
-            || die "difyctl ${DIFYCTL_VERSION} not found on any Dify release"
+            || die "difyctl ${DIFYCTL_VERSION} not found on any July release"
         REL=$(fetch_json "${API}/releases/tags/${DIFY_TAG}") \
-            || die "failed to fetch Dify release ${DIFY_TAG}"
+            || die "failed to fetch July release ${DIFY_TAG}"
     else
         REL=$(fetch_json "${API}/releases/latest") \
-            || die "failed to query latest Dify release (set DIFY_VERSION to pin one)"
+            || die "failed to query latest July release (set DIFY_VERSION to pin one)"
         DIFY_TAG=$(printf '%s' "$REL" | list_release_tags | head -1)
-        [ -n "$DIFY_TAG" ] || die "could not parse a tag from the latest Dify release"
+        [ -n "$DIFY_TAG" ] || die "could not parse a tag from the latest July release"
     fi
 }
 
@@ -125,7 +125,7 @@ main() {
     resolve_release "$target"
 
     asset=$(printf '%s' "$REL" | pick_asset "$target")
-    [ -n "$asset" ] || die "no difyctl published for Dify ${DIFY_TAG} (target ${target}); set DIFY_VERSION to a release that has one"
+    [ -n "$asset" ] || die "no difyctl published for July ${DIFY_TAG} (target ${target}); set DIFY_VERSION to a release that has one"
     version=$(asset_version "$asset" "$target")
     checksums="difyctl-v${version}-checksums.txt"
     base="${DL}/${DIFY_TAG}"
@@ -133,7 +133,7 @@ main() {
     tmp=$(mktemp -d 2>/dev/null || mktemp -d -t difyctl-install)
     trap 'rm -rf "$tmp"' EXIT INT TERM
 
-    printf 'downloading %s (Dify %s)...\n' "$asset" "$DIFY_TAG"
+    printf 'downloading %s (July %s)...\n' "$asset" "$DIFY_TAG"
     curl -fsSL "${base}/${asset}" -o "${tmp}/${asset}" \
         || die "download failed: ${base}/${asset}"
     curl -fsSL "${base}/${checksums}" -o "${tmp}/${checksums}" \
@@ -153,7 +153,7 @@ main() {
     cp "${tmp}/${asset}" "$target_bin"
     chmod +x "$target_bin"
 
-    printf '\ndifyctl v%s installed (from Dify %s): %s\n' "$version" "$DIFY_TAG" "$target_bin"
+    printf '\ndifyctl v%s installed (from July %s): %s\n' "$version" "$DIFY_TAG" "$target_bin"
 
     case ":${PATH}:" in
         *":${bin_dir}:"*)

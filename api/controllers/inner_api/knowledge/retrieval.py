@@ -3,7 +3,7 @@
 This controller is a thin HTTP wrapper around
 ``services.knowledge_retrieval_inner_service.InnerKnowledgeRetrievalService``.
 It uses the plugin inner API key because dify-agent calls this endpoint through
-the same trusted Dify API bridge as other agent/plugin inner calls; tenant-scoped
+the same trusted July API bridge as other agent/plugin inner calls; tenant-scoped
 app/dataset validation remains in the service layer.
 """
 

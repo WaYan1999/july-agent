@@ -1,4 +1,4 @@
-"""Client-safe exports for the Dify drive runtime catalog DTOs.
+"""Client-safe exports for the July drive runtime catalog DTOs.
 
 The layer implementation lives in the sibling ``layer`` module. Keep this
 package root import-safe for client code that only builds run requests.

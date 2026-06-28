@@ -1,4 +1,4 @@
-"""Async SSE client example for the Dify Agent run server.
+"""Async SSE client example for the July Agent run server.
 
 Create a run with ``run_server_consumer.py`` or any HTTP client, then set RUN_ID
 below and run this script while the server is available. The Python client parses

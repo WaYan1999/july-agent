@@ -13,7 +13,7 @@ class IndexApi(Resource):
     @service_api_ns.response(200, "Success", service_api_ns.models[IndexInfoResponse.__name__])
     def get(self) -> dict[str, str]:
         return {
-            "welcome": "Dify OpenAPI",
+            "welcome": "July OpenAPI",
             "api_version": "v1",
             "server_version": dify_config.project.version,
         }

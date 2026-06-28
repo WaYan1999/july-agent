@@ -1,10 +1,10 @@
-# Dify Agent examples
+# July Agent examples
 
 These examples live under `examples/dify_agent/dify_agent_examples`. They are
-separated from Agenton examples because they depend on Dify Agent runtime services
+separated from Agenton examples because they depend on July Agent runtime services
 such as the FastAPI server, Redis, or the plugin daemon.
 
-## Run a Dify plugin-daemon backed model
+## Run a July plugin-daemon backed model
 
 ```snippet {path="/examples/dify_agent/dify_agent_examples/run_pydantic_ai_agent.py"}
 ```

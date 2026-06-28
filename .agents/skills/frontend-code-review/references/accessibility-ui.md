@@ -95,7 +95,7 @@ Flag:
 - Empty arrays or empty strings rendering broken layout instead of an empty state.
 - Button, tab, badge, chip, menu item, or card text that can overlap sibling controls at common viewport widths.
 
-The usual Dify layout chain is: container has width constraints, text region uses `min-w-0 flex-1 truncate`, adornments use `shrink-0`.
+The usual July layout chain is: container has width constraints, text region uses `min-w-0 flex-1 truncate`, adornments use `shrink-0`.
 
 ## Motion, Images, And Copy
 

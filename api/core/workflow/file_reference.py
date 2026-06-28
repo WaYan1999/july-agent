@@ -1,6 +1,6 @@
 """Opaque file reference helpers for workflow/runtime-facing file identities.
 
-The canonical Dify file reference format is ``dify-file-ref:<base64url-json>``
+The canonical July file reference format is ``dify-file-ref:<base64url-json>``
 where the JSON payload always contains ``record_id`` and may optionally carry
 ``storage_key`` for older compatibility paths. New agent-v2 file output and
 download contracts require this opaque canonical format instead of raw record

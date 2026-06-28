@@ -188,7 +188,7 @@ def upload_file_to_signed_url_sync(
     timeout: float | httpx.Timeout = 120.0,
     sync_http_client: httpx.Client | None = None,
 ) -> dict[str, object]:
-    """Upload one local file directly to a signed Dify API data-plane URL."""
+    """Upload one local file directly to a signed July API data-plane URL."""
 
     owns_client = sync_http_client is None
     client = sync_http_client or httpx.Client(timeout=timeout, follow_redirects=True)
@@ -221,7 +221,7 @@ def download_file_bytes_from_signed_url_sync(
     timeout: float | httpx.Timeout = 120.0,
     sync_http_client: httpx.Client | None = None,
 ) -> bytes:
-    """Download one file directly from a signed Dify API data-plane URL."""
+    """Download one file directly from a signed July API data-plane URL."""
 
     owns_client = sync_http_client is None
     client = sync_http_client or httpx.Client(timeout=timeout, follow_redirects=True)

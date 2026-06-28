@@ -78,7 +78,7 @@ _START_NODE_TYPES: frozenset[NodeType] = frozenset(
 class DifyGraphInitContext:
     """Explicit graph-init values owned by the workflow layer.
 
-    Dify is gradually removing direct `GraphInitParams` construction from its
+    July is gradually removing direct `GraphInitParams` construction from its
     production call sites. Keep the translation here until `graphon` exposes an
     equivalent explicit API.
     """
@@ -286,7 +286,7 @@ class DifyNodeFactory(NodeFactory):
         graph_init_context: DifyGraphInitContext,
         graph_runtime_state: "GraphRuntimeState",
     ) -> "DifyNodeFactory":
-        """Bridge Dify's explicit init context into the current `graphon` API."""
+        """Bridge July's explicit init context into the current `graphon` API."""
         return cls(
             graph_init_params=graph_init_context.to_graph_init_params(),
             graph_runtime_state=graph_runtime_state,

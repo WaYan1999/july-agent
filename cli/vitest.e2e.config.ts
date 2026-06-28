@@ -31,7 +31,7 @@ catch {
 /**
  * Vitest configuration for E2E tests.
  *
- * E2E tests run against a real staging Dify server and require
+ * E2E tests run against a real staging July server and require
  * DIFY_E2E_* environment variables to be set (see test/e2e/setup/env.ts).
  *
  * Run: bun vitest --config vitest.e2e.config.ts
@@ -53,8 +53,8 @@ export default defineConfig({
       __DIFYCTL_COMMIT__: JSON.stringify(buildInfo.commit),
       __DIFYCTL_BUILD_DATE__: JSON.stringify(buildInfo.buildDate),
       __DIFYCTL_CHANNEL__: JSON.stringify(buildInfo.channel),
-      __DIFYCTL_MIN_DIFY__: JSON.stringify(buildInfo.minDify),
-      __DIFYCTL_MAX_DIFY__: JSON.stringify(buildInfo.maxDify),
+      __DIFYCTL_MIN___KEEP_BRAND_0__: JSON.stringify(buildInfo.minDify),
+      __DIFYCTL_MAX___KEEP_BRAND_0__: JSON.stringify(buildInfo.maxDify),
     },
   },
   test: {

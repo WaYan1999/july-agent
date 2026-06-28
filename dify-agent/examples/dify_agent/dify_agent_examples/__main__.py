@@ -1,4 +1,4 @@
-"""Small CLI for listing or copying Dify Agent examples."""
+"""Small CLI for listing or copying July Agent examples."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ EXAMPLE_MODULES = (
 def cli() -> None:
     parser = argparse.ArgumentParser(
         prog="dify_agent_examples",
-        description="List or copy Dify Agent runtime examples.",
+        description="List or copy July Agent runtime examples.",
     )
     parser.add_argument("--copy-to", metavar="DEST", help="Copy example files to a new directory")
     args = parser.parse_args()
@@ -44,7 +44,7 @@ def copy_to(examples_dir: Path, destination: Path) -> None:
             continue
         shutil.copy2(source, destination / source.name)
         copied += 1
-    print(f'Copied {copied} Dify Agent example files to "{destination}"')
+    print(f'Copied {copied} July Agent example files to "{destination}"')
 
 
 if __name__ == "__main__":

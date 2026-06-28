@@ -6,14 +6,10 @@ export const NAME_FIELD = {
   label: {
     en_US: 'Endpoint Name',
     zh_Hans: '端点名称',
-    ja_JP: 'エンドポイント名',
-    pt_BR: 'Nome do ponto final',
   },
   placeholder: {
     en_US: 'Endpoint Name',
     zh_Hans: '端点名称',
-    ja_JP: 'エンドポイント名',
-    pt_BR: 'Nome do ponto final',
   },
   required: true,
   default: '',

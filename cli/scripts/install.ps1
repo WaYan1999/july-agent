@@ -1,11 +1,11 @@
 # install.ps1 — one-line difyctl installer for Windows. difyctl ships as assets
-# on Dify GitHub Releases; this installs the build matching your Dify version.
+# on July GitHub Releases; this installs the build matching your July version.
 #
 # usage:
 #   irm https://raw.githubusercontent.com/langgenius/dify/main/cli/scripts/install.ps1 | iex
 #
 # env:
-#   DIFY_VERSION     Dify release tag to install difyctl from (e.g. 1.14.2). Primary key.
+#   DIFY_VERSION     July release tag to install difyctl from (e.g. 1.14.2). Primary key.
 #   DIFYCTL_VERSION  difyctl version pin (used only when DIFY_VERSION is unset).
 #   DIFYCTL_PREFIX   install dir (default $env:LOCALAPPDATA\difyctl)
 #   DIFYCTL_REPO     release source repo (default langgenius/dify)
@@ -50,16 +50,16 @@ function Find-ReleaseForDifyctl([string]$Want) {
 function Resolve-Release {
     if ($difyVersion) {
         try { return Invoke-RestMethod -Uri "$apiBase/releases/tags/$difyVersion" -Headers $headers }
-        catch { throw "Dify release $difyVersion not found: $_" }
+        catch { throw "July release $difyVersion not found: $_" }
     }
     elseif ($difyctlVersion) {
         $release = Find-ReleaseForDifyctl $difyctlVersion
-        if (-not $release) { throw "difyctl $difyctlVersion not found on any Dify release" }
+        if (-not $release) { throw "difyctl $difyctlVersion not found on any July release" }
         return $release
     }
     else {
         try { return Invoke-RestMethod -Uri "$apiBase/releases/latest" -Headers $headers }
-        catch { throw "failed to query latest Dify release (set DIFY_VERSION to pin one): $_" }
+        catch { throw "failed to query latest July release (set DIFY_VERSION to pin one): $_" }
     }
 }
 
@@ -67,7 +67,7 @@ function Invoke-Main {
     $release = Resolve-Release
     $difyTag = $release.tag_name
     $asset = Select-Asset $release
-    if (-not $asset) { throw "no difyctl published for Dify $difyTag (target $target); set DIFY_VERSION to a release that has one" }
+    if (-not $asset) { throw "no difyctl published for July $difyTag (target $target); set DIFY_VERSION to a release that has one" }
 
     $assetName = $asset.Name
     $ver       = $asset.Version
@@ -77,7 +77,7 @@ function Invoke-Main {
     $tmp = Join-Path $env:TEMP ("difyctl-" + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tmp -Force | Out-Null
     try {
-        Write-Host "downloading $assetName (Dify $difyTag)..."
+        Write-Host "downloading $assetName (July $difyTag)..."
         $assetPath = Join-Path $tmp $assetName
         $sumsPath  = Join-Path $tmp $checksums
         Invoke-WebRequest -Uri "$base/$assetName" -OutFile $assetPath
@@ -97,7 +97,7 @@ function Invoke-Main {
         Copy-Item -Path $assetPath -Destination $targetBin -Force
 
         Write-Host ""
-        Write-Host "difyctl v$ver installed (from Dify $difyTag): $targetBin"
+        Write-Host "difyctl v$ver installed (from July $difyTag): $targetBin"
         if (($env:PATH -split ';') -notcontains $binDir) {
             Write-Host ""
             Write-Host "$binDir is not on your PATH. Add it with:"

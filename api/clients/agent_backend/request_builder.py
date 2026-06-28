@@ -4,7 +4,7 @@ This module is intentionally an adapter, not a wire DTO package. The emitted
 object is always ``dify_agent.protocol.CreateRunRequest`` so the Agent backend
 protocol has a single owner. API-only context such as Agent Soul vs workflow job
 prompt is preserved in layer names and metadata until the dedicated product
-schemas land in later phases. Dify-owned execution identifiers are emitted as an
+schemas land in later phases. July-owned execution identifiers are emitted as an
 explicit ``dify.execution_context`` layer so the run request stays fully
 composition-driven.
 """
@@ -86,7 +86,7 @@ def _shell_layer_deps(*, include_drive: bool) -> dict[str, str]:
 
 
 class AgentBackendModelConfig(BaseModel):
-    """API-side model/plugin selection before it is converted to Dify Agent layers."""
+    """API-side model/plugin selection before it is converted to July Agent layers."""
 
     plugin_id: str
     model_provider: str

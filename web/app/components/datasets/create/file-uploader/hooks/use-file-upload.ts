@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next'
 import { getFileUploadErrorMessage } from '@/app/components/base/file-uploader/utils'
 import { IS_CE_EDITION } from '@/config'
 import { useLocale } from '@/context/i18n'
-import { LanguagesSupported } from '@/i18n-config/language'
 import { upload } from '@/service/base'
 import { useFileSupportTypes, useFileUploadConfig } from '@/service/use-common'
 import { getFileExtension } from '@/utils/format'
@@ -101,7 +100,7 @@ export const useFileUpload = ({
       .map(item => item.toLowerCase())
       .filter((item, index, self) => self.indexOf(item) === index)
       .map(item => item.toUpperCase())
-      .join(locale !== LanguagesSupported[1] ? ', ' : '、 ')
+      .join(locale === 'zh-Hans' ? '、' : ', ')
   }, [supportTypes, locale])
 
   const acceptTypes = useMemo(() => supportTypes.map((ext: string) => `.${ext}`), [supportTypes])

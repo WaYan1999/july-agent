@@ -1,12 +1,12 @@
 # Skill 爬虫同步接口文档
 
-本文档约定爬虫服务器向 Dify 提供的 Skill 库增量同步接口。Dify 通过后台自动服务按日期窗口拉取数据，先保存原始 JSON 快照，再做校验、分类匹配、标签同步与入库；完整处理成功后删除本地 JSON 快照，失败时保留快照方便排查。
+本文档约定爬虫服务器向 July 提供的 Skill 库增量同步接口。July 通过后台自动服务按日期窗口拉取数据，先保存原始 JSON 快照，再做校验、分类匹配、标签同步与入库；完整处理成功后删除本地 JSON 快照，失败时保留快照方便排查。
 
 同步范围包括 Skill 元数据、安装次数、GitHub Star 数、内容来源、内容类型、分类词列表、标签、安装命令和 `SKILL.md` Markdown 原文；暂不处理 ZIP/icon 下载。
 
 ## 认证
 
-Dify 请求爬虫服务器时使用 Bearer Token：
+July 请求爬虫服务器时使用 Bearer Token：
 
 ```http
 Authorization: Bearer <SKILL_CRAWLER_API_TOKEN>
@@ -38,7 +38,7 @@ GET /api/v1/skills/getlist?from_date=2026-06-24&to_date=2026-06-25&page=1&limit=
       "slug": "pdf-toolkit",
       "name": "PDF Toolkit",
       "description": "Work with PDFs.",
-      "author_name": "Dify",
+      "author_name": "July",
       "source_type": "github",
       "source_url": "https://github.com/example/pdf-toolkit",
       "install_command": "codex skills install pdf-toolkit",
@@ -77,7 +77,7 @@ GET /api/v1/skills/getlist?from_date=2026-06-24&to_date=2026-06-25&page=1&limit=
 | `install_count` | integer | 否 | 安装次数。下载次数与安装次数视为同一指标，不再单独传 `download_count`。 |
 | `github_stars` | integer | 否 | GitHub Star 数。接口响应返回该字段；同步入库写入本地 `skills.github_stars`。 |
 | `content_type` | string | 否 | 内容类型，支持 `remote_reference`、`zip_package`、`markdown_file`，也兼容 `远程拉取`、`ZIP包`、`Markdown文档`；未传时默认 `markdown_file`。 |
-| `categories` | string[] | 否 | 分类词列表，可传中文词、英文词、旧 slug 或关键词，如 `["前端", "react", "ui"]`。Dify 会用这些词匹配本地 `skill_categories` 分类库，只绑定一个最高分分类。 |
+| `categories` | string[] | 否 | 分类词列表，可传中文词、英文词、旧 slug 或关键词，如 `["前端", "react", "ui"]`。July 会用这些词匹配本地 `skill_categories` 分类库，只绑定一个最高分分类。 |
 | `tags` | string[] | 否 | Skill 标签 slug 列表，仅允许小写字母、数字、`_`、`:`、`-`；空值会被忽略，同一 Skill 内会去重。 |
 | `skill_markdown` | string/null | 条件必填 | Skill 原文。`content_type=markdown_file` 且状态非 `deleted` 时必须提供非空内容。 |
 | `status` | string | 是 | 仅允许 `published`、`unlisted`、`archived`、`deleted`。 |
@@ -92,7 +92,7 @@ GET /api/v1/skills/getlist?from_date=2026-06-24&to_date=2026-06-25&page=1&limit=
 - 新拉取创建的 Skill 默认入库为 `draft`，`published_at = null`。
 - 更新已有 Skill 时不覆盖当前发布状态，避免爬虫同步影响人工发布状态。
 - `deleted` 会把本地已存在的 Skill 归档；本地不存在则忽略。
-- 同一响应窗口内如果出现重复 `slug`，Dify 保留 `updated_at` 最新的一条。
+- 同一响应窗口内如果出现重复 `slug`，July 保留 `updated_at` 最新的一条。
 - 同一个 `slug` 的基础字段、安装次数、GitHub Stars、内容类型或 Markdown 内容变化时，重复同步应得到相同最终状态。
 
 ## 不再传递的字段
@@ -102,7 +102,7 @@ GET /api/v1/skills/getlist?from_date=2026-06-24&to_date=2026-06-25&page=1&limit=
 | `repository_url` | 已移除，GitHub 地址由 `source_url` 承载。 |
 | `download_count` | 已移除，统一使用 `install_count`。 |
 | `readme_markdown` | 已移除，统一使用 `skill_markdown`。 |
-| `version` | 已移除，Dify 根据 Markdown 内容变化创建新的 latest version。 |
+| `version` | 已移除，July 根据 Markdown 内容变化创建新的 latest version。 |
 
 ## 后台自动服务配置
 

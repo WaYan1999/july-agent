@@ -2,7 +2,6 @@ import type {
   CodeBasedExtensionItem,
   ExternalDataTool,
 } from '@/models/common'
-import { LanguagesSupported } from '@/i18n-config/language'
 
 const systemTypes = ['api'] as const
 
@@ -34,6 +33,8 @@ export const buildProviders = ({
   locale,
   t,
 }: BuildProvidersParams): Provider[] => {
+  const isChinese = locale === 'zh-Hans'
+
   return [
     {
       key: 'api',
@@ -42,7 +43,7 @@ export const buildProviders = ({
     ...(codeBasedExtensionList
       ? codeBasedExtensionList.data.map(item => ({
           key: item.name,
-          name: locale === LanguagesSupported[1] ? item.label['zh-Hans'] : item.label['en-US'],
+          name: isChinese ? item.label['zh-Hans'] : item.label['en-US'],
           form_schema: item.form_schema,
         }))
       : []),
@@ -108,14 +109,14 @@ export const getValidationError = ({
   }
 
   if (localeData.type === 'api' && !localeData.config?.api_based_extension_id) {
-    return t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === LanguagesSupported[1] ? 'API 扩展' : 'API Extension' })
+    return t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === 'zh-Hans' ? 'API 扩展' : 'API Extension' })
   }
 
   if (!systemTypes.includes(localeData.type as typeof systemTypes[number]) && currentProvider?.form_schema) {
     for (let i = 0; i < currentProvider.form_schema.length; i++) {
       const form = currentProvider.form_schema[i]
       if (!localeData.config?.[form!.variable] && form!.required) {
-        return t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === LanguagesSupported[1] ? form!.label['zh-Hans'] : form!.label['en-US'] })
+        return t('errorMessage.valueOfVarRequired', { ns: 'appDebug', key: locale === 'zh-Hans' ? form!.label['zh-Hans'] : form!.label['en-US'] })
       }
     }
   }

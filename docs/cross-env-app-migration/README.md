@@ -1,6 +1,6 @@
 # Cross-Environment Data Migration
 
-This guide explains how to move workflow apps, chatflow apps, and their custom tool dependencies from one Dify environment to another.
+This guide explains how to move workflow apps, chatflow apps, and their custom tool dependencies from one July environment to another.
 
 The recommended best-practice path is:
 
@@ -208,7 +208,7 @@ Fields:
 
 Use automatic referenced-tool discovery whenever possible.
 
-When enabled, Dify scans selected workflow/chatflow graphs and agent tool configs, then de-duplicates discovered custom API tools, workflow tools, and MCP tool references before export. This reduces the chance of importing an app whose workflow references missing providers.
+When enabled, July scans selected workflow/chatflow graphs and agent tool configs, then de-duplicates discovered custom API tools, workflow tools, and MCP tool references before export. This reduces the chance of importing an app whose workflow references missing providers.
 
 Built-in and plugin tools are not serialized into the package. The migration report records them as dependency metadata; make sure the target environment has the required built-in or plugin tools installed and configured.
 

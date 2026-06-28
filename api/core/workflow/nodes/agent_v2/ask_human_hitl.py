@@ -6,7 +6,7 @@ call, the workflow Agent node pauses the *outer* workflow through the very same
 form repository, delivery channels, and submission endpoints unchanged. This
 module is a pure translation layer: model-facing ask_human tool args become
 graphon form entities (``HumanInputNodeData`` / ``FormInputConfig`` /
-``UserActionConfig``) plus Dify delivery configs. It adds no new HITL behavior.
+``UserActionConfig``) plus July delivery configs. It adds no new HITL behavior.
 
 The agent-side ``dify.ask_human`` contract is richer than the workflow form
 schema in two places, handled here without widening the form vocabulary:

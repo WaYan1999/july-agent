@@ -15,12 +15,12 @@ import {
 } from '@langgenius/dify-ui/drawer'
 import { useTranslation } from 'react-i18next'
 import TemplateWorkflowEn from '@/app/components/develop/template/template_workflow.en.mdx'
-import TemplateWorkflowJa from '@/app/components/develop/template/template_workflow.ja.mdx'
 import TemplateWorkflowZh from '@/app/components/develop/template/template_workflow.zh.mdx'
 import { useLocale } from '@/context/i18n'
 import useTheme from '@/hooks/use-theme'
 import { getDocLanguage } from '@/i18n-config/language'
 import { AppModeEnum, Theme } from '@/types/app'
+import type { DocLanguage } from '@/types/doc-paths'
 
 type PromptVariable = { key: string, name: string }
 type WorkflowApiDocAppDetail = Pick<App, 'id' | 'mode' | 'api_base_url'>
@@ -35,20 +35,11 @@ const EMPTY_VARIABLES: PromptVariable[] = []
 const EMPTY_INPUTS: Record<string, string> = {}
 
 function WorkflowDocTemplate({ docLanguage, appDetail, variables, inputs }: WorkflowDocTemplateProps & {
-  docLanguage: string
+  docLanguage: DocLanguage
 }) {
   if (docLanguage === 'zh') {
     return (
       <TemplateWorkflowZh
-        appDetail={appDetail}
-        variables={variables}
-        inputs={inputs}
-      />
-    )
-  }
-  if (docLanguage === 'ja') {
-    return (
-      <TemplateWorkflowJa
         appDetail={appDetail}
         variables={variables}
         inputs={inputs}

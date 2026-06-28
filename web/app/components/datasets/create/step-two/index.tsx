@@ -10,7 +10,6 @@ import Divider from '@/app/components/base/divider'
 import { useDatasetDetailContextWithSelector } from '@/context/dataset-detail'
 import { useLocale } from '@/context/i18n'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
-import { LanguagesSupported } from '@/i18n-config/language'
 import { DataSourceProvider } from '@/models/common'
 import { ChunkingMode, ProcessMode } from '@/models/datasets'
 import { useFetchDefaultProcessRule } from '@/service/knowledge/use-create-dataset'
@@ -60,7 +59,7 @@ const StepTwo: FC<StepTwoProps> = ({
 
   // Document form state
   const [docForm, setDocForm] = useState<ChunkingMode>((datasetId && documentDetail) ? documentDetail.doc_form as ChunkingMode : ChunkingMode.text)
-  const [docLanguage, setDocLanguage] = useState<string>(() => (datasetId && documentDetail) ? documentDetail.doc_language : (locale !== LanguagesSupported[1] ? 'English' : 'Chinese Simplified'))
+  const [docLanguage, setDocLanguage] = useState<string>(() => (datasetId && documentDetail) ? documentDetail.doc_language : (locale === 'zh-Hans' ? 'Chinese Simplified' : 'English'))
   const [isQAConfirmDialogOpen, setIsQAConfirmDialogOpen] = useState(false)
   const currentDocForm = currentDataset?.doc_form || docForm
 

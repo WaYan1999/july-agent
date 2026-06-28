@@ -50,7 +50,7 @@ def wrap_metadata(metadata, **kwargs):
 def _seed_to_uuid4(seed: str) -> str:
     """Derive a deterministic UUID4-formatted string from an arbitrary seed.
 
-    uuid4_to_uuid7 requires a valid UUID v4 string, but some Dify identifiers
+    uuid4_to_uuid7 requires a valid UUID v4 string, but some July identifiers
     are not UUIDs (e.g. a workflow_run_id with a "-root" suffix appended to
     distinguish the root span from the trace).  This helper hashes the seed
     with MD5 and patches the version/variant bits so the result satisfies the
@@ -64,7 +64,7 @@ def _seed_to_uuid4(seed: str) -> str:
 
 
 def prepare_opik_uuid(user_datetime: datetime | None, user_uuid: str | None):
-    """Opik needs UUIDv7 while Dify uses UUIDv4 for identifier of most
+    """Opik needs UUIDv7 while July uses UUIDv4 for identifier of most
     messages and objects. The type-hints of BaseTraceInfo indicates that
     objects start_time and message_id could be null which means we cannot map
     it to a UUIDv7. Given that we have no way to identify that object

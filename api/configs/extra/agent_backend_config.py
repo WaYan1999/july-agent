@@ -8,7 +8,7 @@ class AgentBackendConfig(BaseSettings):
     """
 
     AGENT_BACKEND_BASE_URL: str | None = Field(
-        description="Base URL for the Dify Agent backend service.",
+        description="Base URL for the July Agent backend service.",
         default=None,
     )
 

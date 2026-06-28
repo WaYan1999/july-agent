@@ -1,4 +1,4 @@
-"""Embeddable router factory for Dify Agent stub endpoints.
+"""Embeddable router factory for July Agent stub endpoints.
 
 Both the standalone stub server and the standard run server mount the same
 router so the Agent Stub protocol, token validation, and file/drive

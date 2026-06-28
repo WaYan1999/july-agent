@@ -1,4 +1,4 @@
-"""HTTPX-based client for the Dify Agent HTTP API.
+"""HTTPX-based client for the July Agent HTTP API.
 
 The client uses the public DTOs from ``dify_agent.protocol`` for request and
 response parsing across both run-management and sandbox-file endpoints. It
@@ -50,7 +50,7 @@ _function_tool_result_payload_key_cache: str | None = None
 
 
 class DifyAgentClientError(RuntimeError):
-    """Base class for errors raised by the Dify Agent Python client."""
+    """Base class for errors raised by the July Agent Python client."""
 
 
 class DifyAgentHTTPError(DifyAgentClientError):
@@ -62,11 +62,11 @@ class DifyAgentHTTPError(DifyAgentClientError):
     def __init__(self, status_code: int, detail: object) -> None:
         self.status_code = status_code
         self.detail = detail
-        super().__init__(f"Dify Agent HTTP {status_code}: {detail}")
+        super().__init__(f"July Agent HTTP {status_code}: {detail}")
 
 
 class DifyAgentNotFoundError(DifyAgentHTTPError):
-    """Raised when the server returns ``404`` for a requested Dify Agent resource."""
+    """Raised when the server returns ``404`` for a requested July Agent resource."""
 
 
 class DifyAgentValidationError(DifyAgentHTTPError):
@@ -172,7 +172,7 @@ def _function_tool_result_payload_key() -> str:
     """Return the local pydantic-ai wire key for function tool results.
 
     ``pydantic-ai`` renamed the field from ``part`` to ``result`` across
-    versions. Dify Agent server and API may temporarily run different versions
+    versions. July Agent server and API may temporarily run different versions
     during local development or rolling deploys, so the client normalizes the
     remote frame into the local schema before Pydantic validation.
     """
@@ -207,7 +207,7 @@ def _normalize_run_event_payload_for_local_pydantic_ai(payload: Any) -> Any:
 
 
 class Client:
-    """Unified synchronous and asynchronous client for the Dify Agent HTTP API.
+    """Unified synchronous and asynchronous client for the July Agent HTTP API.
 
     The instance is intentionally small and stateful: it stores base URL, default
     headers, timeout settings, optional external HTTPX clients, and lazy-owned

@@ -1,1 +1,1 @@
-"""Adapter integrations for Dify agent components."""
+"""Adapter integrations for July agent components."""

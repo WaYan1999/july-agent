@@ -3,7 +3,7 @@ from typing import Final
 
 ACS_ARMS_SERVICE_FEATURE: Final[str] = "acs.arms.service.feature"
 
-# Dify-specific attributes
+# July-specific attributes
 DIFY_APP_ID: Final[str] = "dify.app_id"
 
 # Public attributes

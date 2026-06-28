@@ -47,7 +47,7 @@ class UploadedToolFileResource:
 def upload_file_from_environment(*, path: str) -> UploadedToolFileMapping:
     """Upload one sandbox-local file through the Agent Stub control plane.
 
-    The signed upload data-plane response must carry the Dify-generated
+    The signed upload data-plane response must carry the July-generated
     ``reference`` for the new ``ToolFile`` so the sandbox can return the
     canonical Agent output file mapping without synthesizing reference format.
     """
@@ -59,7 +59,7 @@ def upload_tool_file_resource_from_environment(*, path: str) -> UploadedToolFile
     """Upload one sandbox-local file and preserve both reference and ToolFile id.
 
     This lower-level helper backs ``drive push``. The signed upload data-plane
-    response must include both the canonical Dify ``reference`` used by public
+    response must include both the canonical July ``reference`` used by public
     CLI output and the raw ToolFile ``id`` required by drive commit payloads.
 
     Raises:

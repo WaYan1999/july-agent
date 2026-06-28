@@ -1,7 +1,7 @@
-"""FastAPI application factory for the Dify Agent run server.
+"""FastAPI application factory for the July Agent run server.
 
 The HTTP process owns Redis clients plus separate shared ``httpx.AsyncClient``
-instances for plugin-daemon and Dify API inner calls, route wiring, and a
+instances for plugin-daemon and July API inner calls, route wiring, and a
 process-local scheduler. Run execution happens in background ``asyncio`` tasks
 rather than request handlers, so client disconnects do not cancel the agent
 runtime. Redis persists run records and per-run event streams with configured
@@ -93,7 +93,7 @@ def create_app(settings: ServerSettings | None = None) -> FastAPI:
             await plugin_daemon_http_client.aclose()
             await redis.aclose()
 
-    app = FastAPI(title="Dify Agent Run Server", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="July Agent Run Server", version="0.1.0", lifespan=lifespan)
 
     def get_store() -> RedisRunStore:
         return state["store"]  # pyright: ignore[reportReturnType]
@@ -124,9 +124,9 @@ def create_plugin_daemon_http_client(settings: ServerSettings) -> httpx.AsyncCli
 
 
 def create_dify_api_inner_http_client(settings: ServerSettings) -> httpx.AsyncClient:
-    """Create the lifespan-owned Dify API inner HTTP client.
+    """Create the lifespan-owned July API inner HTTP client.
 
-    The Dify API inner client intentionally shares the generic outbound HTTP
+    The July API inner client intentionally shares the generic outbound HTTP
     timeout and connection-pool settings with the plugin daemon client so
     operational tuning stays in one place while endpoint URL/API keys remain
     distinct server settings.

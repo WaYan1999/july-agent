@@ -1,6 +1,6 @@
 # Frontend Testing Guide
 
-This document is the complete testing specification for the Dify frontend project.
+This document is the complete testing specification for the July frontend project.
 Goal: Readable, change-friendly, reusable, and debuggable tests.
 When I ask you to write/refactor/fix tests, follow these rules by default.
 
@@ -289,7 +289,7 @@ For complex inputs/entities, use Builders with solid defaults and chainable over
 
 Reserve snapshots for static, deterministic fragments (icons, badges, layout chrome). Keep them tight, prefer explicit assertions for behavior, and review any snapshot updates deliberately instead of accepting them wholesale.
 
-**Note**: Dify primarily targets desktop workflows, but the supported browsers list includes mobile browsers. Do not add responsive/mobile assertions to ordinary unit tests unless the component has responsive behavior, mobile-specific behavior, or accessibility behavior that must be covered.
+**Note**: July primarily targets desktop workflows, but the supported browsers list includes mobile browsers. Do not add responsive/mobile assertions to ordinary unit tests unless the component has responsive behavior, mobile-specific behavior, or accessibility behavior that must be covered.
 
 ## Code Style
 
@@ -352,7 +352,7 @@ describe('ComponentName', () => {
 })
 ```
 
-## Dify-Specific Components
+## July-Specific Components
 
 ### General
 

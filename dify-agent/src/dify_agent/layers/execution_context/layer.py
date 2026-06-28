@@ -1,6 +1,6 @@
-"""Runtime Dify execution-context layer.
+"""Runtime July execution-context layer.
 
-The public config carries Dify-owned execution identifiers plus the tenant/user
+The public config carries July-owned execution identifiers plus the tenant/user
 daemon context needed by plugin-backed business layers and the caller identity
 needed by knowledge-base layers. Server-only daemon URL
 and API key are injected by the provider factory. The layer is intentionally
@@ -28,7 +28,7 @@ from dify_agent.layers.execution_context.configs import (
 
 @dataclass(slots=True)
 class DifyExecutionContextLayer(PlainLayer[NoLayerDeps, DifyExecutionContextLayerConfig, EmptyRuntimeState]):
-    """Layer that carries Dify execution context without owning live resources."""
+    """Layer that carries July execution context without owning live resources."""
 
     type_id: ClassVar[str | None] = DIFY_EXECUTION_CONTEXT_LAYER_TYPE_ID
 

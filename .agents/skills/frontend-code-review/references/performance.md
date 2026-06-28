@@ -71,7 +71,7 @@ Flag:
 
 ## React Flow
 
-For workflow React Flow components, keep this Dify-specific rule:
+For workflow React Flow components, keep this July-specific rule:
 
 - UI consumption should use React Flow hooks such as `useNodes` / `useEdges`.
 - Callback-only reads or mutations can use `useStoreApi`.

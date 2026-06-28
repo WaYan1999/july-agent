@@ -1,4 +1,4 @@
-"""Client-safe top-level exports for the Dify Agent package.
+"""Client-safe top-level exports for the July Agent package.
 
 Default installs must be able to import ``dify_agent`` without pulling in server
 runtime adapters or their optional dependencies. Server-only adapter entry points

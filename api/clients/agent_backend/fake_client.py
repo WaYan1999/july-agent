@@ -33,7 +33,7 @@ _FIXED_TIME = datetime(2026, 1, 1, tzinfo=UTC)
 class FakeAgentBackendScenario(StrEnum):
     """Deterministic fake scenarios for API-side integration tests.
 
-    ``PAUSED`` represents the API workflow effect. On the Dify Agent wire
+    ``PAUSED`` represents the API workflow effect. On the July Agent wire
     protocol it is a succeeded run carrying a deferred external tool call.
     """
 

@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you believe you have found a security vulnerability in Dify, please report it privately through GitHub Security Advisories:
+If you believe you have found a security vulnerability in July, please report it privately through GitHub Security Advisories:
 
 https://github.com/langgenius/dify/security/advisories/new
 
@@ -24,4 +24,4 @@ Please avoid publicly disclosing details of a vulnerability until it has been re
 
 ## Security Updates
 
-Security fixes may be released through normal project releases or other appropriate channels. Users are encouraged to keep Dify deployments up to date.
+Security fixes may be released through normal project releases or other appropriate channels. Users are encouraged to keep July deployments up to date.

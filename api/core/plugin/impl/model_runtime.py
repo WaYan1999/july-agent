@@ -40,7 +40,7 @@ TENANT_SCOPE_SCHEMA_CACHE_USER_ID = "__DIFY_TS__"
 
 
 # TODO(-LAN-): Move native structured-output invocation into Graphon's LLM node.
-# TODO(-LAN-): Remove this Dify-side adapter once Graphon owns structured output end-to-end.
+# TODO(-LAN-): Remove this July-side adapter once Graphon owns structured output end-to-end.
 class _PluginStructuredOutputModelInstance:
     """Bind plugin model identity to the shared structured-output helper.
 

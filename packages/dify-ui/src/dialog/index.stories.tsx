@@ -96,7 +96,7 @@ export const WithoutCloseButton: Story = {
       <DialogContent>
         <div className="flex flex-col gap-2">
           <DialogTitle className="text-lg leading-7 font-semibold text-text-primary">
-            Welcome to Dify
+            Welcome to July
           </DialogTitle>
           <DialogDescription className="text-sm leading-5 text-text-secondary">
             Let's get your workspace ready. This takes about a minute and sets up your default models, datasets, and API keys.

@@ -2,8 +2,8 @@
 
 Only explicitly allowed provider type ids are constructible here. The default
 provider set contains prompt layers, the optional pydantic-ai history layer, the
-state-free Dify structured output layer, the optional Dify ask-human layer, the
-Dify execution-context layer, the stateful Dify shell layer, and the Dify
+state-free July structured output layer, the optional July ask-human layer, the
+July execution-context layer, the stateful July shell layer, and the July
 plugin/knowledge business-layer family:
 
 - ``dify.drive`` for drive-backed skill catalog + eager pull,
@@ -13,8 +13,8 @@ plugin/knowledge business-layer family:
 - ``dify.plugin.tools`` for prepared plugin tool exposure, and
 - ``dify.knowledge_base`` for inner-API-backed knowledge search tools.
 
-Public DTOs provide Dify context plus plugin/model/tool data, while server-only
-plugin daemon settings and Dify API inner settings are injected through provider
+Public DTOs provide July context plus plugin/model/tool data, while server-only
+plugin daemon settings and July API inner settings are injected through provider
 factories. Optional shellctl entrypoint/auth token, client factory, and Agent
 Stub URL/token issuer are injected for ``DifyShellLayer``. The resulting
 ``Compositor`` remains Agenton state-only at the snapshot boundary: live
@@ -66,8 +66,8 @@ def create_default_layer_providers(
 
     ``shellctl_auth_token`` defaults to no token. Passing an explicit empty string
     to ``create_shellctl_client_factory`` prevents ``ShellctlClient`` from falling
-    back to the Dify Agent process's ``SHELLCTL_AUTH_TOKEN`` environment variable;
-    deployments that enable shellctl bearer auth must set the Dify Agent server
+    back to the July Agent process's ``SHELLCTL_AUTH_TOKEN`` environment variable;
+    deployments that enable shellctl bearer auth must set the July Agent server
     setting explicitly.
     """
     shellctl_token = shellctl_auth_token or ""
@@ -145,7 +145,7 @@ def build_pydantic_ai_compositor(
     """Build a Pydantic AI-ready compositor from a validated graph config.
 
     Prompt, user prompt, and tool conversion is delegated to Agenton's shared
-    pydantic-ai transformer preset so Dify Agent does not duplicate conversion
+    pydantic-ai transformer preset so July Agent does not duplicate conversion
     logic for plain and pydantic-ai layer families. Callers must pass the already
     selected provider set explicitly so provider defaulting stays at outer runtime
     boundaries rather than being duplicated here.

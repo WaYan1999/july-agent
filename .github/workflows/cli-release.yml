@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Dify release tag to attach difyctl assets to (blank = latest stable)
+        description: July release tag to attach difyctl assets to (blank = latest stable)
         required: false
         type: string
   workflow_call:
     inputs:
       release_tag:
-        description: Dify release tag to attach difyctl assets to (blank = latest stable)
+        description: July release tag to attach difyctl assets to (blank = latest stable)
         required: false
         type: string
   release:
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   validate:
-    name: validate manifest + resolve target Dify release
+    name: validate manifest + resolve target July release
     runs-on: depot-ubuntu-24.04
     if: github.repository == 'langgenius/dify'
     permissions:
@@ -45,7 +45,7 @@ jobs:
       - name: Validate manifest
         run: scripts/release-validate-manifest.sh
 
-      - name: Resolve target Dify release
+      - name: Resolve target July release
         id: resolve
         env:
           GH_TOKEN: ${{ github.token }}
@@ -60,15 +60,15 @@ jobs:
               tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name)"
           fi
           if [ -z "$tag" ]; then
-              echo "::error::could not resolve a target Dify release tag"
+              echo "::error::could not resolve a target July release tag"
               exit 1
           fi
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              echo "::error::target Dify release ${tag} not found"
+              echo "::error::target July release ${tag} not found"
               exit 1
           fi
           echo "dify_tag=${tag}" >> "$GITHUB_OUTPUT"
-          echo "::notice::target Dify release ${tag}"
+          echo "::notice::target July release ${tag}"
 
       - name: Compatibility check
         env:
@@ -127,7 +127,7 @@ jobs:
       - name: Generate sha256 checksum file
         run: scripts/release-write-checksums.sh
 
-      - name: Attach difyctl assets to Dify release
+      - name: Attach difyctl assets to July release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

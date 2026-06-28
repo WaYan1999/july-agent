@@ -2,7 +2,7 @@
 
 The layer contributes one optional external tool plus one prompt hint. The tool
 never executes Python during the initial run; instead the model emits an
-external deferred tool call that Dify Agent returns through ``run_succeeded`` as
+external deferred tool call that July Agent returns through ``run_succeeded`` as
 ``deferred_tool_call``. Guardrails are enforced in two places:
 
 * prompt/tool-definition guidance nudges the model toward valid requests, and

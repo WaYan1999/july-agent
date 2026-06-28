@@ -58,7 +58,7 @@ def _list_provider_tool_names(*, tenant_id: str, provider_id: str) -> list[str]:
 
 
 class WorkflowAgentPluginToolsBuilder:
-    """Prepare Agent Soul Dify Plugin Tools for the public Agent backend DTO."""
+    """Prepare Agent Soul July Plugin Tools for the public Agent backend DTO."""
 
     def __init__(
         self,
@@ -78,7 +78,7 @@ class WorkflowAgentPluginToolsBuilder:
         tools: AgentSoulToolsConfig,
         invoke_from: InvokeFrom,
     ) -> DifyPluginToolsLayerConfig | None:
-        """Resolve user-selected Dify Plugin Tools into the Agent backend DTO.
+        """Resolve user-selected July Plugin Tools into the Agent backend DTO.
 
         ``invoke_from`` is the *real* runtime caller category (DEBUGGER for a
         Composer test run, SERVICE_API / WEB_APP for a published run). It must
@@ -106,7 +106,7 @@ class WorkflowAgentPluginToolsBuilder:
             if exposed_name in seen_names:
                 raise WorkflowAgentPluginToolsBuildError(
                     "agent_tool_name_duplicated",
-                    f"Duplicate Dify Plugin Tool name {exposed_name!r}.",
+                    f"Duplicate July Plugin Tool name {exposed_name!r}.",
                 )
             seen_names.add(exposed_name)
 
@@ -142,12 +142,12 @@ class WorkflowAgentPluginToolsBuilder:
             except ToolProviderNotFoundError as exc:
                 raise WorkflowAgentPluginToolsBuildError(
                     "agent_tool_declaration_not_found",
-                    f"Dify Plugin Tool provider {provider_id!r} declaration not found: {exc}",
+                    f"July Plugin Tool provider {provider_id!r} declaration not found: {exc}",
                 ) from exc
             if not tool_names:
                 raise WorkflowAgentPluginToolsBuildError(
                     "agent_tool_declaration_not_found",
-                    f"Dify Plugin Tool provider {provider_id!r} declares no tools.",
+                    f"July Plugin Tool provider {provider_id!r} declares no tools.",
                 )
             already_explicit = explicit_by_provider.get(provider_id, set())
             for tool_name in tool_names:
@@ -184,12 +184,12 @@ class WorkflowAgentPluginToolsBuilder:
         except ToolProviderNotFoundError as exc:
             raise WorkflowAgentPluginToolsBuildError(
                 "agent_tool_declaration_not_found",
-                f"Dify Plugin Tool {tool_config.tool_name!r} declaration not found: {exc}",
+                f"July Plugin Tool {tool_config.tool_name!r} declaration not found: {exc}",
             ) from exc
         except ToolProviderCredentialValidationError as exc:
             raise WorkflowAgentPluginToolsBuildError(
                 "agent_tool_credential_invalid",
-                f"Dify Plugin Tool {tool_config.tool_name!r} credential validation failed: {exc}",
+                f"July Plugin Tool {tool_config.tool_name!r} credential validation failed: {exc}",
             ) from exc
         except ValueError as exc:
             # ToolManager raises bare ValueError when the agent tool's
@@ -198,7 +198,7 @@ class WorkflowAgentPluginToolsBuilder:
             # frontend can render an actionable hint.
             raise WorkflowAgentPluginToolsBuildError(
                 "agent_tool_config_invalid",
-                f"Dify Plugin Tool {tool_config.tool_name!r} runtime construction failed: {exc}",
+                f"July Plugin Tool {tool_config.tool_name!r} runtime construction failed: {exc}",
             ) from exc
 
     @staticmethod
@@ -239,7 +239,7 @@ class WorkflowAgentPluginToolsBuilder:
         if runtime is None:
             raise WorkflowAgentPluginToolsBuildError(
                 "agent_tool_config_invalid",
-                f"Dify Plugin Tool {tool_config.tool_name!r} has no runtime.",
+                f"July Plugin Tool {tool_config.tool_name!r} has no runtime.",
             )
 
         provider_id = self._provider_id(tool_config)
@@ -301,7 +301,7 @@ class WorkflowAgentPluginToolsBuilder:
             names = ", ".join(sorted(missing))
             raise WorkflowAgentPluginToolsBuildError(
                 "agent_tool_runtime_parameter_missing",
-                f"Dify Plugin Tool {tool_runtime.entity.identity.name!r} is missing runtime parameters: {names}.",
+                f"July Plugin Tool {tool_runtime.entity.identity.name!r} is missing runtime parameters: {names}.",
             )
         return runtime_parameters
 
@@ -327,7 +327,7 @@ class WorkflowAgentPluginToolsBuilder:
             raise WorkflowAgentPluginToolsBuildError(
                 "agent_tool_credential_shape_invalid",
                 (
-                    f"Dify Plugin Tool {tool_name!r} credential {key!r} has a non-scalar value "
+                    f"July Plugin Tool {tool_name!r} credential {key!r} has a non-scalar value "
                     f"({type(value).__name__}); only str/int/float/bool/None are forwarded to the daemon."
                 ),
             )

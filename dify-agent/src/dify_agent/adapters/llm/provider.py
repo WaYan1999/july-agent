@@ -1,4 +1,4 @@
-"""Dify plugin-daemon provider for Pydantic AI LLM adapters.
+"""July plugin-daemon provider for Pydantic AI LLM adapters.
 
 The Pydantic AI provider represents daemon/plugin transport identity. Business
 model provider names such as ``openai`` are request-level model identity and are
@@ -149,7 +149,7 @@ class DifyPluginDaemonLLMClient:
 
 @dataclass(slots=True, kw_only=True)
 class DifyPluginDaemonProvider(Provider[DifyPluginDaemonLLMClient]):
-    """Pydantic AI provider for Dify plugin-daemon dispatch requests.
+    """Pydantic AI provider for July plugin-daemon dispatch requests.
 
     The provider ``name`` identifies the daemon/plugin context. The business LLM
     provider is supplied by each adapter model request so one daemon provider can

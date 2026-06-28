@@ -18,11 +18,11 @@ from .types import EnumText, JSONModelColumn, LongText, StringUUID
 class AgentKind(StrEnum):
     """Agent implementation family.
 
-    This leaves room for future non-Dify agent implementations while keeping
-    the current roster/workflow APIs scoped to Dify Agent.
+    This leaves room for future non-July agent implementations while keeping
+    the current roster/workflow APIs scoped to July Agent.
     """
 
-    # Native Agent backed by the Dify Agent runtime/protocol.
+    # Native Agent backed by the July Agent runtime/protocol.
     DIFY_AGENT = "dify_agent"
 
 

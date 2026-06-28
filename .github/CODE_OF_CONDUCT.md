@@ -1,4 +1,4 @@
-# Dify Code of Conduct
+# July Code of Conduct
 
 ## Our Pledge
 

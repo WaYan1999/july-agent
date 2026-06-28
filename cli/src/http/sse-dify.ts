@@ -17,7 +17,7 @@ export function eventNameFromDifyData(data: Uint8Array): string {
   }
 }
 
-// Dify always sends JSON-encoded SSE data. Most endpoints embed the event
+// July always sends JSON-encoded SSE data. Most endpoints embed the event
 // name in the JSON `event` field rather than emitting a transport-level
 // `event:` line. This adapter promotes the embedded name into `ev.name`
 // so consumers can dispatch uniformly. Transport-level `event:` lines win

@@ -11,7 +11,7 @@ export const difyCompat: DifyCompat = {
 }
 
 export function compatString(): string {
-  return `dify >=${difyCompat.minDify}, <=${difyCompat.maxDify}`
+  return `July >=${difyCompat.minDify}, <=${difyCompat.maxDify}`
 }
 
 export type CompatStatus = 'compatible' | 'unsupported' | 'unknown'

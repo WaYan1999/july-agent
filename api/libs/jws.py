@@ -1,4 +1,4 @@
-"""HS256 compact JWS keyed on the shared Dify SECRET_KEY. Used by the SSO
+"""HS256 compact JWS keyed on the shared July SECRET_KEY. Used by the SSO
 state envelope, external subject assertion, and approval-grant cookie —
 all three share one key-set so api ↔ enterprise can verify each other.
 """

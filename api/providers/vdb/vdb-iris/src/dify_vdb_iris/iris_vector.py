@@ -1,4 +1,4 @@
-"""InterSystems IRIS vector database implementation for Dify.
+"""InterSystems IRIS vector database implementation for July.
 
 This module provides vector storage and retrieval using IRIS native VECTOR type
 with HNSW indexing for efficient similarity search.

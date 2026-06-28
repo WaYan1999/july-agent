@@ -221,7 +221,7 @@ function renderGlobalFlagRows(): string {
 
 function formatTopLevelHelpText(tree: CommandTree): string {
   const sections = [
-    `${BIN} — Dify command-line interface`,
+    `${BIN} — July command-line interface`,
     `USAGE\n  ${BIN} <command> <subcommand> [flags]`,
     `COMMANDS\n${renderCommandRows(collectCommands(tree))}`,
     `EXAMPLES\n${ROOT_EXAMPLES.map(ex => `  $ ${ex}`).join('\n')}`,

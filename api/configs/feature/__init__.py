@@ -24,7 +24,7 @@ class SecurityConfig(BaseSettings):
 
     SECRET_KEY: str = Field(
         description="Secret key for secure session cookie signing. "
-        "Leave empty to let Dify generate a persistent key in the storage directory, "
+        "Leave empty to let July generate a persistent key in the storage directory, "
         "or set a strong value via the `SECRET_KEY` environment variable.",
         default="",
     )

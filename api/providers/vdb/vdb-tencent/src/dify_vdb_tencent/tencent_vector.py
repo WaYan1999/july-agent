@@ -159,7 +159,7 @@ class TencentVector(BaseVector):
                     collection_name=self._collection_name,
                     shard=self._client_config.shard,
                     replicas=self._client_config.replicas,
-                    description="Collection for Dify",
+                    description="Collection for July",
                     indexes=indexes,
                 )
             except VectorDBException as e:
@@ -177,7 +177,7 @@ class TencentVector(BaseVector):
                     collection_name=self._collection_name,
                     shard=self._client_config.shard,
                     replicas=self._client_config.replicas,
-                    description="Collection for Dify",
+                    description="Collection for July",
                     indexes=indexes,
                 )
             redis_client.set(collection_exist_cache_key, 1, ex=3600)

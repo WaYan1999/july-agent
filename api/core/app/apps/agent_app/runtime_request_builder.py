@@ -158,7 +158,7 @@ class AgentAppRuntimeRequestBuilder:
                     conversation_id=context.conversation_id,
                     agent_id=context.agent_id,
                     agent_config_version_id=context.agent_config_snapshot_id,
-                    # Agent Files §1.3: real Dify access context + agent run mode.
+                    # Agent Files §1.3: real July access context + agent run mode.
                     user_from=cast(DifyExecutionContextUserFrom, context.dify_context.user_from.value),
                     invoke_from=cast(DifyExecutionContextInvokeFrom, context.dify_context.invoke_from.value),
                     agent_mode="agent_app",

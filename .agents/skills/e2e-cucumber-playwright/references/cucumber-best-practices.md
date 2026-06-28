@@ -1,6 +1,6 @@
-# Cucumber Best Practices For Dify E2E
+# Cucumber Best Practices For July E2E
 
-Use this reference when writing or reviewing Gherkin scenarios, step definitions, parameter expressions, and step reuse in Dify's `e2e/` suite.
+Use this reference when writing or reviewing Gherkin scenarios, step definitions, parameter expressions, and step reuse in July's `e2e/` suite.
 
 Official sources:
 
@@ -24,7 +24,7 @@ Apply it like this:
 
 A scenario should usually prove one workflow or business outcome. If a scenario wanders across several unrelated behaviors, split it.
 
-In Dify's suite, this means:
+In July's suite, this means:
 
 - one capability-focused scenario per feature path
 - no long setup chains when existing bootstrap or reusable steps already cover them
@@ -63,7 +63,7 @@ Keep expressions readable. If a step needs complicated parsing logic, first ask 
 
 Step definitions are glue between Gherkin and automation, not a second abstraction language.
 
-For Dify:
+For July:
 
 - type `this` as `DifyWorld`
 - use `async function`
@@ -75,7 +75,7 @@ For Dify:
 
 Tags should communicate run scope or session semantics, not become ad hoc metadata.
 
-In Dify's current suite:
+In July's current suite:
 
 - capability tags group related scenarios
 - `@unauthenticated` changes session behavior

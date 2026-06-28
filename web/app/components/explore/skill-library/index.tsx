@@ -12,8 +12,9 @@ import {
 import { Input } from '@langgenius/dify-ui/input'
 import { toast } from '@langgenius/dify-ui/toast'
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Loading from '@/app/components/base/loading'
 import { Markdown } from '@/app/components/base/markdown'
 import { useMarketplaceContainerScroll } from '@/app/components/plugins/marketplace/hooks'
 import { fetchSkillDetail, fetchSkillList, getSkillDownloadUrl, recordSkillCopy } from '@/service/skills'
@@ -94,41 +95,6 @@ function TaxonomyPills({ items, limit = 3 }: { items: SkillTaxonomy[], limit?: n
         <span key={item.slug} className="max-w-24 truncate rounded-md bg-background-section px-2 py-0.5 system-xs-medium text-text-tertiary">
           {item.name}
         </span>
-      ))}
-    </div>
-  )
-}
-
-function SkillCardSkeleton() {
-  return (
-    <div
-      className="flex h-[148px] flex-col overflow-hidden rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-on-panel-item-bg shadow-xs"
-      aria-hidden="true"
-    >
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-        <div className="size-10 shrink-0 animate-pulse rounded-xl bg-background-section-burn" />
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="h-4 w-2/3 animate-pulse rounded-md bg-background-section-burn" />
-          <div className="h-3 w-2/5 animate-pulse rounded-md bg-background-section-burn" />
-        </div>
-      </div>
-      <div className="mx-4 mt-1 space-y-1.5">
-        <div className="h-3 w-full animate-pulse rounded-md bg-background-section-burn" />
-        <div className="h-3 w-4/5 animate-pulse rounded-md bg-background-section-burn" />
-      </div>
-      <div className="mt-auto flex items-center justify-between gap-2 px-4 pt-2 pb-4">
-        <div className="h-5 w-16 animate-pulse rounded-md bg-background-section-burn" />
-        <div className="h-5 w-24 animate-pulse rounded-md bg-background-section-burn" />
-      </div>
-    </div>
-  )
-}
-
-function SkillGridSkeleton({ count = 8 }: { count?: number }) {
-  return (
-    <div className={SKILL_GRID_CLASS_NAME} role="status" aria-busy="true">
-      {Array.from({ length: count }).map((_, index) => (
-        <SkillCardSkeleton key={index} />
       ))}
     </div>
   )
@@ -243,7 +209,7 @@ function ArticleMarkdown({
   return (
     <Markdown
       content={markdown}
-      className="max-w-none text-[14px]! leading-6!"
+      className="max-w-none text-[15px]! leading-7!"
     />
   )
 }
@@ -256,9 +222,9 @@ function DetailMetaItem({
   value?: string | number | null
 }) {
   return (
-    <div className="min-w-0 rounded-lg bg-background-section px-3 py-2">
+    <div className="min-w-0 py-3">
       <dt className="system-xs-medium text-text-tertiary">{label}</dt>
-      <dd className="mt-1 truncate system-sm-medium text-text-secondary">{value || '-'}</dd>
+      <dd className="mt-1 system-sm-medium break-all text-text-secondary">{value || '-'}</dd>
     </div>
   )
 }
@@ -317,54 +283,77 @@ function SkillDetailDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="h-[calc(100dvh-16px)] w-full max-w-[920px] overflow-hidden p-0">
+      <DialogContent className="h-[calc(100dvh-16px)] w-full max-w-[1120px] overflow-hidden p-0">
         {detail && (
-          <div className="flex size-full min-h-0 flex-col overflow-hidden">
-            <div className="shrink-0 rounded-t-xl bg-background-body p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-1">
-                  <span aria-hidden="true" className="i-ri-article-line size-3 shrink-0 text-text-tertiary" />
-                  <DialogTitle className="truncate text-xs font-medium text-text-tertiary uppercase">
+          <div className="flex size-full min-h-0 flex-col overflow-hidden bg-background-body">
+            <div className="relative shrink-0 overflow-hidden rounded-t-xl px-5 pt-5 pb-8">
+              <div className="absolute inset-0 bg-saas-dify-blue-static" />
+              <div
+                className="absolute inset-0 bg-no-repeat opacity-80 mix-blend-lighten"
+                style={{
+                  backgroundImage: 'url(/marketplace/hero-bg.jpg)',
+                  backgroundPosition: 'center top',
+                  backgroundSize: '110% auto',
+                }}
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: 'url(/marketplace/hero-gradient-noise.svg)' }}
+              />
+
+              <div className="relative z-10 mb-8 flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2 rounded-lg border border-white/30 bg-white/15 px-2.5 py-1 text-text-primary-on-surface shadow-xs backdrop-blur-[6px]">
+                  <span aria-hidden="true" className="i-ri-article-line size-3.5 shrink-0" />
+                  <DialogTitle className="truncate system-xs-medium uppercase">
                     {t('skills.preview', { ns: 'explore' })}
                   </DialogTitle>
                 </div>
                 <DialogCloseButton
                   aria-label={t('operation.close', { ns: 'common' })}
-                  className="static size-8 rounded-lg"
+                  className="static size-8 rounded-lg bg-white/15 text-text-primary-on-surface hover:bg-white/25"
                 />
               </div>
 
-              <div className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4">
-                <div className="flex items-start gap-3">
-                  <SkillIcon skill={detail} />
-                  <div className="min-w-0 flex-1">
-                    <h1 className="truncate title-xl-semi-bold text-text-primary">{detail.name}</h1>
-                    <div className="mt-1 flex min-w-0 items-center gap-2 system-xs-regular text-text-tertiary">
-                      {authorName && (
-                        <>
-                          <span className="truncate">{authorName}</span>
-                          <span aria-hidden="true" className="text-text-quaternary">/</span>
-                        </>
-                      )}
-                      <span className="truncate">{detail.slug}</span>
-                      <span aria-hidden="true" className="text-text-quaternary">/</span>
-                      <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: detail.install_count })}</span>
+              <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-[760px] min-w-0">
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="rounded-2xl bg-white/15 p-2 shadow-md backdrop-blur-[6px]">
+                      <SkillIcon skill={detail} />
                     </div>
-                    <p className="mt-3 max-w-[72ch] system-sm-regular leading-6 text-text-secondary">{detail.description}</p>
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      <span className="rounded-md bg-background-section px-2 py-0.5 system-xs-medium text-text-tertiary">
-                        {getSkillSourceTypeLabel(normalizeValue(detail.source_type), t)}
-                      </span>
-                      <span className="rounded-md bg-background-section px-2 py-0.5 system-xs-medium text-text-tertiary">
-                        {getContentTypeLabel(contentType, t)}
-                      </span>
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 system-sm-medium text-text-secondary-on-surface">
+                        {authorName && (
+                          <>
+                            <span className="max-w-48 truncate">{authorName}</span>
+                            <span aria-hidden="true" className="text-text-secondary-on-surface/60">/</span>
+                          </>
+                        )}
+                        <span className="max-w-80 truncate">{detail.slug}</span>
+                        <span aria-hidden="true" className="text-text-secondary-on-surface/60">/</span>
+                        <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: detail.install_count })}</span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span className="rounded-md bg-white/15 px-2 py-0.5 system-xs-medium text-text-secondary-on-surface backdrop-blur-[6px]">
+                          {getSkillSourceTypeLabel(normalizeValue(detail.source_type), t)}
+                        </span>
+                        <span className="rounded-md bg-white/15 px-2 py-0.5 system-xs-medium text-text-secondary-on-surface backdrop-blur-[6px]">
+                          {getContentTypeLabel(contentType, t)}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <h1 className="text-[34px] leading-[42px] font-semibold text-balance text-text-primary-on-surface md:text-[42px] md:leading-[50px]">
+                    {detail.name}
+                  </h1>
+                  <p className="mt-4 max-w-[68ch] body-md-medium leading-7 text-pretty text-text-secondary-on-surface">
+                    {detail.description}
+                  </p>
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
+
+                <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:max-w-[320px] lg:justify-end">
                   {contentType !== 'remote_reference' && (
                     <a
-                      className="flex h-8 items-center justify-center rounded-lg bg-state-accent-solid px-3 system-sm-medium text-text-primary-on-surface hover:bg-state-accent-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+                      className="flex h-9 items-center justify-center rounded-lg bg-white px-3 system-sm-medium text-text-accent shadow-md hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
                       href={getSkillDownloadUrl(detail.id)}
                     >
                       {contentType === 'markdown_file' ? t('skills.downloadMarkdown', { ns: 'explore' }) : t('skills.downloadZip', { ns: 'explore' })}
@@ -374,19 +363,20 @@ function SkillDetailDialog({
                     type="button"
                     variant={contentType === 'remote_reference' ? 'primary' : 'secondary'}
                     size="small"
+                    className="h-9"
                     disabled={!detail.install_command}
                     onClick={handleCopyInstall}
                   >
                     {t('skills.copyInstall', { ns: 'explore' })}
                   </Button>
                   {contentType === 'markdown_file' && (
-                    <Button type="button" size="small" variant="secondary" disabled={!markdown} onClick={handleCopyMarkdown}>
+                    <Button type="button" size="small" variant="secondary" className="h-9" disabled={!markdown} onClick={handleCopyMarkdown}>
                       {t('skills.copyMarkdown', { ns: 'explore' })}
                     </Button>
                   )}
                   {detail.source_url && (
                     <a
-                      className="flex h-8 items-center gap-1 rounded-lg border border-components-button-secondary-border bg-components-button-secondary-bg px-3 system-sm-medium text-components-button-secondary-text hover:bg-components-button-secondary-bg-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+                      className="flex h-9 items-center gap-1 rounded-lg border border-white/30 bg-white/15 px-3 system-sm-medium text-text-primary-on-surface backdrop-blur-[6px] hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
                       href={detail.source_url}
                       target="_blank"
                       rel="noreferrer noopener"
@@ -399,48 +389,51 @@ function SkillDetailDialog({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-              <article className="mx-auto max-w-[760px]">
-                {detail.install_command && (
-                  <section className="mb-5 rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4">
-                    <h2 className="system-sm-semibold text-text-secondary">{t('skills.installCommand', { ns: 'explore' })}</h2>
-                    <pre className="mt-2 overflow-auto rounded-lg bg-background-section p-3 system-xs-regular text-text-secondary">
-                      {detail.install_command}
-                    </pre>
-                  </section>
-                )}
-
-                <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className="mx-auto grid w-full max-w-[1040px] grid-cols-1 gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-6 lg:py-8">
+                <article className="min-w-0 rounded-xl bg-components-panel-bg px-5 py-6 shadow-xs md:px-8 md:py-8">
                   <ArticleMarkdown
                     markdown={markdown}
                     isLoading={detailQuery.isFetching}
                     isError={detailQuery.isError}
                   />
-                </section>
+                </article>
 
-                <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4">
-                    <h2 className="system-sm-semibold text-text-secondary">{t('skills.categories', { ns: 'explore' })}</h2>
-                    <div className="mt-3">
-                      <TaxonomyPills items={detail.categories} limit={8} />
-                    </div>
-                  </div>
-                  <div className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4">
-                    <h2 className="system-sm-semibold text-text-secondary">{t('skills.tags', { ns: 'explore' })}</h2>
-                    <div className="mt-3">
-                      <TaxonomyPills items={detail.tags} limit={10} />
-                    </div>
-                  </div>
-                </section>
+                <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
+                  <div className="space-y-3">
+                    {detail.install_command && (
+                      <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
+                        <h2 className="system-sm-semibold text-text-secondary">{t('skills.installCommand', { ns: 'explore' })}</h2>
+                        <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-background-section p-3 system-xs-regular text-text-secondary">
+                          {detail.install_command}
+                        </pre>
+                      </section>
+                    )}
 
-                <section className="mt-5 rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4">
-                  <h2 className="system-sm-semibold text-text-secondary">{t('skills.audit', { ns: 'explore' })}</h2>
-                  <dl className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                    <DetailMetaItem label={t('skills.auditStatus', { ns: 'explore' })} value={detail.audit_status} />
-                    <DetailMetaItem label={t('skills.sha256', { ns: 'explore' })} value={version?.checksum_sha256} />
-                  </dl>
-                </section>
-              </article>
+                    <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
+                      <h2 className="system-sm-semibold text-text-secondary">{t('skills.categories', { ns: 'explore' })}</h2>
+                      <div className="mt-3">
+                        <TaxonomyPills items={detail.categories} limit={8} />
+                      </div>
+                    </section>
+
+                    <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
+                      <h2 className="system-sm-semibold text-text-secondary">{t('skills.tags', { ns: 'explore' })}</h2>
+                      <div className="mt-3">
+                        <TaxonomyPills items={detail.tags} limit={10} />
+                      </div>
+                    </section>
+
+                    <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
+                      <h2 className="system-sm-semibold text-text-secondary">{t('skills.audit', { ns: 'explore' })}</h2>
+                      <dl className="mt-1 divide-y divide-divider-subtle">
+                        <DetailMetaItem label={t('skills.auditStatus', { ns: 'explore' })} value={detail.audit_status} />
+                        <DetailMetaItem label={t('skills.sha256', { ns: 'explore' })} value={version?.checksum_sha256} />
+                      </dl>
+                    </section>
+                  </div>
+                </aside>
+              </div>
             </div>
           </div>
         )}
@@ -535,6 +528,7 @@ export default function SkillLibrary() {
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [detailSkill, setDetailSkill] = useState<Skill | null>(null)
+  const cachedCategoriesRef = useRef<SkillTaxonomy[]>([])
   const listQuery = useInfiniteQuery({
     queryKey: ['explore', 'skills', 'list', keyword, category],
     queryFn: ({ pageParam = 1 }) => fetchSkillList({
@@ -549,9 +543,16 @@ export default function SkillLibrary() {
   })
   const skills = listQuery.data?.pages.flatMap(page => page.data) ?? []
   const firstPage = listQuery.data?.pages[0]
-  const categories = firstPage?.filters?.categories ?? []
+  const categoriesFromPages = listQuery.data?.pages.find(page => page.filters?.categories?.length)?.filters?.categories
+  const categories = categoriesFromPages ?? cachedCategoriesRef.current
   const isInitialLoading = listQuery.isLoading && !listQuery.data
   const { hasNextPage, fetchNextPage, isFetching } = listQuery
+
+  useEffect(() => {
+    if (categoriesFromPages?.length)
+      cachedCategoriesRef.current = categoriesFromPages
+  }, [categoriesFromPages])
+
   const handlePageChange = useCallback(() => {
     if (hasNextPage && !isFetching)
       void fetchNextPage()
@@ -616,9 +617,11 @@ export default function SkillLibrary() {
           </div>
         </div>
 
-        <div className="relative min-h-0 flex-1 px-3 pt-1">
+        <div className="relative min-h-80 flex-1 px-3 pt-1">
           {isInitialLoading && (
-            <SkillGridSkeleton />
+            <div className="absolute top-1/2 left-1/2 -translate-1/2">
+              <Loading />
+            </div>
           )}
           {listQuery.error && (
             <div className="flex min-h-80 flex-col items-center justify-center gap-3 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
@@ -649,25 +652,9 @@ export default function SkillLibrary() {
                   />
                 ))}
               </div>
-              <div className="mt-6 flex items-center justify-center pb-2">
-                {hasNextPage
-                  ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="medium"
-                      loading={listQuery.isFetchingNextPage}
-                      onClick={() => handlePageChange()}
-                    >
-                      {listQuery.isFetchingNextPage ? t('skills.loading', { ns: 'explore' }) : t('skills.loadMore', { ns: 'explore' })}
-                    </Button>
-                    )
-                  : (
-                    <p className="system-xs-regular text-text-quaternary">
-                      {t('skills.endOfList', { ns: 'explore' })}
-                    </p>
-                    )}
-              </div>
+              {listQuery.isFetchingNextPage && (
+                <Loading className="my-3" />
+              )}
             </>
           )}
         </div>

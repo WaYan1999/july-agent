@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # ================================================================
-# Dify Environment Variables Synchronization Script
+# July Environment Variables Synchronization Script
 #
 # Features:
 # - Synchronize latest settings from .env.example to .env
@@ -414,7 +414,7 @@ def main() -> None:
 
     work_dir = Path(args.dir).resolve()
 
-    log_info("=== Dify Environment Variables Synchronization Script ===")
+    log_info("=== July Environment Variables Synchronization Script ===")
     log_info(f"Execution started: {datetime.now()}")
     log_info(f"Working directory: {work_dir}")
 

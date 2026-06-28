@@ -165,7 +165,7 @@ jobs:
           allowed_bots: 'github-actions[bot]'
           show_full_output: ${{ github.event_name == 'workflow_dispatch' }}
           prompt: |
-            You are the i18n sync agent for the Dify repository.
+            You are the i18n sync agent for the July repository.
             Your job is to keep translations synchronized with the English source files under `${{ github.workspace }}/web/i18n/en-US/`.
 
             Use absolute paths at all times:

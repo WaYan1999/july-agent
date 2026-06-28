@@ -1,6 +1,6 @@
-# Dify PHP SDK
+# July PHP SDK
 
-This is the PHP SDK for the Dify API, which allows you to easily integrate Dify into your PHP applications.
+This is the PHP SDK for the July API, which allows you to easily integrate July into your PHP applications.
 
 ## Requirements
 
@@ -88,7 +88,7 @@ $response = $difyClient->message_feedback($message_id, $rating, "user_id");
 // - rename_conversation()
 ```
 
-Replace 'your-api-key-here' with your actual Dify API key.
+Replace 'your-api-key-here' with your actual July API key.
 
 ## License
 

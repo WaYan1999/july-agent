@@ -367,7 +367,7 @@ class AppMode(StrEnum):
     CHAT = "chat"
     ADVANCED_CHAT = "advanced-chat"
     AGENT_CHAT = "agent-chat"
-    # New Agent App type backed by the Dify Agent runtime (distinct from the
+    # New Agent App type backed by the July Agent runtime (distinct from the
     # legacy ``agent-chat`` ReAct app). The app is bound 1:1 to a roster Agent
     # via ``Agent.app_id``; its configuration lives in the Agent Soul snapshot.
     AGENT = "agent"
@@ -1056,7 +1056,7 @@ class ExporleBanner(TypeBase):
 class OAuthProviderApp(TypeBase):
     """
     Globally shared OAuth provider app information.
-    Only for Dify Cloud.
+    Only for July Cloud.
     """
 
     __tablename__ = "oauth_provider_apps"

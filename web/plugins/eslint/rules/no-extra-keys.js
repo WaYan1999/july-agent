@@ -19,7 +19,7 @@ export default {
           return
 
         const parts = normalize(filename).split(sep)
-        // e.g., i18n/ar-TN/common.json -> jsonFile = common.json, lang = ar-TN
+        // 例如 i18n/zh-Hans/common.json 会解析为 jsonFile = common.json、lang = zh-Hans。
         const jsonFile = parts.at(-1)
         const lang = parts.at(-2)
 
@@ -32,8 +32,8 @@ export default {
 
         try {
           currentJson = JSON.parse(sourceCode.text)
-          // Look for the same filename in en-US folder
-          // e.g., i18n/ar-TN/common.json -> i18n/en-US/common.json
+          // 在 en-US 目录中查找同名文件。
+          // 例如 i18n/zh-Hans/common.json 对应 i18n/en-US/common.json。
           const englishFilePath = path.join(path.dirname(filename), '..', 'en-US', jsonFile ?? '')
           englishJson = JSON.parse(fs.readFileSync(englishFilePath, 'utf8'))
         }

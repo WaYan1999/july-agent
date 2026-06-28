@@ -165,7 +165,7 @@ export const WithLinkItems: Story = {
       <TriggerArea label="Right-click to open links" />
       <ContextMenuContent>
         <ContextMenuLinkItem href="https://docs.dify.ai" rel="noopener noreferrer" target="_blank">
-          Dify Docs
+          July Docs
         </ContextMenuLinkItem>
         <ContextMenuLinkItem href="https://roadmap.dify.ai" rel="noopener noreferrer" target="_blank">
           Product Roadmap

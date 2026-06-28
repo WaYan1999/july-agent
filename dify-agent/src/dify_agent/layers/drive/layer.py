@@ -1,8 +1,8 @@
-"""Runtime Dify drive layer with eager pull for prompt-mentioned targets.
+"""Runtime July drive layer with eager pull for prompt-mentioned targets.
 
 The API backend sends the full drive skill catalog plus the ordered drive keys
 mentioned in the prompt. When the layer enters a run context it eagerly pulls
-those mentioned skills/files from the Dify inner drive bridge, materializes them
+those mentioned skills/files from the July inner drive bridge, materializes them
 under the fixed Agent Stub drive base for ``drive_ref``, and contributes a
 concise prompt block describing what was loaded and what other skills remain
 available for lazy pull.
@@ -60,7 +60,7 @@ class DifyDriveLayer(PlainLayer[DifyDriveDeps, DifyDriveLayerConfig, EmptyRuntim
     @override
     def from_config(cls, config: DifyDriveLayerConfig) -> Self:
         del config
-        raise TypeError("DifyDriveLayer requires server-side Dify API settings and must use a provider factory.")
+        raise TypeError("DifyDriveLayer requires server-side July API settings and must use a provider factory.")
 
     @classmethod
     def from_config_with_settings(

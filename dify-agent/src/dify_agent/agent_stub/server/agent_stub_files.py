@@ -1,11 +1,11 @@
-"""Server-side Dify API client for Agent Stub file endpoints.
+"""Server-side July API client for Agent Stub file endpoints.
 
 The Agent Stub serves only control-plane file endpoints. This module is
-the trusted bridge from authenticated stub requests into Dify's inner file
+the trusted bridge from authenticated stub requests into July's inner file
 request APIs. Callers pass a decoded ``AgentStubPrincipal`` and a validated
 public Agent Stub request DTO; this module injects the execution-context tenant
 and user fields that sandbox code is not allowed to forge, calls the matching
-Dify inner API endpoint, and normalizes all expected failures into
+July inner API endpoint, and normalizes all expected failures into
 ``AgentStubFileRequestError`` with HTTP-oriented ``status_code`` and ``detail``
 values that route handlers can map directly into responses.
 """
@@ -30,11 +30,11 @@ from dify_agent.layers.execution_context import DifyExecutionContextLayerConfig
 
 
 class AgentStubFileRequestHandler(Protocol):
-    """Trusted control-plane bridge from sandbox calls to Dify API inner APIs.
+    """Trusted control-plane bridge from sandbox calls to July API inner APIs.
 
     Implementations are expected to accept authenticated execution context from
     the stub token principal, inject the required tenant/user metadata into the
-    Dify inner API request, and raise ``AgentStubFileRequestError`` when the
+    July inner API request, and raise ``AgentStubFileRequestError`` when the
     downstream call cannot produce a valid control-plane response.
     """
 
@@ -58,7 +58,7 @@ class AgentStubFileRequestError(RuntimeError):
 
     ``status_code`` and ``detail`` are shaped for direct translation into HTTP
     responses by FastAPI route handlers, so downstream callers should not need a
-    second error-mapping layer for Dify file-request failures.
+    second error-mapping layer for July file-request failures.
     """
 
     status_code: int
@@ -71,7 +71,7 @@ class AgentStubFileRequestError(RuntimeError):
 
 
 class _BackwardsInvocationEnvelope(BaseModel):
-    """Minimal parser for Dify API plugin-style inner API envelopes."""
+    """Minimal parser for July API plugin-style inner API envelopes."""
 
     data: object | None = None
     error: str | None = None
@@ -81,7 +81,7 @@ class _BackwardsInvocationEnvelope(BaseModel):
 
 @dataclass(slots=True)
 class DifyApiAgentStubFileRequestHandler:
-    """Call Dify API inner file request endpoints on behalf of the sandbox.
+    """Call July API inner file request endpoints on behalf of the sandbox.
 
     The upload path calls ``/inner/api/upload/file/request`` and injects the
     authenticated execution context's ``tenant_id`` and ``user_id`` along with
@@ -108,12 +108,12 @@ class DifyApiAgentStubFileRequestHandler:
         principal: AgentStubPrincipal,
         request: AgentStubFileUploadRequest,
     ) -> AgentStubFileUploadResponse:
-        """Request one signed upload URL from Dify's inner upload endpoint.
+        """Request one signed upload URL from July's inner upload endpoint.
 
         The request payload is derived from authenticated execution context and
         the public upload DTO. ``principal.execution_context.user_id`` must be
         present; otherwise the method raises ``AgentStubFileRequestError`` with
-        status ``400`` before contacting Dify.
+        status ``400`` before contacting July.
 
         Raises:
             AgentStubFileRequestError: when user context is incomplete, the
@@ -130,7 +130,7 @@ class DifyApiAgentStubFileRequestHandler:
         data = await self._post_inner_api("/inner/api/upload/file/request", payload)
         upload_url = data.get("url")
         if not isinstance(upload_url, str) or not upload_url:
-            raise AgentStubFileRequestError(502, "Dify API upload request response is missing url")
+            raise AgentStubFileRequestError(502, "July API upload request response is missing url")
         return AgentStubFileUploadResponse(upload_url=upload_url)
 
     async def create_download_request(
@@ -139,7 +139,7 @@ class DifyApiAgentStubFileRequestHandler:
         principal: AgentStubPrincipal,
         request: AgentStubFileDownloadRequest,
     ) -> AgentStubFileDownloadResponse:
-        """Request one signed download URL from Dify's inner download endpoint.
+        """Request one signed download URL from July's inner download endpoint.
 
         The request payload combines authenticated execution-context identity
         fields with the validated public file mapping. ``user_id`` is required
@@ -164,7 +164,7 @@ class DifyApiAgentStubFileRequestHandler:
         try:
             return AgentStubFileDownloadResponse.model_validate(data)
         except ValidationError as exc:
-            raise AgentStubFileRequestError(502, "Dify API download request response is invalid") from exc
+            raise AgentStubFileRequestError(502, "July API download request response is invalid") from exc
 
     def _require_user_context(
         self, execution_context: DifyExecutionContextLayerConfig
@@ -183,9 +183,9 @@ class DifyApiAgentStubFileRequestHandler:
                     headers={"X-Inner-Api-Key": self.inner_api_key},
                 )
             except httpx.TimeoutException as exc:
-                raise AgentStubFileRequestError(504, "Dify API file request timed out") from exc
+                raise AgentStubFileRequestError(504, "July API file request timed out") from exc
             except httpx.RequestError as exc:
-                raise AgentStubFileRequestError(502, f"Dify API file request failed: {exc}") from exc
+                raise AgentStubFileRequestError(502, f"July API file request failed: {exc}") from exc
 
         raw_payload = self._parse_json(response)
         if response.is_error:
@@ -194,11 +194,11 @@ class DifyApiAgentStubFileRequestHandler:
         try:
             envelope = _BackwardsInvocationEnvelope.model_validate(raw_payload)
         except ValidationError as exc:
-            raise AgentStubFileRequestError(502, "Dify API file request response is invalid") from exc
+            raise AgentStubFileRequestError(502, "July API file request response is invalid") from exc
         if envelope.error:
             raise AgentStubFileRequestError(400, envelope.error)
         if not isinstance(envelope.data, dict):
-            raise AgentStubFileRequestError(502, "Dify API file request response is missing data")
+            raise AgentStubFileRequestError(502, "July API file request response is missing data")
         return dict(envelope.data)
 
     @staticmethod
@@ -206,7 +206,7 @@ class DifyApiAgentStubFileRequestHandler:
         try:
             return response.json()
         except ValueError as exc:
-            raise AgentStubFileRequestError(502, "Dify API file request returned invalid JSON") from exc
+            raise AgentStubFileRequestError(502, "July API file request returned invalid JSON") from exc
 
 
 __all__ = [

@@ -9,16 +9,12 @@ import { getDocLanguage } from '@/i18n-config/language'
 import { AppModeEnum, Theme } from '@/types/app'
 import { useDocToc } from './hooks/use-doc-toc'
 import TemplateEn from './template/template.en.mdx'
-import TemplateJa from './template/template.ja.mdx'
 import TemplateZh from './template/template.zh.mdx'
 import TemplateAdvancedChatEn from './template/template_advanced_chat.en.mdx'
-import TemplateAdvancedChatJa from './template/template_advanced_chat.ja.mdx'
 import TemplateAdvancedChatZh from './template/template_advanced_chat.zh.mdx'
 import TemplateChatEn from './template/template_chat.en.mdx'
-import TemplateChatJa from './template/template_chat.ja.mdx'
 import TemplateChatZh from './template/template_chat.zh.mdx'
 import TemplateWorkflowEn from './template/template_workflow.en.mdx'
-import TemplateWorkflowJa from './template/template_workflow.ja.mdx'
 import TemplateWorkflowZh from './template/template_workflow.zh.mdx'
 import TocPanel from './toc-panel'
 
@@ -29,22 +25,20 @@ type IDocProps = {
   appDetail: AppDetail
 }
 
-// Shared props shape for all MDX template components
+// 所有 MDX 模板组件共享的业务 props。
 type TemplateProps = {
   appDetail: AppDetail
   variables: PromptVariable[]
   inputs: Record<string, string>
 }
 
-// Lookup table: [appMode][docLanguage] → template component
-// MDX components accept arbitrary props at runtime but expose a narrow static type,
-// so we assert the map type to allow passing TemplateProps when rendering.
+// 按应用模式和文档语言选择模板。
 const TEMPLATE_MAP = {
-  [AppModeEnum.CHAT]: { zh: TemplateChatZh, ja: TemplateChatJa, en: TemplateChatEn },
-  [AppModeEnum.AGENT_CHAT]: { zh: TemplateChatZh, ja: TemplateChatJa, en: TemplateChatEn },
-  [AppModeEnum.ADVANCED_CHAT]: { zh: TemplateAdvancedChatZh, ja: TemplateAdvancedChatJa, en: TemplateAdvancedChatEn },
-  [AppModeEnum.WORKFLOW]: { zh: TemplateWorkflowZh, ja: TemplateWorkflowJa, en: TemplateWorkflowEn },
-  [AppModeEnum.COMPLETION]: { zh: TemplateZh, ja: TemplateJa, en: TemplateEn },
+  [AppModeEnum.CHAT]: { zh: TemplateChatZh, en: TemplateChatEn },
+  [AppModeEnum.AGENT_CHAT]: { zh: TemplateChatZh, en: TemplateChatEn },
+  [AppModeEnum.ADVANCED_CHAT]: { zh: TemplateAdvancedChatZh, en: TemplateAdvancedChatEn },
+  [AppModeEnum.WORKFLOW]: { zh: TemplateWorkflowZh, en: TemplateWorkflowEn },
+  [AppModeEnum.COMPLETION]: { zh: TemplateZh, en: TemplateEn },
 } as Record<string, Record<string, ComponentType<TemplateProps>>>
 
 const resolveTemplate = (mode: string | undefined, locale: string): ComponentType<TemplateProps> | null => {
@@ -62,7 +56,7 @@ const Doc = ({ appDetail }: IDocProps) => {
   const { theme } = useTheme()
   const { toc, isTocExpanded, setIsTocExpanded, activeSection, handleTocClick } = useDocToc({ appDetail, locale })
 
-  // model_config.configs.prompt_variables exists in the raw API response but is not modeled in ModelConfig type
+  // 原始接口里存在 prompt_variables，但 ModelConfig 类型尚未建模这个字段。
   const variables: PromptVariable[] = (
     appDetail?.model_config as unknown as Record<string, Record<string, PromptVariable[]>> | undefined
   )?.configs?.prompt_variables ?? []

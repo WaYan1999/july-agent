@@ -1,7 +1,7 @@
 # Ask human layer
 
 The ask human layer exposes one model-visible tool that lets an agent end the
-current run with a structured request for human input. This page is for Dify
+current run with a structured request for human input. This page is for July
 Agent clients that build `CreateRunRequest` payloads and then interpret terminal
 run events.
 
@@ -124,7 +124,7 @@ When enabled, the layer exposes an external deferred tool whose argument shape i
 | `question` | `str` | Required question/instruction for the human. |
 | `markdown` | `str \| None` | Optional longer Markdown body. Treat it as untrusted user-visible content. |
 | `fields` | `list[AskHumanField]` | Optional structured fields for the human to fill. |
-| `actions` | `list[AskHumanAction]` | Optional action buttons. If omitted, Dify Agent normalizes to a single primary `Submit` action. |
+| `actions` | `list[AskHumanAction]` | Optional action buttons. If omitted, July Agent normalizes to a single primary `Submit` action. |
 | `urgency` | `"normal" \| "high"` | Hint for downstream systems; it is not a delivery policy. |
 
 Supported field variants:
@@ -159,7 +159,7 @@ async for event in client.stream_events(run_id):
 
 if deferred_call is not None:
     # Render your own human-facing form, enqueue notification, pause an outer
-    # workflow, or store the request for later. Dify Agent does not do that part.
+    # workflow, or store the request for later. July Agent does not do that part.
     print(deferred_call.tool_call_id, deferred_call.args)
 ```
 
@@ -226,7 +226,7 @@ resume_request = CreateRunRequest(
 )
 ```
 
-Dify Agent passes the supplied result back to pydantic-ai as the return value of
+July Agent passes the supplied result back to pydantic-ai as the return value of
 the original external tool call, then the model continues. The resumed run may
 produce a final `output`, or it may produce another `deferred_tool_call` if the
 agent needs another human turn.

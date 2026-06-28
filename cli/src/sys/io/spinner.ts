@@ -1,7 +1,7 @@
 import type { IOStreams } from './streams'
 import oraImport from 'ora'
 
-const DIFY_FRAMES = ['Dify', 'dIfy', 'diFy', 'difY', 'diFy', 'dIfy']
+const DIFY_FRAMES = ['July', 'jUly', 'juLy', 'julY', 'juLy', 'jUly']
 const DIFY_BLUE_RGB = '\x1B[38;2;0;51;255m'
 const DIFY_BLUE_256 = '\x1B[38;5;27m'
 const DIM = '\x1B[2m'

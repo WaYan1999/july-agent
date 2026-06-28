@@ -1,4 +1,4 @@
-"""Synchronous Python client example for the Dify Agent run server.
+"""Synchronous Python client example for the July Agent run server.
 
 Requires the same running FastAPI server as the async examples. Before starting
 that server, sync the server runtime dependencies with
@@ -38,7 +38,7 @@ def main() -> None:
                             type=PLAIN_PROMPT_LAYER_TYPE_ID,
                             config=PromptLayerConfig(
                                 prefix="You are a concise assistant.",
-                                user="Say hello from the synchronous Dify Agent client example.",
+                                user="Say hello from the synchronous July Agent client example.",
                             ),
                         ),
                         RunLayerSpec(

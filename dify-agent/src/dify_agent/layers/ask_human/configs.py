@@ -1,4 +1,4 @@
-"""Client-safe DTOs for the Dify ask-human layer.
+"""Client-safe DTOs for the July ask-human layer.
 
 The public config controls only stable model-facing tool identity and guardrails.
 Delivery, recipient selection, timeout policy, and other operational behavior are

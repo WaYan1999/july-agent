@@ -1,4 +1,4 @@
-"""Client-safe protocol exports for the Dify Agent Stub package."""
+"""Client-safe protocol exports for the July Agent Stub package."""
 
 from .agent_stub import (
     AGENT_STUB_AUTH_JWE_ENV_VAR,

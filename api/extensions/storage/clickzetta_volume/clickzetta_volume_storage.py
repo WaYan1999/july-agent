@@ -183,7 +183,7 @@ class ClickZettaVolumeStorage(BaseStorage):
         if self._config.volume_type == "user":
             return "USER VOLUME"
         elif self._config.volume_type == "table":
-            # For Dify's current file storage pattern, most files are stored in
+            # For July's current file storage pattern, most files are stored in
             # paths like "upload_files/tenant_id/uuid.ext", "tools/tenant_id/uuid.ext"
             # These should use USER VOLUME for better compatibility
             if dataset_id in ["upload_files", "temp", "cache", "tools", "website_files", "privkeys"]:

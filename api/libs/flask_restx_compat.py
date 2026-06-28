@@ -1,4 +1,4 @@
-"""Compatibility helpers for Dify's Flask-RESTX OpenAPI integration.
+"""Compatibility helpers for July's Flask-RESTX OpenAPI integration.
 
 These helpers are temporary bridges for legacy Flask-RESTX field contracts
 while controllers migrate their request and response documentation to Pydantic
@@ -101,7 +101,7 @@ def _inline_model_name(nested_fields: dict[object, object]) -> str:
 
 
 def install_swagger_compatibility() -> None:
-    """Install Dify's Flask-RESTX OpenAPI compatibility hooks.
+    """Install July's Flask-RESTX OpenAPI compatibility hooks.
 
     Some existing controllers use raw field mappings in `fields.Nested({...})`
     or directly in `@namespace.response(...)`. Runtime marshalling accepts that,

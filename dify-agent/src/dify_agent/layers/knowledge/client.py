@@ -1,4 +1,4 @@
-"""Async client for the Dify API inner knowledge retrieval endpoint.
+"""Async client for the July API inner knowledge retrieval endpoint.
 
 This wrapper owns only request/response mapping and error normalization for
 ``POST /inner/api/knowledge/retrieve``. The shared ``httpx.AsyncClient`` is
@@ -92,7 +92,7 @@ class DifyKnowledgeRetrieveResponse(BaseModel):
 
 @dataclass(slots=True)
 class DifyKnowledgeBaseClient:
-    """Boundary client for the Dify API inner knowledge retrieval endpoint."""
+    """Boundary client for the July API inner knowledge retrieval endpoint."""
 
     base_url: str
     api_key: str = field(repr=False)
@@ -168,7 +168,7 @@ class DifyKnowledgeBaseClient:
             return DifyKnowledgeRetrieveResponse.model_validate_json(response.text)
         except ValidationError as exc:
             raise DifyKnowledgeBaseClientError(
-                "Invalid knowledge retrieval response from Dify API.",
+                "Invalid knowledge retrieval response from July API.",
                 status_code=response.status_code,
                 error_code="invalid_response",
                 retryable=False,

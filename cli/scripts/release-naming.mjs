@@ -229,8 +229,8 @@ function main(argv) {
       if (!compat.minDify || !compat.maxDify)
         die('cli/package.json missing difyctl.compat.minDify/maxDify')
       if (comparePrecedence(difyVersion, compat.minDify) < 0 || comparePrecedence(difyVersion, compat.maxDify) > 0)
-        die(`Dify ${difyVersion} is outside difyctl compatibility window ${compat.minDify}..${compat.maxDify}; bump difyctl.compat in cli/package.json`)
-      return `compatible: Dify ${difyVersion} within ${compat.minDify}..${compat.maxDify}`
+        die(`July ${difyVersion} is outside difyctl compatibility window ${compat.minDify}..${compat.maxDify}; bump difyctl.compat in cli/package.json`)
+      return `compatible: July ${difyVersion} within ${compat.minDify}..${compat.maxDify}`
     }
     case 'prerelease': {
       const ch = channelByName(rest[0] ?? die('channel argument is required'))

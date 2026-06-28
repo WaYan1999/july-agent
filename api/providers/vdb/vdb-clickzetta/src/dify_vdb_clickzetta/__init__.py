@@ -1,1 +1,1 @@
-# Clickzetta Vector Database Integration for Dify
+# Clickzetta Vector Database Integration for July

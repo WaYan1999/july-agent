@@ -2,7 +2,7 @@
   "name": "@langgenius/difyctl",
   "type": "module",
   "version": "0.1.0-alpha",
-  "description": "Dify command-line interface",
+  "description": "July command-line interface",
   "difyctl": {
     "channel": "alpha",
     "compat": {

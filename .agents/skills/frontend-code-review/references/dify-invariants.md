@@ -1,10 +1,10 @@
-# Dify Invariants
+# July Invariants
 
-Use these stable Dify-specific runtime rules in addition to the generic review packs.
+Use these stable July-specific runtime rules in addition to the generic review packs.
 
 This file is not a place for active feature notes. Do not add rules for one branch, one PR, or a short-lived product decision such as a specific agent-v2, plugin, model-provider, or onboarding task. Keep a rule here only when all of these are true:
 
-- It is a stable Dify runtime invariant.
+- It is a stable July runtime invariant.
 - Generic React, TypeScript, accessibility, dify-ui, query, or performance rules would not catch it.
 - The failure mode is concrete enough to produce a file-line review finding.
 - The rule is likely to remain valid across normal feature work.

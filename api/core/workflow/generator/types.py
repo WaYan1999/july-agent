@@ -107,7 +107,7 @@ class GraphEdgeDict(TypedDict):
     id: str
     source: str
     target: str
-    type: str  # always "custom" for Dify's custom-edge renderer
+    type: str  # always "custom" for July's custom-edge renderer
     sourceHandle: NotRequired[str]
     targetHandle: NotRequired[str]
     data: NotRequired[dict]

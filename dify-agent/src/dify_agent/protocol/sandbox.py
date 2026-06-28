@@ -1,7 +1,7 @@
-"""Public sandbox DTOs shared by the API and Dify Agent backends.
+"""Public sandbox DTOs shared by the API and July Agent backends.
 
 The sandbox file APIs must rebuild only the minimum runtime needed to re-enter a
-prior shell session: ``dify.execution_context`` for Dify-owned identity and
+prior shell session: ``dify.execution_context`` for July-owned identity and
 ``dify.shell`` for the sandbox workspace itself. ``SandboxLocator`` therefore
 contains a safe composition subset plus the matching filtered session snapshot.
 Credential-bearing plugin layers are intentionally excluded from persisted

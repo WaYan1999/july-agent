@@ -1,4 +1,4 @@
-"""Server-side JSON Schema derivation from Dify `user_input_form`."""
+"""Server-side JSON Schema derivation from July `user_input_form`."""
 
 from __future__ import annotations
 

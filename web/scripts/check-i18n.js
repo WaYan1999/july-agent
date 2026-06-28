@@ -73,7 +73,7 @@ function parseArgs(argv) {
     }
 
     if (arg.startsWith('--lang=')) {
-      args.errors.push('--lang expects space-separated values. Example: --lang zh-Hans ja-JP')
+      args.errors.push('--lang expects space-separated values. Example: --lang zh-Hans')
       continue
     }
 
@@ -99,7 +99,7 @@ Options:
   -h, --help        Show help
 
 Examples:
-  pnpm run i18n:check --file app billing --lang zh-Hans ja-JP
+  pnpm run i18n:check --file app billing --lang zh-Hans
   pnpm run i18n:check --auto-remove
 `)
 }

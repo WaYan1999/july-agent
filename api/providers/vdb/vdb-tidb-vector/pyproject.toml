@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "tidb-vector==0.0.15",
 ]
-description = "Dify vector store backend (dify-vdb-tidb-vector)."
+description = "July vector store backend (dify-vdb-tidb-vector)."
 
 [project.entry-points."dify.vector_backends"]
 tidb_vector = "dify_vdb_tidb_vector.tidb_vector:TiDBVectorFactory"

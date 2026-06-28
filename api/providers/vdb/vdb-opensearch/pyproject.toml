@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "opensearch-py==3.1.0",
 ]
-description = "Dify vector store backend (dify-vdb-opensearch)."
+description = "July vector store backend (dify-vdb-opensearch)."
 
 [project.entry-points."dify.vector_backends"]
 opensearch = "dify_vdb_opensearch.opensearch_vector:OpenSearchVectorFactory"

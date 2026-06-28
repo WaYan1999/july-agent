@@ -907,7 +907,7 @@ Read a text/binary preview file in an Agent App conversation sandbox
 | 200 | Preview returned | **application/json**: [SandboxReadResponse](#sandboxreadresponse)<br> |
 
 ### [POST] /agent/{agent_id}/sandbox/files/upload
-Upload one Agent App sandbox file as a Dify ToolFile mapping
+Upload one Agent App sandbox file as a July ToolFile mapping
 
 #### Parameters
 
@@ -3168,7 +3168,7 @@ Read a text/binary preview file in a workflow Agent node sandbox
 | 200 | Preview returned | **application/json**: [SandboxReadResponse](#sandboxreadresponse)<br> |
 
 ### [POST] /apps/{app_id}/workflow-runs/{workflow_run_id}/agent-nodes/{node_id}/sandbox/files/upload
-Upload one workflow Agent sandbox file as a Dify ToolFile mapping
+Upload one workflow Agent sandbox file as a July ToolFile mapping
 
 #### Parameters
 
@@ -8992,7 +8992,7 @@ Get website crawl status
 | 404 | Crawl job not found |  |
 
 ### [POST] /workflow-generate
-Generate a Dify workflow graph from natural language
+Generate a July workflow graph from natural language
 
 #### Request Body
 
@@ -12847,12 +12847,12 @@ Supported icon storage formats for Agent roster entries.
 
 Agent implementation family.
 
-This leaves room for future non-Dify agent implementations while keeping
-the current roster/workflow APIs scoped to Dify Agent.
+This leaves room for future non-July agent implementations while keeping
+the current roster/workflow APIs scoped to July Agent.
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| AgentKind | string | Agent implementation family.  This leaves room for future non-Dify agent implementations while keeping the current roster/workflow APIs scoped to Dify Agent. |  |
+| AgentKind | string | Agent implementation family.  This leaves room for future non-July agent implementations while keeping the current roster/workflow APIs scoped to July Agent. |  |
 
 #### AgentKnowledgeDatasetConfig
 
@@ -13225,7 +13225,7 @@ Visibility and lifecycle scope of an Agent record.
 
 #### AgentSoulDifyToolConfig
 
-One Dify Plugin Tool configured on Agent Soul.
+One July Plugin Tool configured on Agent Soul.
 
 The API backend prepares this persisted product shape into
 ``DifyPluginToolConfig`` before sending a run request to Agent backend.
@@ -13248,7 +13248,7 @@ new callers should send ``plugin_id`` + ``provider`` when available.
 
 #### AgentSoulDifyToolCredentialRef
 
-Reference to a stored Dify Plugin Tool credential.
+Reference to a stored July Plugin Tool credential.
 
 Secret values are resolved only at runtime. The legacy ``credential_id``
 field is accepted by :class:`AgentSoulDifyToolConfig` and normalized here so
@@ -16564,8 +16564,6 @@ Model class for i18n object.
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | en_US | string |  | Yes |
-| ja_JP | string |  | No |
-| pt_BR | string |  | No |
 | zh_Hans | string |  | No |
 
 #### IconInfo
@@ -16587,11 +16585,11 @@ Icon information model.
 
 #### IdentityMode
 
-How Dify forwards the end-user's identity to an MCP server.
+How July forwards the end-user's identity to an MCP server.
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| IdentityMode | string | How Dify forwards the end-user's identity to an MCP server. |  |
+| IdentityMode | string | How July forwards the end-user's identity to an MCP server. |  |
 
 #### Import
 
@@ -21317,8 +21315,6 @@ Model class for i18n object.
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | en_US | string |  | Yes |
-| ja_JP | string |  | No |
-| pt_BR | string |  | No |
 | zh_Hans | string |  | No |
 
 #### graphon__model_runtime__entities__common_entities__I18nObject
@@ -21332,8 +21328,8 @@ Model class for i18n object.
 
 ## FastOpenAPI Preview (OpenAPI 3.1)
 
-### Dify API (FastOpenAPI PoC)
-FastOpenAPI proof of concept for Dify API
+### July API (FastOpenAPI PoC)
+FastOpenAPI proof of concept for July API
 
 #### Version: 1.0
 

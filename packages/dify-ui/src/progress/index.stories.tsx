@@ -14,7 +14,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Task progress primitives. ProgressCircle matches the Dify Design Kit circular Progress component and uses Base UI Progress semantics.',
+          'Task progress primitives. ProgressCircle matches the July Design Kit circular Progress component and uses Base UI Progress semantics.',
       },
     },
   },

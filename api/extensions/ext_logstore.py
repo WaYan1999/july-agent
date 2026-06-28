@@ -1,5 +1,5 @@
 """
-Logstore extension for Dify application.
+Logstore extension for July application.
 
 This extension initializes the logstore (Aliyun SLS) on application startup,
 creating necessary projects, logstores, and indexes if they don't exist.
@@ -67,7 +67,7 @@ def init_app(app: DifyApp):
     If initialization fails, the application continues running without logstore features.
 
     Args:
-        app: The Dify application instance
+        app: The July application instance
     """
     try:
         from extensions.logstore.aliyun_logstore import AliyunLogStore

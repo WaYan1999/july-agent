@@ -196,7 +196,7 @@ def _stage_error_to_envelope_code(exc: Exception) -> str:
 
 class WorkflowGenerator:
     """
-    Generates a Dify workflow graph from a natural-language instruction.
+    Generates a July workflow graph from a natural-language instruction.
 
     Domain layer — receives an already-constructed model instance. Use
     ``services.workflow_generator_service.WorkflowGeneratorService`` to
@@ -577,7 +577,7 @@ class WorkflowGenerator:
         nodes: list[dict[str, Any]] = list(cast(list[dict[str, Any]], graph.get("nodes", [])))
         edges: list[dict[str, Any]] = list(cast(list[dict[str, Any]], graph.get("edges", [])))
 
-        # Defensive ID remap: Dify's run-time placeholder regex only accepts
+        # Defensive ID remap: July's run-time placeholder regex only accepts
         # ``[a-zA-Z0-9_]`` in the node-id slot, so anything the LLM emits with
         # hyphens, dots, or spaces (``node-1``, ``node.2``, etc.) would break
         # every placeholder pointing at it. Sanitize every id + every
@@ -646,7 +646,7 @@ class WorkflowGenerator:
             deduped_edges.append(edge)
 
         # Build source/target → node_type lookup so we can fill edge.data.{sourceType,targetType}
-        # which Dify's edge renderer needs.
+        # which July's edge renderer needs.
         type_by_id = {node.get("id", ""): node.get("data", {}).get("type", "") for node in nodes}
         for edge in deduped_edges:
             edge.setdefault("data", {})
@@ -702,7 +702,7 @@ class WorkflowGenerator:
     # ------------------------------------------------------------------
 
     # Detects ``{{#node_id.var#}}`` placeholders. We match the EXACT regex
-    # Dify's workflow runtime uses (see
+    # July's workflow runtime uses (see
     # ``graphon.runtime.variable_pool.VARIABLE_PATTERN``):
     #
     #     \{\{#([a-zA-Z0-9_]{1,50}(?:\.[a-zA-Z_][a-zA-Z0-9_]{0,29}){1,10})#\}\}
@@ -877,7 +877,7 @@ class WorkflowGenerator:
         """
         Rewrite every node id to ``[a-zA-Z0-9_]`` and fix every cross-reference.
 
-        Dify's run-time ``VARIABLE_PATTERN`` accepts only ``[a-zA-Z0-9_]`` in
+        July's run-time ``VARIABLE_PATTERN`` accepts only ``[a-zA-Z0-9_]`` in
         the node-id slot of ``{{#…#}}`` placeholders. The builder LLM often
         emits ``node-1`` style ids (and occasionally dots or spaces); left
         unfixed those make every placeholder silently fail at run time, the
@@ -1395,7 +1395,7 @@ class WorkflowGenerator:
         """Flag ``parentId`` / ``start_node_id`` / ``iteration_id`` / ``loop_id`` pointing nowhere.
 
         ``parentId`` is checked at BOTH the node wrapper and inside ``data``
-        because Dify's schema puts it on the wrapper (ReactFlow convention)
+        because July's schema puts it on the wrapper (ReactFlow convention)
         but the LLM occasionally drops it into ``data`` too. Either spot is
         a real signal that we should validate.
         """

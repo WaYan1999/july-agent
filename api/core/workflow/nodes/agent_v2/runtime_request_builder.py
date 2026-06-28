@@ -124,7 +124,7 @@ class WorkflowAgentRuntimeRequest:
 
 
 class WorkflowAgentRuntimeRequestBuilder:
-    """Build public Dify Agent run requests from workflow Agent v2 runtime state."""
+    """Build public July Agent run requests from workflow Agent v2 runtime state."""
 
     def __init__(
         self,
@@ -210,7 +210,7 @@ class WorkflowAgentRuntimeRequestBuilder:
                     model_settings=agent_soul.model.model_settings.model_dump(mode="json", exclude_none=True),
                 ),
                 # The execution-context layer is now the only public protocol
-                # carrier for Dify tenant/user/run identifiers. ``user_id`` and
+                # carrier for July tenant/user/run identifiers. ``user_id`` and
                 # ``user_from`` must be forwarded here because downstream plugin-
                 # daemon provider/tool clients and knowledge-base layers read
                 # caller identity from this layer rather than from any parallel
@@ -547,7 +547,7 @@ def build_shell_layer_config(agent_soul: AgentSoulConfig) -> DifyShellLayerConfi
 
 
 def build_knowledge_layer_config(agent_soul: AgentSoulConfig) -> DifyKnowledgeBaseLayerConfig | None:
-    """Map Agent Soul knowledge config into the fixed Dify knowledge-base layer.
+    """Map Agent Soul knowledge config into the fixed July knowledge-base layer.
 
     Normalization intentionally matches the current dify-agent runtime contract:
 

@@ -10,7 +10,7 @@ from common import Logger, config_helper
 
 
 def setup_admin_account() -> None:
-    """Setup Dify API with an admin account."""
+    """Setup July API with an admin account."""
 
     log = Logger("SetupAdmin")
     log.header("Setting up Admin Account")
@@ -37,7 +37,7 @@ def setup_admin_account() -> None:
         "password": admin_config["password"],
     }
 
-    log.step("Configuring Dify with admin account...")
+    log.step("Configuring July with admin account...")
 
     try:
         # Make the setup request
@@ -61,7 +61,7 @@ def setup_admin_account() -> None:
                 log.debug(f"Response: {response.text}")
 
     except httpx.ConnectError:
-        log.error("Could not connect to Dify API at http://localhost:5001")
+        log.error("Could not connect to July API at http://localhost:5001")
         log.info("Make sure the API server is running with: ./dev/start-api")
     except Exception as e:
         log.error(f"An error occurred: {e}")

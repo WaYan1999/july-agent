@@ -14,7 +14,7 @@ plain-text fallback only. A single ``:`` separates all three fields; ``label``
 is the trailing remainder and may itself contain ``:``.
 
 The ``[§…§]`` wrapper uses the section sign ``§`` (U+00A7), which never appears
-in Dify template syntax (``{{var}}`` / ``{{#a.b#}}``) nor in normal prompt text,
+in July template syntax (``{{var}}`` / ``{{#a.b#}}``) nor in normal prompt text,
 so these tokens can never collide with the existing template parsers. Runtime
 expansion (and the final scrub that guarantees no internal marker ever reaches
 the model) is owned by the run-request builders.

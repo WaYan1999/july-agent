@@ -2,11 +2,11 @@
 
 Outbound HTTP client settings describe the FastAPI lifespan-owned
 ``httpx.AsyncClient`` instances shared by local run tasks for plugin-daemon and
-Dify API inner calls. Layers and Agenton providers do not own those clients, so
+July API inner calls. Layers and Agenton providers do not own those clients, so
 these settings are process resource limits rather than per-run lifecycle knobs.
 Endpoint URLs and API keys stay service-specific. The Agent Stub also uses this
 settings model directly: the public Agent Stub API base URL, server secret,
-optional gRPC bind override, and optional Dify inner API bridge settings all
+optional gRPC bind override, and optional July inner API bridge settings all
 live here under the ``DIFY_AGENT_...`` environment-variable namespace.
 """
 
@@ -97,7 +97,7 @@ class ServerSettings(BaseSettings):
     @field_validator("inner_api_url")
     @classmethod
     def normalize_inner_api_url(cls, value: str) -> str:
-        """Normalize the trusted Dify API base URL used for inner API calls."""
+        """Normalize the trusted July API base URL used for inner API calls."""
         stripped = value.strip()
         if not stripped:
             raise ValueError("DIFY_AGENT_INNER_API_URL must not be empty")
@@ -110,7 +110,7 @@ class ServerSettings(BaseSettings):
     @field_validator("inner_api_key")
     @classmethod
     def normalize_inner_api_key(cls, value: str | None) -> str | None:
-        """Normalize the optional trusted Dify inner API key."""
+        """Normalize the optional trusted July inner API key."""
         if value is None:
             return None
         stripped = value.strip()
@@ -137,7 +137,7 @@ class ServerSettings(BaseSettings):
         return AgentStubTokenCodec.from_server_secret(self.server_secret_key)
 
     def create_agent_stub_file_request_handler(self) -> DifyApiAgentStubFileRequestHandler | None:
-        """Return the Dify API file bridge when both Dify API settings are configured."""
+        """Return the July API file bridge when both July API settings are configured."""
         if self.inner_api_key is None:
             return None
         return DifyApiAgentStubFileRequestHandler(
@@ -146,10 +146,10 @@ class ServerSettings(BaseSettings):
         )
 
     def create_agent_stub_drive_request_handler(self) -> DifyApiAgentStubDriveRequestHandler | None:
-        """Return the Dify API drive bridge when both Dify API settings are configured.
+        """Return the July API drive bridge when both July API settings are configured.
 
         Drive manifest and commit requests should honor the same outbound timeout
-        settings as the server's other trusted Dify API HTTP calls.
+        settings as the server's other trusted July API HTTP calls.
         """
         if self.inner_api_key is None:
             return None

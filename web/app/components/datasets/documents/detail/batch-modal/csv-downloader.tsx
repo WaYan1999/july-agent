@@ -7,7 +7,6 @@ import {
 } from 'react-papaparse'
 import { Download02 as DownloadIcon } from '@/app/components/base/icons/src/vender/solid/general'
 import { useLocale } from '@/context/i18n'
-import { LanguagesSupported } from '@/i18n-config/language'
 import { ChunkingMode } from '@/models/datasets'
 
 const CSV_TEMPLATE_QA_EN = [
@@ -37,7 +36,7 @@ const CSVDownload: FC<{ docForm: ChunkingMode }> = ({ docForm }) => {
   const { CSVDownloader, Type } = useCSVDownloader()
 
   const getTemplate = () => {
-    if (locale === LanguagesSupported[1]) {
+    if (locale === 'zh-Hans') {
       if (docForm === ChunkingMode.qa)
         return CSV_TEMPLATE_QA_CN
       return CSV_TEMPLATE_CN

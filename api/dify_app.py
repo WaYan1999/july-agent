@@ -9,6 +9,6 @@ if TYPE_CHECKING:
 
 
 class DifyApp(Flask):
-    """Flask application type with Dify-specific extension attributes."""
+    """Flask application type with July-specific extension attributes."""
 
     login_manager: DifyLoginManager

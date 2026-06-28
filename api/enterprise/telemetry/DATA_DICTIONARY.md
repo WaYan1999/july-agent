@@ -1,6 +1,6 @@
-# Dify Enterprise Telemetry Data Dictionary
+# July Enterprise Telemetry Data Dictionary
 
-Quick reference for all telemetry signals emitted by Dify Enterprise. For configuration and architecture details, see [README.md](./README.md).
+Quick reference for all telemetry signals emitted by July Enterprise. For configuration and architecture details, see [README.md](./README.md).
 
 ## Resource Attributes
 

@@ -9,6 +9,7 @@ import FeatureCard from '@/app/components/base/features/new-feature-panel/featur
 import { FeatureEnum } from '@/app/components/base/features/types'
 import { ContentModeration } from '@/app/components/base/icons/src/vender/features'
 import { useLocale } from '@/context/i18n'
+import { getSupportedLocale } from '@/i18n-config/language'
 import { useModalContext } from '@/context/modal-context'
 import { useCodeBasedExtensions } from '@/service/use-common'
 
@@ -111,7 +112,7 @@ const Moderation = ({
     else if (moderation?.type === 'api')
       return t('apiBasedExtension.selector.title', { ns: 'common' })
     else
-      return codeBasedExtensionList?.data.find(item => item.name === moderation?.type)?.label[locale] || '-'
+      return codeBasedExtensionList?.data.find(item => item.name === moderation?.type)?.label[getSupportedLocale(locale)] || '-'
   }, [codeBasedExtensionList?.data, locale, moderation?.type, t])
 
   const enableContent = useMemo(() => {

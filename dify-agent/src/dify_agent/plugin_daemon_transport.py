@@ -1,7 +1,7 @@
 """Shared plugin-daemon transport helpers.
 
 These helpers define the common request-payload and nested-error semantics used
-by Dify Agent's LLM and tools daemon clients so the two transport adapters do
+by July Agent's LLM and tools daemon clients so the two transport adapters do
 not drift when the daemon protocol evolves.
 """
 

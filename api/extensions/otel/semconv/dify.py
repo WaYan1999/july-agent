@@ -1,8 +1,8 @@
-"""Dify-specific semantic convention definitions."""
+"""July-specific semantic convention definitions."""
 
 
 class DifySpanAttributes:
-    """Attribute names for Dify-specific spans."""
+    """Attribute names for July-specific spans."""
 
     APP_ID = "dify.app_id"
     """Application identifier."""

@@ -174,7 +174,7 @@ export const Positions: Story = {
                       Right panel
                     </DrawerTitle>
                     <DrawerDescription className="mt-1 text-sm/5 text-text-tertiary">
-                      This drawer is positioned with swipeDirection="right" and the Dify default popup styles.
+                      This drawer is positioned with swipeDirection="right" and the July default popup styles.
                     </DrawerDescription>
                   </div>
                   <DrawerCloseButton className="shrink-0" />
@@ -207,7 +207,7 @@ export const Positions: Story = {
                       Left panel
                     </DrawerTitle>
                     <DrawerDescription className="mt-1 text-sm/5 text-text-tertiary">
-                      This drawer is positioned with swipeDirection="left" and the Dify default popup styles.
+                      This drawer is positioned with swipeDirection="left" and the July default popup styles.
                     </DrawerDescription>
                   </div>
                   <DrawerCloseButton className="shrink-0" />

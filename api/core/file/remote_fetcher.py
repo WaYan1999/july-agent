@@ -1,15 +1,15 @@
-"""Unified remote-file retrieval with Dify signed file URL resolution.
+"""Unified remote-file retrieval with July signed file URL resolution.
 
 Use this module for backend workflows whose intent is to fetch remote file content
 or remote file metadata from a URL, even when the URL originally came from a user
 upload, a workflow variable, a tool/datasource file, or an app DSL. GET/HEAD
-requests can resolve Dify-signed file URLs locally through DB + storage before
+requests can resolve July-signed file URLs locally through DB + storage before
 falling back to the SSRF-protected network client.
 
 Use `core.helper.ssrf_proxy` directly only for generic outbound HTTP where the
 URL is not being treated as a remote file, such as HTTP Request nodes, external
 API integrations, auth discovery, or user-configured tool calls. Those calls must
-stay as real network requests and should not reinterpret Dify file URLs as stored
+stay as real network requests and should not reinterpret July file URLs as stored
 files.
 """
 
@@ -58,7 +58,7 @@ class _SignedFileUrl:
 def make_request(method: str, url: str, max_retries: int = SSRF_DEFAULT_MAX_RETRIES, **kwargs: Any) -> httpx.Response:
     """Fetch remote file content or metadata.
 
-    GET and HEAD requests for Dify-owned signed file URLs are served from local
+    GET and HEAD requests for July-owned signed file URLs are served from local
     storage. Every other request is delegated unchanged to the SSRF proxy.
     """
 
@@ -77,7 +77,7 @@ def make_request(method: str, url: str, max_retries: int = SSRF_DEFAULT_MAX_RETR
 class GraphonRemoteFileFetcher:
     """Graphon HTTP-client adapter backed by the unified remote-file fetcher.
 
-    Graphon requires method-specific HTTP client methods, while regular Dify
+    Graphon requires method-specific HTTP client methods, while regular July
     call sites should use `make_request` directly.
     """
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Dify Node.js SDK Publish Script
+# July Node.js SDK Publish Script
 # ================================
 # A beautiful and reliable script to publish the SDK to npm
 #
@@ -34,7 +34,7 @@ print_banner() {
     echo -e "${CYAN}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
     echo "║                                                               ║"
-    echo "║           🚀 Dify Node.js SDK Publish Script 🚀              ║"
+    echo "║           🚀 July Node.js SDK Publish Script 🚀              ║"
     echo "║                                                               ║"
     echo "╚═══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"

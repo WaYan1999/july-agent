@@ -1,4 +1,4 @@
-"""LLM adapters for Dify plugin-daemon integrations."""
+"""LLM adapters for July plugin-daemon integrations."""
 
 from .model import DifyLLMAdapterModel
 from .provider import DifyPluginDaemonProvider

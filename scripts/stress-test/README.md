@@ -1,6 +1,6 @@
-# Dify Stress Test Suite
+# July Stress Test Suite
 
-A high-performance stress test suite for Dify workflow execution using **Locust** - optimized for measuring Server-Sent Events (SSE) streaming performance.
+A high-performance stress test suite for July workflow execution using **Locust** - optimized for measuring Server-Sent Events (SSE) streaming performance.
 
 ## Key Metrics Tracked
 
@@ -89,7 +89,7 @@ The stress test tests a single endpoint with comprehensive SSE metrics tracking:
    - Locust (load testing framework)
    - sseclient-py (SSE client library)
 
-1. **Complete Dify setup**:
+1. **Complete July setup**:
 
    ```bash
    # Run the complete setup
@@ -213,7 +213,7 @@ After running the stress test, you'll find these files in the `reports/` directo
 
 ```text
 ============================================================
-DIFY SSE STRESS TEST
+JULY SSE STRESS TEST
 ============================================================
 
 [2025-09-12 15:45:44,468] Starting test run with 10 users at 2 users/sec
@@ -413,7 +413,7 @@ docker compose -f docker/docker-compose.middleware.yaml up -d db
 1. **Services not running**:
 
    ```bash
-   # Start Dify API with Gunicorn (production mode)
+   # Start July API with Gunicorn (production mode)
    cd api
    uv run gunicorn --bind 0.0.0.0:5001 --workers 4 --worker-class gevent app:app
 

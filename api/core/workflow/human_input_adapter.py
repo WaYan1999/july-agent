@@ -1,7 +1,7 @@
 """Workflow-to-Graphon adapters for persisted node payloads.
 
 Stored workflow graphs and editor payloads still contain a small set of
-Dify-owned field spellings and value shapes. Adapt them here before handing the
+July-owned field spellings and value shapes. Adapt them here before handing the
 payload to Graphon so Graphon-owned models only see current contracts.
 """
 

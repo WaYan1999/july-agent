@@ -334,7 +334,7 @@ class WorkflowAgentNodeValidator:
             exposed_name = tool.tool_name or f"{provider_key}/*"
             if exposed_name in exposed_names:
                 raise WorkflowAgentNodeValidationError(
-                    f"Workflow Agent node {binding.node_id} has duplicate Dify Plugin Tool name {exposed_name}."
+                    f"Workflow Agent node {binding.node_id} has duplicate July Plugin Tool name {exposed_name}."
                 )
             exposed_names.add(exposed_name)
 

@@ -197,10 +197,10 @@ class AliyunLogStore:
             self.endpoint, self.access_key_id, self.access_key_secret, auth_version=AUTH_VERSION_4, region=self.region
         )
 
-        # Append Dify identification to the existing user agent
+        # Append July identification to the existing user agent
         original_user_agent = self.client._user_agent
         dify_version = dify_config.project.version
-        enhanced_user_agent = f"Dify,Dify-{dify_version},{original_user_agent}"
+        enhanced_user_agent = f"July,July-{dify_version},{original_user_agent}"
         self.client.set_user_agent(enhanced_user_agent)
 
         # PG client will be initialized in init_project_logstore
@@ -427,7 +427,7 @@ class AliyunLogStore:
                     )
                     raise
 
-            # Ensure index contains all Dify-required fields
+            # Ensure index contains all July-required fields
             # This intelligently merges with existing config, preserving custom indexes
             self.ensure_index_config(logstore_name)
 
@@ -562,24 +562,24 @@ class AliyunLogStore:
         self, existing_config: IndexConfig, required_keys: dict[str, IndexKeyConfig], logstore_name: str
     ) -> tuple[IndexConfig, bool]:
         """
-        Intelligently merge existing index config with Dify's required field indexes.
+        Intelligently merge existing index config with July's required field indexes.
 
         This method:
         1. Preserves all existing field indexes in logstore (including custom fields)
-        2. Adds missing Dify-required fields
+        2. Adds missing July-required fields
         3. Updates fields where type doesn't match (with json/text compatibility)
-        4. Corrects case mismatches (e.g., if Dify needs 'status' but logstore has 'Status')
+        4. Corrects case mismatches (e.g., if July needs 'status' but logstore has 'Status')
 
         Type compatibility rules:
         - json and text types are considered compatible (users can manually choose either)
-        - All other type mismatches will be corrected to match Dify requirements
+        - All other type mismatches will be corrected to match July requirements
 
         Note: Logstore is case-sensitive and doesn't allow duplicate fields with different cases.
         Case mismatch means: existing field name differs from required name only in case.
 
         Args:
             existing_config: Current index configuration from logstore
-            required_keys: Dify's required field index configurations
+            required_keys: July's required field index configurations
             logstore_name: Name of the logstore (for logging)
 
         Returns:
@@ -641,7 +641,7 @@ class AliyunLogStore:
         # Log changes
         if missing_fields:
             logger.info(
-                "Logstore %s: Adding %d missing Dify-required fields: %s",
+                "Logstore %s: Adding %d missing July-required fields: %s",
                 logstore_name,
                 len(missing_fields),
                 ", ".join(missing_fields[:10]) + ("..." if len(missing_fields) > 10 else ""),
@@ -679,19 +679,19 @@ class AliyunLogStore:
 
     def ensure_index_config(self, logstore_name: str) -> None:
         """
-        Ensure index configuration includes all Dify-required fields.
+        Ensure index configuration includes all July-required fields.
 
         This method intelligently manages index configuration:
-        1. If index doesn't exist, create it with Dify's required fields
+        1. If index doesn't exist, create it with July's required fields
         2. If index exists:
-           - Check if all Dify-required fields are present
+           - Check if all July-required fields are present
            - Check if field types match requirements
            - Only update if fields are missing or types are incorrect
            - Preserve any additional custom index configurations
 
         This approach allows users to add their own custom indexes without being overwritten.
         """
-        # Get Dify's required field indexes
+        # Get July's required field indexes
         required_keys = {}
         if logstore_name == AliyunLogStore.workflow_execution_logstore:
             required_keys = self._get_workflow_execution_index_keys()
@@ -713,7 +713,7 @@ class AliyunLogStore:
             merged_config, needs_update = self._merge_index_configs(existing_config, required_keys, logstore_name)
 
             if needs_update:
-                logger.info("Logstore %s: Updating index to include Dify-required fields", logstore_name)
+                logger.info("Logstore %s: Updating index to include July-required fields", logstore_name)
                 try:
                     self.client.update_index(self.project_name, logstore_name, merged_config)
                     logger.info(
@@ -732,7 +732,7 @@ class AliyunLogStore:
                     raise
             else:
                 logger.info(
-                    "Logstore %s: Index already contains all %d Dify-required fields with correct types, "
+                    "Logstore %s: Index already contains all %d July-required fields with correct types, "
                     "no update needed",
                     logstore_name,
                     len(required_keys),

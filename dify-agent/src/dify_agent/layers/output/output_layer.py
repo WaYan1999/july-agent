@@ -1,4 +1,4 @@
-"""Runtime layer for Dify Agent structured final output contracts.
+"""Runtime layer for July Agent structured final output contracts.
 
 ``DifyOutputLayer`` is intentionally state-free and does not participate in
 prompt, user prompt, or tool aggregation. Instead, the scheduler and runner read
@@ -7,7 +7,7 @@ top-level object JSON Schema into a ``ToolOutput(...)`` whose inner dynamic type
 both exposes the model-facing schema and validates runtime output. ``jsonschema``
 performs the real content validation inside that custom Pydantic-compatible
 dict-like type, so Pydantic AI's normal output validation flow can request
-retries without a separate Dify-owned output-validator callback. Keeping both
+retries without a separate July-owned output-validator callback. Keeping both
 steps here lets request validation and execution reuse the same schema checks
 without teaching Agenton core about output aggregation.
 """

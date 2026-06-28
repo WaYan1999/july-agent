@@ -4,7 +4,7 @@ import { realStreams } from '@/sys/io/streams'
 import { runUseHost } from './use-host'
 
 export default class UseHost extends DifyCommand {
-  static override description = 'Switch the active Dify host'
+  static override description = 'Switch the active July host'
 
   static override examples = [
     '<%= config.bin %> use host',

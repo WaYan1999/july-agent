@@ -286,7 +286,7 @@ class PluginModelClient(BasePluginClient):
 
     @staticmethod
     def _raise_typed_polling_unsupported_error(error: PluginInvokeError) -> None:
-        """Convert plugin polling capability failures into a dedicated Dify exception."""
+        """Convert plugin polling capability failures into a dedicated July exception."""
         if error.get_error_type() == PluginLLMPollingUnsupportedError.__name__:
             raise PluginLLMPollingUnsupportedError(description=error.description) from error
 

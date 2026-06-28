@@ -1,4 +1,4 @@
-"""Async Python client example for the Dify Agent run server.
+"""Async Python client example for the July Agent run server.
 
 Requires Redis and a running API server. Before starting the server, sync the
 server runtime dependencies with `uv sync --project dify-agent --extra server`
@@ -7,7 +7,7 @@ example:
 
     uv run --project dify-agent uvicorn dify_agent.server.app:app --reload
 
-The request carries Dify plugin model configuration in Agenton layers. This
+The request carries July plugin model configuration in Agenton layers. This
 script prints the created run and every event observed through cursor polling.
 ``Client.create_run`` performs one POST attempt only; use polling or SSE replay to
 recover after client-side uncertainty.
@@ -45,7 +45,7 @@ async def main() -> None:
                             type=PLAIN_PROMPT_LAYER_TYPE_ID,
                             config=PromptLayerConfig(
                                 prefix="You are a concise assistant.",
-                                user="Say hello from the Dify Agent API server example.",
+                                user="Say hello from the July Agent API server example.",
                             ),
                         ),
                         RunLayerSpec(

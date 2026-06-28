@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "pymilvus~=2.6.12",
 ]
-description = "Dify vector store backend (dify-vdb-milvus)."
+description = "July vector store backend (dify-vdb-milvus)."
 
 [project.entry-points."dify.vector_backends"]
 milvus = "dify_vdb_milvus.milvus_vector:MilvusVectorFactory"

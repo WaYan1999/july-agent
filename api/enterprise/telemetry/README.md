@@ -1,10 +1,10 @@
-# Dify Enterprise Telemetry
+# July Enterprise Telemetry
 
-This document provides an overview of the Dify Enterprise OpenTelemetry (OTEL) exporter and how to configure it for integration with observability stacks like Prometheus, Grafana, Jaeger, or Honeycomb.
+This document provides an overview of the July Enterprise OpenTelemetry (OTEL) exporter and how to configure it for integration with observability stacks like Prometheus, Grafana, Jaeger, or Honeycomb.
 
 ## Overview
 
-Dify Enterprise uses a "slim span + rich companion log" architecture to provide high-fidelity observability without overwhelming trace storage.
+July Enterprise uses a "slim span + rich companion log" architecture to provide high-fidelity observability without overwhelming trace storage.
 
 - **Traces (Spans)**: Capture the structure, identity, and timing of high-level operations (Workflows and Nodes).
 - **Structured Logs**: Provide deep context (inputs, outputs, metadata) for every event, correlated to spans via `trace_id` and `span_id`.
@@ -44,7 +44,7 @@ The Enterprise OTEL exporter is configured via environment variables.
 
 ## Correlation Model
 
-Dify uses deterministic ID generation to ensure signals are correlated across different services and asynchronous tasks.
+July uses deterministic ID generation to ensure signals are correlated across different services and asynchronous tasks.
 
 ### ID Generation Rules
 
@@ -114,7 +114,7 @@ ref:node_execution_id=660e8400-e29b-41d4-a716-446655440001
 ref:message_id=770e8400-e29b-41d4-a716-446655440002
 ```
 
-To retrieve actual content when gating is enabled, query the Dify database using the provided UUID.
+To retrieve actual content when gating is enabled, query the July database using the provided UUID.
 
 ## Reference
 

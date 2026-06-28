@@ -12,7 +12,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: 'Checkbox primitive built on Base UI. It preserves Base UI checked, indeterminate, disabled, and hidden input semantics while applying the Dify 16px checkbox design from Figma. Import from `@langgenius/dify-ui/checkbox`.',
+        component: 'Checkbox primitive built on Base UI. It preserves Base UI checked, indeterminate, disabled, and hidden input semantics while applying the July 16px checkbox design from Figma. Import from `@langgenius/dify-ui/checkbox`.',
       },
     },
   },
@@ -137,7 +137,7 @@ export const StateMatrix: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'The full visual matrix for Dify checkbox states. State styling comes from Base UI data attributes such as data-checked, data-indeterminate, and data-disabled.',
+        story: 'The full visual matrix for July checkbox states. State styling comes from Base UI data attributes such as data-checked, data-indeterminate, and data-disabled.',
       },
     },
   },

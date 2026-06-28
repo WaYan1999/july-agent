@@ -3,7 +3,7 @@
 The adapter does not define a new cross-service event contract. It consumes
 ``dify_agent.protocol.RunEvent`` and produces small API-internal models that the
 workflow Agent Node maps to Graphon/AppQueue events. Deferred external tool calls
-remain Dify Agent ``run_succeeded`` payloads on the wire; API code turns them
+remain July Agent ``run_succeeded`` payloads on the wire; API code turns them
 into an internal event so workflow pause/session handling stays local to API.
 """
 
@@ -39,7 +39,7 @@ class AgentBackendInternalEventType(StrEnum):
 
 
 class AgentBackendInternalEventBase(BaseModel):
-    """Common fields preserved from public Dify Agent run events."""
+    """Common fields preserved from public July Agent run events."""
 
     run_id: str
     source_event_id: str | None = None
@@ -70,7 +70,7 @@ class AgentBackendRunSucceededInternalEvent(AgentBackendInternalEventBase):
 
 
 class AgentBackendDeferredToolCallInternalEvent(AgentBackendInternalEventBase):
-    """API-internal representation of a Dify Agent deferred external tool call."""
+    """API-internal representation of a July Agent deferred external tool call."""
 
     type: Literal[AgentBackendInternalEventType.DEFERRED_TOOL_CALL] = AgentBackendInternalEventType.DEFERRED_TOOL_CALL
     deferred_tool_call: DeferredToolCallPayload

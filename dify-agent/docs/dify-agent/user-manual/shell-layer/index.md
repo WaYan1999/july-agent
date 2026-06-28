@@ -1,7 +1,7 @@
 # Shell layer
 
-The shell layer lets a Dify Agent run expose a `shellctl`-backed workspace to the
-model. This page is for Dify Agent clients that build `CreateRunRequest`
+The shell layer lets a July Agent run expose a `shellctl`-backed workspace to the
+model. This page is for July Agent clients that build `CreateRunRequest`
 payloads. It explains how to add the layer to a run composition and how the
 server-side runtime must be wired.
 
@@ -19,13 +19,13 @@ RunLayerSpec(
 ```
 
 Server-only settings, such as the `shellctl` HTTP entrypoint and auth token, are
-injected by the Dify Agent runtime provider. They are not part of
+injected by the July Agent runtime provider. They are not part of
 `DifyShellLayerConfig` and should not be submitted by clients in the public run
 request.
 
 ## Runtime requirements
 
-When a run includes `dify.shell`, the Dify Agent server must construct its layer
+When a run includes `dify.shell`, the July Agent server must construct its layer
 providers with a non-empty shellctl entrypoint:
 
 ```python
@@ -51,7 +51,7 @@ DIFY_AGENT_SHELLCTL_AUTH_TOKEN=replace-with-shellctl-token
 client on the no-token path. Set it only when the shellctl server is started with
 bearer authentication.
 
-To let commands inside user-visible shell jobs call back to the Dify Agent server
+To let commands inside user-visible shell jobs call back to the July Agent server
 with `dify-agent ...`, also enable the Agent Stub:
 
 ```env
@@ -204,7 +204,7 @@ Here is the analysis of the sales dataset:
 
 ## Running the local sandbox in Docker
 
-Build the local sandbox image from the Dify Agent package root:
+Build the local sandbox image from the July Agent package root:
 
 ```bash
 docker build -f docker/local-sandbox/Dockerfile -t dify-agent-local-sandbox:local .

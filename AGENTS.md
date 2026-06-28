@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-Dify is an open-source platform for developing LLM applications with an intuitive interface combining agentic AI workflows, RAG pipelines, agent capabilities, and model management.
+July is an open-source platform for developing LLM applications with an intuitive interface combining agentic AI workflows, RAG pipelines, agent capabilities, and model management.
 
 The codebase is split into:
 
 - **Backend API** (`/api`): Python Flask application organized with Domain-Driven Design
 - **Frontend Web** (`/web`): Next.js application using TypeScript and React
 - **Docker deployment** (`/docker`): Containerized deployment configurations
-- **Dify Agent Backend** (`/dify-agent`): Backend services for managing and executing agent
+- **July Agent Backend** (`/dify-agent`): Backend services for managing and executing agent
 
 ## Backend Workflow
 

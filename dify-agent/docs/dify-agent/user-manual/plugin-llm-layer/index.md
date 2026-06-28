@@ -1,7 +1,7 @@
 # Plugin LLM layer
 
 The plugin LLM layer selects the plugin package, model provider, model name,
-provider credentials, and optional model settings for the current run. Dify
+provider credentials, and optional model settings for the current run. July
 Agent reads the model from the reserved layer name `llm`.
 
 It must depend on an [execution context layer](../execution-context-layer/index.md),
@@ -102,7 +102,7 @@ composition = RunComposition(
 
 - The model layer must use the reserved name `llm` (`DIFY_AGENT_MODEL_LAYER_ID`).
 - `plugin_id` belongs here because model calls are plugin-specific business
-  calls. The shared execution-context layer only carries Dify run and
+  calls. The shared execution-context layer only carries July run and
   tenant/user daemon context.
 - Credential shape depends on the selected plugin provider; the OpenAI-style
   `api_key` field above is only an example.

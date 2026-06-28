@@ -1,4 +1,4 @@
-# Dedicated image for the standalone Dify Agent backend server.
+# Dedicated image for the standalone July Agent backend server.
 #
 # It is laid out to match how the service is deployed today (see the
 # agent_backend compose service): the virtualenv lives at /app/api/.venv and

@@ -38,7 +38,7 @@ class MCPSupportGrantType(StrEnum):
 
 
 class IdentityMode(StrEnum):
-    """How Dify forwards the end-user's identity to an MCP server."""
+    """How July forwards the end-user's identity to an MCP server."""
 
     OFF = "off"
     IDP_TOKEN = "idp_token"

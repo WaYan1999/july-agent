@@ -362,7 +362,7 @@ class AgentSoulPromptConfig(BaseModel):
 
 
 class AgentSoulDifyToolCredentialRef(BaseModel):
-    """Reference to a stored Dify Plugin Tool credential.
+    """Reference to a stored July Plugin Tool credential.
 
     Secret values are resolved only at runtime. The legacy ``credential_id``
     field is accepted by :class:`AgentSoulDifyToolConfig` and normalized here so
@@ -377,7 +377,7 @@ class AgentSoulDifyToolCredentialRef(BaseModel):
 
 
 class AgentSoulDifyToolConfig(BaseModel):
-    """One Dify Plugin Tool configured on Agent Soul.
+    """One July Plugin Tool configured on Agent Soul.
 
     The API backend prepares this persisted product shape into
     ``DifyPluginToolConfig`` before sending a run request to Agent backend.
@@ -392,7 +392,7 @@ class AgentSoulDifyToolConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     enabled: bool = True
-    # Dify Plugin Tools live behind the ``PLUGIN`` provider type. ``BUILT_IN`` /
+    # July Plugin Tools live behind the ``PLUGIN`` provider type. ``BUILT_IN`` /
     # ``WORKFLOW`` / ``API`` providers are not exposed to the Agent backend in
     # this layer — keep the default narrow so a missing field surfaces as
     # ``agent_tool_declaration_not_found`` against the correct provider table.
@@ -435,9 +435,9 @@ class AgentSoulDifyToolConfig(BaseModel):
     @model_validator(mode="after")
     def _validate_provider_and_credentials(self) -> AgentSoulDifyToolConfig:
         if not self.provider_id and not (self.plugin_id and self.provider):
-            raise ValueError("Dify tool requires provider_id or plugin_id + provider")
+            raise ValueError("July tool requires provider_id or plugin_id + provider")
         if self.credential_type != "unauthorized" and (self.credential_ref is None or not self.credential_ref.id):
-            raise ValueError("credential_ref.id is required for credentialed Dify tools")
+            raise ValueError("credential_ref.id is required for credentialed July tools")
         # ``name`` is reserved for a future user-rename UX. Until that lands
         # the model-visible name is forced to match ``tool_name``; reject
         # explicit values so a frontend bug surfaces immediately instead of

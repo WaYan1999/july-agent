@@ -1,7 +1,7 @@
 """
 Workflow generator package.
 
-Generates a Dify workflow graph (nodes, edges, viewport) from a natural-language
+Generates a July workflow graph (nodes, edges, viewport) from a natural-language
 instruction. Intended for the cmd+k `/create` slash command's preview/apply flow.
 
 Pipeline (slim, single-shot variant):

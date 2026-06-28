@@ -1,4 +1,4 @@
-"""Client-safe helpers for the Dify Agent Stub control plane."""
+"""Client-safe helpers for the July Agent Stub control plane."""
 
 from ._agent_stub import (
     connect_agent_stub_sync,

@@ -20,7 +20,7 @@ const REGISTRY_UNSORTED: readonly EnvVar[] = [
   },
   {
     name: 'DIFY_HOST',
-    description: 'Default Dify host (overridden by --host).',
+    description: 'Default July host (overridden by --host).',
   },
   {
     name: 'DIFY_LIMIT',

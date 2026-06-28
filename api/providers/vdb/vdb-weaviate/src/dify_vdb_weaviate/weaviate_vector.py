@@ -1,5 +1,5 @@
 """
-Weaviate vector database implementation for Dify's RAG system.
+Weaviate vector database implementation for July's RAG system.
 
 This module provides integration with Weaviate vector database for storing and retrieving
 document embeddings used in retrieval-augmented generation workflows.

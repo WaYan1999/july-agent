@@ -1,4 +1,4 @@
-"""Async plugin-daemon client for Dify plugin tool invocation.
+"""Async plugin-daemon client for July plugin tool invocation.
 
 The agent runtime talks to the plugin daemon rather than importing provider SDKs
 directly. The tools layer now consumes API-prepared declarations from config, so
@@ -53,7 +53,7 @@ class FileChunk:
 
 
 class DifyPluginToolInvokeMessage(BaseModel):
-    """Subset of Dify tool stream messages needed for agent observations."""
+    """Subset of July tool stream messages needed for agent observations."""
 
     class TextMessage(BaseModel):
         text: str
@@ -268,7 +268,7 @@ def merge_blob_chunks(
 ) -> list[DifyPluginToolInvokeMessage]:
     """Merge streamed blob chunks into complete blob messages.
 
-    This mirrors Dify API's plugin-daemon chunk-merging behavior before the
+    This mirrors July API's plugin-daemon chunk-merging behavior before the
     higher-level observation conversion logic sees tool stream messages.
     """
     files: dict[str, FileChunk] = {}

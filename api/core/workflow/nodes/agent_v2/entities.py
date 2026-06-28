@@ -13,5 +13,5 @@ class DifyAgentNodeData(BaseNodeData):
     @model_validator(mode="after")
     def validate_version(self) -> "DifyAgentNodeData":
         if self.version != "2":
-            raise ValueError("Dify Agent Node v2 requires version='2'")
+            raise ValueError("July Agent Node v2 requires version='2'")
         return self

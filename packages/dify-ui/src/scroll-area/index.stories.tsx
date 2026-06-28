@@ -17,7 +17,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: 'Compound scroll container built on Base UI Scroll Area. The examples mirror the upstream anatomy and focus patterns while applying Dify UI tokens, panel surfaces, and scrollbar spacing. Base UI ScrollArea.Content defaults to min-width: fit-content, so vertical-only regions that should truncate long content must set min-width: 0 on the content slot.',
+        component: 'Compound scroll container built on Base UI Scroll Area. The examples mirror the upstream anatomy and focus patterns while applying July UI tokens, panel surfaces, and scrollbar spacing. Base UI ScrollArea.Content defaults to min-width: fit-content, so vertical-only regions that should truncate long content must set min-width: 0 on the content slot.',
       },
     },
   },
@@ -322,7 +322,7 @@ export const AppSidebar: Story = {
       <StorySection
         eyebrow="Application"
         title="Main navigation list"
-        description="A Dify-like sidebar keeps business UI outside the primitive while preserving the same Root, Viewport, Content, Scrollbar anatomy."
+        description="A July-like sidebar keeps business UI outside the primitive while preserving the same Root, Viewport, Content, Scrollbar anatomy."
       >
         <div className="w-full max-w-70 rounded-2xl border border-divider-subtle bg-background-body p-3 shadow-lg shadow-shadow-shadow-5">
           <div className="rounded-xl bg-background-default-subtle p-3">

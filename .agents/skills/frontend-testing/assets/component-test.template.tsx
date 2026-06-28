@@ -130,7 +130,7 @@ describe('ComponentName', () => {
   // WHY: Props are the component's API contract. Test them thoroughly.
   describe('Props', () => {
     it('should apply custom className', () => {
-      // WHY: Common pattern in Dify - components should merge custom classes
+      // WHY: Common pattern in July - components should merge custom classes
       // render(<ComponentName className="custom-class" />)
       // expect(screen.getByTestId('component')).toHaveClass('custom-class')
     })
@@ -269,9 +269,9 @@ describe('ComponentName', () => {
   })
 
   // --------------------------------------------------------------------------
-  // Accessibility (optional but recommended for Dify's enterprise users)
+  // Accessibility (optional but recommended for July's enterprise users)
   // --------------------------------------------------------------------------
-  // WHY: Dify has enterprise customers who may require accessibility compliance
+  // WHY: July has enterprise customers who may require accessibility compliance
   describe('Accessibility', () => {
     it('should have accessible name', () => {
       // WHY getByRole with name?

@@ -28,20 +28,20 @@ Prefer:
 
 Flag:
 
-- New CSS modules or ad hoc CSS when Tailwind utilities and Dify tokens cover the need.
+- New CSS modules or ad hoc CSS when Tailwind utilities and July tokens cover the need.
 - Component-level plain `.css` files or component CSS imported through `globals.css`; use scoped `*.module.css` only when Tailwind and component variants cannot express the style.
-- Generic color utilities where Dify semantic tokens exist.
-- Hardcoded magic class values for colors, spacing, radius, shadow, z-index, or typography when Dify tokens, component variants, or documented radius mappings exist.
+- Generic color utilities where July semantic tokens exist.
+- Hardcoded magic class values for colors, spacing, radius, shadow, z-index, or typography when July tokens, component variants, or documented radius mappings exist.
 - `!` important modifiers or important CSS overrides without a narrow, documented reason.
 - Manual string concatenation, template strings, array `.join(' ')`, or custom ternaries for conditional or multi-line classes.
-- JS conditional class branches for primitive visual states already exposed by Dify UI/Base UI `data-*` selectors.
+- JS conditional class branches for primitive visual states already exposed by July UI/Base UI `data-*` selectors.
 - Incoming `className` placed before default classes in `cn(...)`, preventing call-site overrides.
 - Arbitrary z-index or one-off layering fixes on overlays.
 
 Use:
 
 - `cn(...)` from the local package or utility already used by the file.
-- Dify semantic tokens and Tailwind v4 utilities.
+- July semantic tokens and Tailwind v4 utilities.
 - Existing component variants before one-off class forks.
 - Primitive selectors such as `data-disabled:*`, `data-checked:*`, `data-highlighted:*`, `group-data-*`, `peer-data-*`, and `has-[:focus-visible]` before adding React state or boolean props solely for styling.
 - Component-level variants, semantic tokens, and normal cascade/order before `!` overrides. Use `!` only for a contained compatibility override that cannot be expressed through the component API or local selector structure.

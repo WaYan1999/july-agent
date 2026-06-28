@@ -71,15 +71,15 @@ def main() -> None:
     """Run all setup scripts in order."""
 
     log = Logger("Setup")
-    log.box("Dify Stress Test Setup - Full Installation")
+    log.box("July Stress Test Setup - Full Installation")
 
     # Check if required services are running
     log.step("Checking required services...")
     log.separator()
 
-    dify_running = check_port("localhost", 5001, "Dify API server")
+    dify_running = check_port("localhost", 5001, "July API server")
     if not dify_running:
-        log.info("To start Dify API server:")
+        log.info("To start July API server:")
         log.list_item("Run: ./dev/start-api")
 
     mock_running = check_port("localhost", 5004, "Mock OpenAI server")
@@ -131,7 +131,7 @@ def main() -> None:
         log.error(f"Setup failed at: {failed_step}")
         log.separator()
         log.info("Troubleshooting:")
-        log.list_item("Check if the Dify API server is running (./dev/start-api)")
+        log.list_item("Check if the July API server is running (./dev/start-api)")
         log.list_item("Check if the mock OpenAI server is running (port 5004)")
         log.list_item("Review the error messages above")
         log.list_item("Run cleanup.py and try again")

@@ -1,4 +1,4 @@
-// Web-side calls into the Dify device-flow endpoints. All routes now sit
+// Web-side calls into the July device-flow endpoints. All routes now sit
 // under /openapi/v1/oauth/device/* (Phase G of the openapi migration). The
 // approve/deny endpoints still require the console session cookie + CSRF
 // token; lookup is unauthenticated; the SSO branch uses cookie + per-flow

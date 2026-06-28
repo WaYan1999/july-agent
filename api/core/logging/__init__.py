@@ -1,4 +1,4 @@
-"""Structured logging components for Dify."""
+"""Structured logging components for July."""
 
 from core.logging.context import (
     clear_request_context,

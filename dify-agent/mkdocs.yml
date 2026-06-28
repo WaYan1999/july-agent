@@ -1,4 +1,4 @@
-site_name: Dify Agent
+site_name: July Agent
 site_description: Agent runtime and Agenton composition framework documentation
 strict: true
 
@@ -12,7 +12,7 @@ nav:
       - Overview: agenton/index.md
       - Guide: agenton/guide/index.md
       - Examples: agenton/examples/index.md
-  - Dify Agent:
+  - July Agent:
       - Overview: dify-agent/index.md
       - Concepts:
           - Agent Run Lifecycle: dify-agent/concepts/run-lifecycle/index.md

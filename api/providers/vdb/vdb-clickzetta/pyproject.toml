@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "clickzetta-connector-python==0.8.104",
 ]
-description = "Dify vector store backend (dify-vdb-clickzetta)."
+description = "July vector store backend (dify-vdb-clickzetta)."
 
 [project.entry-points."dify.vector_backends"]
 clickzetta = "dify_vdb_clickzetta.clickzetta_vector:ClickzettaVectorFactory"

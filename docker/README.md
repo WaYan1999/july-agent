@@ -1,6 +1,6 @@
 ## README for docker Deployment
 
-Welcome to the new `docker` directory for deploying Dify using Docker Compose. This README outlines the updates, deployment instructions, and migration details for existing users.
+Welcome to the new `docker` directory for deploying July using Docker Compose. This README outlines the updates, deployment instructions, and migration details for existing users.
 
 ### What's Updated
 
@@ -14,7 +14,7 @@ Welcome to the new `docker` directory for deploying Dify using Docker Compose. T
 
 - **Unified Vector Database Services**: All vector database services are now managed from a single Docker Compose file `docker-compose.yaml`. You can switch between different vector databases by setting the `VECTOR_STORE` environment variable in your `.env` file.
 
-### How to Deploy Dify with `docker-compose.yaml`
+### How to Deploy July with `docker-compose.yaml`
 
 1. **Prerequisites**: Ensure Docker and Docker Compose are installed on your system.
 2. **Environment Setup**:
@@ -38,7 +38,7 @@ Welcome to the new `docker` directory for deploying Dify using Docker Compose. T
    - Copy `envs/core-services/shared.env.example` to `envs/core-services/shared.env`.
    - Set `ENABLE_OTEL=true` and configure `OTLP_BASE_ENDPOINT`. Tune the other `OTEL_*` knobs in the same file if needed.
 
-### How to Deploy Middleware for Developing Dify
+### How to Deploy Middleware for Developing July
 
 1. **Middleware Setup**:
    - Use the `docker-compose.middleware.yaml` for setting up essential middleware services like databases and caches.
@@ -93,7 +93,7 @@ The root `.env.example` file contains the essential startup settings. Optional a
 2. **Server Configuration**:
 
    - `LOG_LEVEL`, `DEBUG`, `FLASK_DEBUG`: Logging and debug settings.
-   - `SECRET_KEY`: A key for signing sessions, JWTs, and file URLs. Leave it empty to let Dify generate a persistent key in the storage directory, or set a unique value yourself.
+   - `SECRET_KEY`: A key for signing sessions, JWTs, and file URLs. Leave it empty to let July generate a persistent key in the storage directory, or set a unique value yourself.
 
 3. **Database Configuration**:
 
@@ -132,7 +132,7 @@ The root `.env.example` file contains the essential startup settings. Optional a
 
 ### Environment Variables Synchronization
 
-When upgrading Dify or pulling the latest changes, new environment variables may be introduced in `.env.example` only when they are required for startup,
+When upgrading July or pulling the latest changes, new environment variables may be introduced in `.env.example` only when they are required for startup,
 or in the optional files under `envs/` for advanced, provider-specific, and service-specific settings.
 
 If you use the default workflow, review `.env.example` and keep your `.env` aligned with essential startup values.
@@ -160,7 +160,7 @@ Before synchronization, the current `.env` file is saved to the `env-backup/` di
 
 **When to use**
 
-- After upgrading Dify to a newer version with a full `.env` file
+- After upgrading July to a newer version with a full `.env` file
 - When `.env.example` has been updated with new environment variables
 - When managing a large or heavily customized `.env` file copied from `.env.example`
 

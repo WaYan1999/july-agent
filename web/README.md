@@ -1,4 +1,4 @@
-# Dify Frontend
+# July Frontend
 
 This is a [Next.js] project, but you can dev with [vinext].
 
@@ -156,7 +156,7 @@ Visit <https://docs.dify.ai> to view the full documentation.
 
 ## Community
 
-The Dify community can be found on [Discord community], where you can ask questions, voice ideas, and share your projects.
+The July community can be found on [Discord community], where you can ask questions, voice ideas, and share your projects.
 
 [Corepack]: https://github.com/nodejs/corepack#readme
 [Discord community]: https://discord.gg/5AEfbxcd9k

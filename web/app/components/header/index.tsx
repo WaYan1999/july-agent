@@ -1,6 +1,6 @@
 'use client'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import DifyLogo from '@/app/components/base/logo/dify-logo'
+import JulyLogo from '@/app/components/base/logo/dify-logo'
 import WorkplaceSelector from '@/app/components/header/account-dropdown/workplace-selector'
 import { ACCOUNT_SETTING_TAB } from '@/app/components/header/account-setting/constants'
 import { useAppContext, useSelector as useAppContextSelector } from '@/context/app-context'
@@ -50,7 +50,7 @@ export function Header() {
   const canAccessExplorePage = hasPermission(workspacePermissionKeys, 'app_library.access')
   const canAccessToolsPage = hasPermission(workspacePermissionKeys, ['tool.manage', 'mcp.manage'])
 
-  const logoLabel = isBrandingEnabled && systemFeatures.branding.application_title ? systemFeatures.branding.application_title : 'Dify'
+  const logoLabel = isBrandingEnabled && systemFeatures.branding.application_title ? systemFeatures.branding.application_title : 'July'
   const renderLogo = () => (
     <Link
       href="/apps"
@@ -65,7 +65,7 @@ export function Header() {
               alt=""
             />
           )
-        : <DifyLogo alt="" />}
+        : <JulyLogo alt="" />}
     </Link>
   )
 

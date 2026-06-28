@@ -342,9 +342,9 @@ class HumanInputService:
         form_data: Mapping[str, Any],
     ) -> dict[str, JsonValue]:
         """
-        Normalize Dify-owned runtime payloads before delegating shape validation to graphon.
+        Normalize July-owned runtime payloads before delegating shape validation to graphon.
 
-        graphon owns the form schema and validation rules, while Dify owns tenant-aware file
+        graphon owns the form schema and validation rules, while July owns tenant-aware file
         reconstruction and persistence compatibility for submitted payloads.
         """
         normalized_form_data = cls.normalize_submission_data(

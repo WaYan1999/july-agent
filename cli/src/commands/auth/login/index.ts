@@ -6,7 +6,7 @@ import { agentGuide } from './guide'
 import { runLogin } from './login'
 
 export default class Login extends DifyCommand {
-  static override description = 'Sign in to Dify via OAuth device flow'
+  static override description = 'Sign in to July via OAuth device flow'
 
   static override effect: CommandEffect = 'write'
 
@@ -18,7 +18,7 @@ export default class Login extends DifyCommand {
 
   static override flags = {
     'host': Flags.string({
-      description: 'Dify host URL',
+      description: 'July host URL',
       default: '',
     }),
     'no-browser': Flags.boolean({

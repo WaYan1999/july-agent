@@ -116,7 +116,7 @@ def apply_dify_debug_email_recipient(
     enabled: bool,
     actor_id: str | None,
 ) -> DeliveryChannelConfig:
-    """Apply the Dify debugger-specific email recipient override outside `graphon`."""
+    """Apply the July debugger-specific email recipient override outside `graphon`."""
     if not enabled:
         return method
     if not isinstance(method, EmailDeliveryMethod):
@@ -348,7 +348,7 @@ class DifyPromptMessageSerializer(PromptMessageSerializerProtocol):
 
 
 class DifyRetrieverAttachmentLoader(RetrieverAttachmentLoaderProtocol):
-    """Resolve retriever attachments through Dify persistence and return graph file references."""
+    """Resolve retriever attachments through July persistence and return graph file references."""
 
     _segment_access_checker: Callable[[str], bool] | None
 

@@ -1,7 +1,7 @@
-"""API-side integration boundary for the Dify Agent backend.
+"""API-side integration boundary for the July Agent backend.
 
 Public wire DTOs come from ``dify_agent.protocol``. This package only contains
-API adapters: request building from Dify product concepts, a thin client wrapper,
+API adapters: request building from July product concepts, a thin client wrapper,
 event adaptation for future workflow integration, and deterministic fakes.
 """
 

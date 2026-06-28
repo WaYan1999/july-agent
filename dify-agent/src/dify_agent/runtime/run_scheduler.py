@@ -1,4 +1,4 @@
-"""In-process scheduling for Dify Agent runs.
+"""In-process scheduling for July Agent runs.
 
 The scheduler is intentionally process-local: it persists a run record, starts an
 ``asyncio.Task`` for ``AgentRunRunner.run()``, and keeps only a transient active

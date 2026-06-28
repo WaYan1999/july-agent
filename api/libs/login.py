@@ -31,7 +31,7 @@ def _resolve_current_user() -> EndUser | Account | None:
 
 
 def _get_login_manager() -> DifyLoginManager:
-    """Return the project login manager with Dify's narrowed unauthorized contract."""
+    """Return the project login manager with July's narrowed unauthorized contract."""
     app = cast(DifyApp, current_app)
     return app.login_manager
 

@@ -5,7 +5,7 @@ version = "0.0.1"
 dependencies = [
     "elasticsearch==8.14.0",
 ]
-description = "Dify vector store backend (dify-vdb-elasticsearch)."
+description = "July vector store backend (dify-vdb-elasticsearch)."
 
 [project.entry-points."dify.vector_backends"]
 elasticsearch = "dify_vdb_elasticsearch.elasticsearch_vector:ElasticSearchVectorFactory"

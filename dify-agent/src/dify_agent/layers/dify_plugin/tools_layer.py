@@ -1,4 +1,4 @@
-"""Dify plugin tools layer for agent-accessible plugin tools.
+"""July plugin tools layer for agent-accessible plugin tools.
 
 This layer consumes API-prepared plugin tool declarations. The API side is
 responsible for resolving daemon declarations, applying runtime-parameter
@@ -42,7 +42,7 @@ from dify_agent.layers.execution_context.layer import DifyExecutionContextLayer
 
 
 # Plugin tools intentionally do not expose a per-tool strictness override in the
-# public config. The API supplies already-prepared schemas, but Dify Agent always
+# public config. The API supplies already-prepared schemas, but July Agent always
 # registers those tools in loose mode so daemon tool invocation stays tolerant of
 # plugin schema differences and older API-prepared payloads.
 PLUGIN_TOOL_STRICT = False
@@ -56,7 +56,7 @@ class DifyPluginToolsDeps(LayerDeps):
 
 @dataclass(slots=True)
 class DifyPluginToolsLayer(PlainLayer[DifyPluginToolsDeps, DifyPluginToolsLayerConfig]):
-    """Layer that resolves Dify plugin tools into Pydantic AI tools."""
+    """Layer that resolves July plugin tools into Pydantic AI tools."""
 
     type_id: ClassVar[str | None] = DIFY_PLUGIN_TOOLS_LAYER_TYPE_ID
 
@@ -169,7 +169,7 @@ def _prepare_tool_arguments(
 ) -> dict[str, object]:
     """Build the daemon invocation payload from prepared config + model args.
 
-    Argument precedence intentionally mirrors the old Dify tool runtime contract:
+    Argument precedence intentionally mirrors the old July tool runtime contract:
 
     1. start from config-supplied ``runtime_parameters`` for hidden/manual inputs;
     2. let model-supplied tool arguments override same-named entries;
@@ -204,7 +204,7 @@ def _cast_tool_parameter_value(parameter_type: DifyPluginToolParameterType, valu
     """Cast prepared tool argument values into daemon-facing wire shapes.
 
     The API side prepares declaration metadata, but the actual invocation payload
-    still needs to match Dify plugin-daemon expectations. This helper keeps the
+    still needs to match July plugin-daemon expectations. This helper keeps the
     runtime-side coercion rules for common scalar, collection, file, and selector
     parameter types so model-supplied JSON values and config-supplied hidden
     inputs are normalized before transport.
@@ -296,7 +296,7 @@ def _tool_error_text(*, tool_name: str, error: DifyPluginToolClientError) -> str
 def _convert_tool_response_to_text(tool_response: Sequence[DifyPluginToolInvokeMessage]) -> str:
     """Convert daemon stream messages into the plain-text tool observation.
 
-    This preserves the user-facing semantics Dify's agent tool runtime relies on:
+    This preserves the user-facing semantics July's agent tool runtime relies on:
     text is appended directly, links/images become user-check instructions, JSON
     output is included unless explicitly suppressed, variable messages stay
     internal, and everything else falls back to ``str(message)``. JSON fragments

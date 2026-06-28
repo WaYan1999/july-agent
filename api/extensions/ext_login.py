@@ -24,7 +24,7 @@ type LoginUser = Account | EndUser
 class DifyLoginManager(flask_login.LoginManager):
     """Project-specific Flask-Login manager with a stable unauthorized contract.
 
-    Dify registers `unauthorized_handler` below to always return a JSON `Response`.
+    July registers `unauthorized_handler` below to always return a JSON `Response`.
     Overriding this method lets callers rely on that narrower return type instead of
     Flask-Login's broader callback contract.
     """

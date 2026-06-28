@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run Dify SSE Stress Test using Locust
+# Run July SSE Stress Test using Locust
 
 set -e
 
@@ -30,16 +30,16 @@ SUMMARY_REPORT="${REPORT_DIR}/locust_summary_${TIMESTAMP}.txt"
 mkdir -p "${REPORT_DIR}"
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║             DIFY SSE WORKFLOW STRESS TEST (LOCUST)             ║${NC}"
+echo -e "${BLUE}║             JULY SSE WORKFLOW STRESS TEST (LOCUST)             ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo
 
 # Check if services are running
 echo -e "${YELLOW}Checking services...${NC}"
 
-# Check Dify API
+# Check July API
 if curl -s -f http://localhost:5001/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Dify API is running${NC}"
+    echo -e "${GREEN}✓ July API is running${NC}"
     
     # Warn if running in debug mode (check for werkzeug in process)
     if ps aux | grep -v grep | grep -q "werkzeug.*5001\|flask.*run.*5001"; then
@@ -56,7 +56,7 @@ if curl -s -f http://localhost:5001/health > /dev/null 2>&1; then
         fi
     fi
 else
-    echo -e "${RED}✗ Dify API is not running on port 5001${NC}"
+    echo -e "${RED}✗ July API is not running on port 5001${NC}"
     echo -e "${YELLOW}  Start it with Gunicorn for accurate benchmarking:${NC}"
     echo -e "${CYAN}  cd api && uv run gunicorn --bind 0.0.0.0:5001 --workers 4 --worker-class gevent app:app${NC}"
     exit 1

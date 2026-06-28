@@ -1,4 +1,4 @@
-"""Client-safe DTOs for Dify Agent structured output configuration.
+"""Client-safe DTOs for July Agent structured output configuration.
 
 This module contains only the public config schema and stable layer type id for
 the optional structured output layer. Runtime conversion into pydantic-ai output

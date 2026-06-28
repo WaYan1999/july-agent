@@ -1,4 +1,4 @@
-# Dify Backend API
+# July Backend API
 
 ## Setup and Run
 
@@ -6,7 +6,7 @@
 >
 > In the v1.3.0 release, `poetry` has been replaced with
 > [`uv`](https://docs.astral.sh/uv/) as the package manager
-> for Dify API backend service.
+> for July API backend service.
 
 `uv` and `pnpm` are required to run the setup and development commands below.
 
@@ -34,7 +34,7 @@ The scripts resolve paths relative to their location, so you can run them from a
    ./dev/start-api
    ```
 
-1. Start Dify [web](../web) service.
+1. Start July [web](../web) service.
 
    ```bash
    ./dev/start-web

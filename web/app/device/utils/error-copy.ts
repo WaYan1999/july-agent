@@ -33,7 +33,7 @@ export function approveErrorCopy(err: unknown): string {
 // SSO-branch failures arrive as a `sso_error` query param set by the backend
 // (oauth_device_sso sso-complete) when it redirects back to /device.
 const SSO_ERROR_COPY: Record<string, string> = {
-  email_belongs_to_dify_account: 'This identity is linked to a Dify account. Use “Sign in with Dify account” instead.',
+  email_belongs_to_dify_account: 'This identity is linked to a July account. Use “Sign in with July account” instead.',
 }
 
 const DEFAULT_SSO_ERROR_MESSAGE = 'Single sign-on could not be completed. Try again.'

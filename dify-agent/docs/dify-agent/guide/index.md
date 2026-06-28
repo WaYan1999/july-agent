@@ -1,6 +1,6 @@
-# Operating the Dify Agent Run Server
+# Operating the July Agent Run Server
 
-This guide describes how to run the MVP Dify Agent API server. The server is
+This guide describes how to run the MVP July Agent API server. The server is
 implemented in `dify-agent/src/dify_agent/server/app.py` and uses Redis for run
 records and per-run event streams only.
 
@@ -19,7 +19,7 @@ By default, the FastAPI lifespan creates:
 - one process-local scheduler that starts background `asyncio` run tasks
 
 This means local development needs one uvicorn process plus Redis, and
-plugin-backed runs also need a reachable Dify plugin daemon. Run execution still
+plugin-backed runs also need a reachable July plugin daemon. Run execution still
 happens outside request handlers, so client disconnects do not cancel the agent
 run.
 
@@ -34,10 +34,10 @@ also reads `.env` and `dify-agent/.env` when present.
 | `DIFY_AGENT_REDIS_PREFIX` | `dify-agent` | Prefix for Redis record and event keys. |
 | `DIFY_AGENT_SHUTDOWN_GRACE_SECONDS` | `30` | Seconds to wait for active local runs during graceful shutdown before cancellation. |
 | `DIFY_AGENT_RUN_RETENTION_SECONDS` | `259200` | Seconds to retain Redis run records and per-run event streams; defaults to 3 days. |
-| `DIFY_AGENT_PLUGIN_DAEMON_URL` | `http://localhost:5002` | Base URL for the Dify plugin daemon. |
-| `DIFY_AGENT_PLUGIN_DAEMON_API_KEY` | empty | API key sent to the Dify plugin daemon. |
-| `DIFY_AGENT_INNER_API_URL` | `http://localhost:5001` | Dify API service root used when dify-agent calls `/inner/api/...` endpoints. |
-| `DIFY_AGENT_INNER_API_KEY` | empty | API key sent to Dify API inner plugin endpoints. Set this to Dify API `INNER_API_KEY_FOR_PLUGIN` (Docker: `PLUGIN_DIFY_INNER_API_KEY`). |
+| `DIFY_AGENT_PLUGIN_DAEMON_URL` | `http://localhost:5002` | Base URL for the July plugin daemon. |
+| `DIFY_AGENT_PLUGIN_DAEMON_API_KEY` | empty | API key sent to the July plugin daemon. |
+| `DIFY_AGENT_INNER_API_URL` | `http://localhost:5001` | July API service root used when dify-agent calls `/inner/api/...` endpoints. |
+| `DIFY_AGENT_INNER_API_KEY` | empty | API key sent to July API inner plugin endpoints. Set this to July API `INNER_API_KEY_FOR_PLUGIN` (Docker: `PLUGIN_DIFY_INNER_API_KEY`). |
 | `DIFY_AGENT_SHELLCTL_ENTRYPOINT` | empty | Base URL for the shellctl server used by `dify.shell`; required when runs include the shell layer. |
 | `DIFY_AGENT_SHELLCTL_AUTH_TOKEN` | empty | Optional bearer token sent to the shellctl server. |
 | `DIFY_AGENT_STUB_API_BASE_URL` | empty | Public Agent Stub API base URL reachable from shellctl-managed remote machines. HTTP may be the service root or `/agent-stub`; gRPC must be `grpc://host:port`. Enables `DIFY_AGENT_STUB_*` env injection for user `shell.run` jobs. |
@@ -154,5 +154,5 @@ The repository includes simple consumers that print observed output/events:
 - `dify-agent/examples/dify_agent/dify_agent_examples/run_server_sse_consumer.py`
   consumes raw SSE frames for an existing run id.
 
-The create-run examples submit Dify plugin model layers, so they require Redis,
+The create-run examples submit July plugin model layers, so they require Redis,
 the API server, plugin-daemon settings, and provider credentials.

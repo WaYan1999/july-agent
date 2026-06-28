@@ -14,7 +14,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Status Dot primitive from the Dify Design Kit. Use it for compact visual status indicators; provide an accessible label only when the dot is the sole status representation.',
+          'Status Dot primitive from the July Design Kit. Use it for compact visual status indicators; provide an accessible label only when the dot is the sole status representation.',
       },
     },
   },

@@ -19,7 +19,6 @@ import {
 } from 'react-papaparse'
 import { useLocale } from '@/context/i18n'
 
-import { LanguagesSupported } from '@/i18n-config/language'
 import { clearAllAnnotations, fetchExportAnnotationList } from '@/service/annotation'
 import { downloadBlob } from '@/utils/download'
 import AddAnnotationModal from '../add-annotation-modal'
@@ -58,7 +57,7 @@ const downloadAnnotationJsonl = (list: AnnotationItemBasic[], locale: string) =>
 
 const downloadAnnotationCsv = (list: AnnotationItemBasic[], locale: string) => {
   const content = jsonToCSV([
-    locale !== LanguagesSupported[1] ? CSV_HEADER_QA_EN : CSV_HEADER_QA_CN,
+    locale === 'zh-Hans' ? CSV_HEADER_QA_CN : CSV_HEADER_QA_EN,
     ...list.map(item => [item.question, item.answer]),
   ])
   const file = new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8;' })

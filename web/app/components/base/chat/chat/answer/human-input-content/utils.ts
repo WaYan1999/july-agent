@@ -17,8 +17,6 @@ import {
 } from '@/app/components/workflow/nodes/human-input/types'
 import 'dayjs/locale/en'
 import 'dayjs/locale/zh-cn'
-import 'dayjs/locale/ja'
-import 'dayjs/locale/nl'
 
 dayjs.extend(utc)
 dayjs.extend(relativeTime)
@@ -178,8 +176,6 @@ export const getProcessedHumanInputFormInputs = (
 const localeMap: Record<string, string> = {
   'en-US': 'en',
   'zh-Hans': 'zh-cn',
-  'ja-JP': 'ja',
-  'nl-NL': 'nl',
 }
 
 export const getRelativeTime = (

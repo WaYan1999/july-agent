@@ -323,7 +323,7 @@ class WorkflowGenerateApi(Resource):
     """
 
     @console_ns.doc("generate_workflow_graph")
-    @console_ns.doc(description="Generate a Dify workflow graph from natural language")
+    @console_ns.doc(description="Generate a July workflow graph from natural language")
     @console_ns.expect(console_ns.models[WorkflowGeneratePayload.__name__])
     @console_ns.response(200, "Workflow graph generated successfully", console_ns.models[GeneratorResponse.__name__])
     @console_ns.response(400, "Invalid request parameters")

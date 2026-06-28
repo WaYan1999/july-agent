@@ -1,11 +1,11 @@
-"""Client-safe DTOs for the Dify execution-context Agenton layer.
+"""Client-safe DTOs for the July execution-context Agenton layer.
 
-This layer carries both Dify product execution context (tenant, user, workflow,
+This layer carries both July product execution context (tenant, user, workflow,
 invoke source) and Agent backend runtime mode. The product-facing fields are
 used by trusted server-side boundaries such as the Agent Stub when they
-need to reconstruct Dify API file-access scope without granting the sandbox any
+need to reconstruct July API file-access scope without granting the sandbox any
 direct inner-API credentials. Knowledge-base layers also read ``user_from`` from
-this shared config so the inner Dify API can distinguish platform-user and
+this shared config so the inner July API can distinguish platform-user and
 end-user searches without making that caller identity model-controlled.
 Server-only plugin-daemon settings are injected by the runtime provider factory
 and therefore do not appear in this public schema.
@@ -40,7 +40,7 @@ DifyExecutionContextInvokeFrom: TypeAlias = Literal[
 
 
 class DifyExecutionContextLayerConfig(LayerConfig):
-    """Public config for Dify execution identity and daemon transport context."""
+    """Public config for July execution identity and daemon transport context."""
 
     tenant_id: str
     user_id: str | None = None

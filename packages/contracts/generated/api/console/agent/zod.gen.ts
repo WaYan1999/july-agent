@@ -832,8 +832,8 @@ export const zAgentAppDetailWithSite = z.object({
  *
  * Agent implementation family.
  *
- * This leaves room for future non-Dify agent implementations while keeping
- * the current roster/workflow APIs scoped to Dify Agent.
+ * This leaves room for future non-July agent implementations while keeping
+ * the current roster/workflow APIs scoped to July Agent.
  */
 export const zAgentKind = z.enum(['dify_agent'])
 
@@ -1673,7 +1673,7 @@ export const zDeclaredOutputCheckConfig = z.object({
 /**
  * AgentSoulDifyToolCredentialRef
  *
- * Reference to a stored Dify Plugin Tool credential.
+ * Reference to a stored July Plugin Tool credential.
  *
  * Secret values are resolved only at runtime. The legacy ``credential_id``
  * field is accepted by :class:`AgentSoulDifyToolConfig` and normalized here so
@@ -1688,7 +1688,7 @@ export const zAgentSoulDifyToolCredentialRef = z.object({
 /**
  * AgentSoulDifyToolConfig
  *
- * One Dify Plugin Tool configured on Agent Soul.
+ * One July Plugin Tool configured on Agent Soul.
  *
  * The API backend prepares this persisted product shape into
  * ``DifyPluginToolConfig`` before sending a run request to Agent backend.

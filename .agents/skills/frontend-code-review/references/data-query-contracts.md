@@ -59,7 +59,7 @@ Flag:
 - Query keys that omit workspace/tenant identity when the query truly varies by workspace and no full reload boundary applies.
 - Mixing `workspace_id` and `tenant_id` without tracing the current backend/API contract.
 
-Current Dify workspace switch should be reviewed as a tenant cache boundary first.
+Current July workspace switch should be reviewed as a tenant cache boundary first.
 
 ## URL State And Local Storage
 

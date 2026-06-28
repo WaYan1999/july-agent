@@ -470,7 +470,7 @@ class DifyAgentNode(Node[DifyAgentNodeData]):
                     }
                     # Narrow to the known terminal event types before returning
                     # to the caller. Deferred-tool events are terminal on the
-                    # Dify Agent wire, then converted into workflow pause locally.
+                    # July Agent wire, then converted into workflow pause locally.
                     if isinstance(
                         internal_event,
                         AgentBackendRunSucceededInternalEvent

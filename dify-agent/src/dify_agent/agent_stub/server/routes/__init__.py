@@ -1,4 +1,4 @@
-"""Route exports for the Dify Agent stub server."""
+"""Route exports for the July Agent stub server."""
 
 from .agent_stub import create_agent_stub_http_router
 

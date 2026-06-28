@@ -157,7 +157,7 @@
     function createIframe() {
       const iframe = document.createElement("iframe");
       iframe.allow = "fullscreen;microphone";
-      iframe.title = "dify chatbot bubble window";
+      iframe.title = "July chatbot bubble window";
       iframe.id = iframeId;
       iframe.src = iframeUrl;
       iframe.style.cssText = originalIframeStyleText;

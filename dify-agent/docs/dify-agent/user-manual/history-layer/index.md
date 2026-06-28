@@ -63,7 +63,7 @@ terminal snapshot resumable. Keep that default for normal memory flows.
 
 ## What gets stored
 
-Dify Agent handles memory conservatively:
+July Agent handles memory conservatively:
 
 1. Current system prompts are rendered into temporary `message_history` before
    stored history.

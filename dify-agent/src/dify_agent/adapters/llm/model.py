@@ -1,4 +1,4 @@
-"""Bridge Dify plugin-daemon LLM invocations into Pydantic AI's model interface.
+"""Bridge July plugin-daemon LLM invocations into Pydantic AI's model interface.
 
 The API and agent layers are clients of the plugin daemon, not direct hosts of provider SDK
 implementations. This adapter therefore targets the plugin-daemon dispatch protocol and maps
@@ -89,7 +89,7 @@ class _DifyRequestInput:
 
 @dataclass(slots=True)
 class DifyLLMAdapterModel(Model[DifyPluginDaemonLLMClient]):
-    """Use a Dify plugin-daemon transport plus request-level model identity."""
+    """Use a July plugin-daemon transport plus request-level model identity."""
 
     model: str
     daemon_provider: DifyPluginDaemonProvider

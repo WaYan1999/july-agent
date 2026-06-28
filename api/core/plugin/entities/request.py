@@ -252,7 +252,7 @@ class RequestDownloadFileMapping(BaseModel):
         if not self.reference:
             raise ValueError("reference is required for non-remote file mappings")
         if not is_canonical_file_reference(self.reference):
-            raise ValueError("reference must be a canonical Dify file reference")
+            raise ValueError("reference must be a canonical July file reference")
         if self.url is not None:
             raise ValueError("url is not allowed for non-remote file mappings")
         return self

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-SSE (Server-Sent Events) Stress Test for Dify Workflow API
+SSE (Server-Sent Events) Stress Test for July Workflow API
 
-This script stress tests the streaming performance of Dify's workflow execution API,
+This script stress tests the streaming performance of July's workflow execution API,
 measuring key metrics like connection rate, event throughput, and time to first event (TTFE).
 """
 
@@ -362,7 +362,7 @@ class SSEParser:
 
 
 class DifyWorkflowUser(HttpUser):
-    """Locust user for testing Dify workflow SSE endpoints"""
+    """Locust user for testing July workflow SSE endpoints"""
 
     # Use constant wait for streaming workloads
     wait_time = constant(0) if os.getenv("WAIT_TIME", "0") == "0" else between(1, 3)
@@ -558,7 +558,7 @@ class DifyWorkflowUser(HttpUser):
 @events.test_start.add_listener  # type: ignore[misc]
 def on_test_start(environment: object, **kwargs: object) -> None:
     logger.info("=" * 80)
-    logger.info(" " * 25 + "DIFY SSE BENCHMARK - REAL-TIME METRICS")
+    logger.info(" " * 25 + "JULY SSE BENCHMARK - REAL-TIME METRICS")
     logger.info("=" * 80)
     logger.info(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 80)

@@ -1,4 +1,4 @@
-# Dify UI Rules
+# July UI Rules
 
 Use these rules whenever a review touches `packages/dify-ui/` or code consuming `@langgenius/dify-ui/*`.
 
@@ -18,7 +18,7 @@ Flag in `packages/dify-ui`:
 - Business-specific component behavior that belongs in `web/`.
 - Multiple unrelated primitives in one component folder.
 
-`packages/dify-ui` is a primitive layer: Base UI headless components + `cva` + `cn` + Dify design tokens.
+`packages/dify-ui` is a primitive layer: Base UI headless components + `cva` + `cn` + July design tokens.
 
 ## Imports And Exports
 
@@ -37,37 +37,37 @@ Flag:
 
 - Flattened props where related values need a discriminated union, such as `value` / `defaultValue`, `multiple` / `value`, or `clearable` / `onChange`.
 - React state used only to mirror Base UI state for class names.
-- JavaScript conditional class logic for visual states that the Dify UI/Base UI primitive already exposes through `data-*` attributes or CSS variables.
+- JavaScript conditional class logic for visual states that the July UI/Base UI primitive already exposes through `data-*` attributes or CSS variables.
 - Controlled props added when uncontrolled DOM state or CSS variables would be enough.
 - Thin wrappers that rename Base UI parts without adding semantics.
 
-Prefer Base UI/Dify UI data attributes and CSS variables for visual state: `data-open`, `data-checked`, `data-disabled`, `data-highlighted`, `data-popup-open`, `group-data-*`, `peer-data-*`, `has-[:focus-visible]`, and primitive CSS variables such as anchor width or transform origin. Use JS conditional classes for product/business state that the primitive does not expose.
+Prefer Base UI/July UI data attributes and CSS variables for visual state: `data-open`, `data-checked`, `data-disabled`, `data-highlighted`, `data-popup-open`, `group-data-*`, `peer-data-*`, `has-[:focus-visible]`, and primitive CSS variables such as anchor width or transform origin. Use JS conditional classes for product/business state that the primitive does not expose.
 
 ## Forms
 
 Flag:
 
 - Form-like UI using unrelated `Input` and `Button` pieces without a submit boundary.
-- Text-like fields not composed through `FieldRoot`, `FieldLabel`, and `FieldControl` when using Dify UI form semantics.
+- Text-like fields not composed through `FieldRoot`, `FieldLabel`, and `FieldControl` when using July UI form semantics.
 - Select fields using `FieldLabel` instead of `SelectLabel`.
 - Slider fields using a generic label instead of `SliderLabel`.
 - Checkbox/radio groups missing `FieldsetRoot` and `FieldsetLegend`.
 - Field errors or descriptions rendered without `FieldDescription` / `FieldError` relationships.
 
-`Form` is the submit boundary. Dify UI form primitives are not a form state-management framework; business validation and schema-driven behavior belong in `web/`.
+`Form` is the submit boundary. July UI form primitives are not a form state-management framework; business validation and schema-driven behavior belong in `web/`.
 
 ## Overlay Contract
 
 Flag:
 
 - Legacy web overlay imports in new or modified code.
-- Manual portals around Dify UI overlay primitives.
+- Manual portals around July UI overlay primitives.
 - Call-site `z-*` overrides on overlays.
 - Missing root `isolation: isolate` assumptions when debugging overlay stacking.
 - Repeated backdrop, z-index, or portal chrome at call sites.
 - Tooltip used for infotips, long text, or interactive content.
 
-All Dify UI body-portalled overlays use `z-50`. Toast uses `z-60`. DOM order handles stacking between overlays.
+All July UI body-portalled overlays use `z-50`. Toast uses `z-60`. DOM order handles stacking between overlays.
 
 ## Primitive Selection
 
@@ -92,8 +92,8 @@ Use:
 Flag:
 
 - Manually recreating UI behavior or chrome already owned by `@langgenius/dify-ui/*` or `web/app/components/base/*`, such as buttons, inputs, toggle groups, popovers, dropdown menus, alert dialogs, switches, avatars, scroll areas, toasts, borders, focus states, disabled states, segmented controls, or existing feature components.
-- Styling a raw Base UI primitive directly in `web/` when a Dify UI primitive exists.
-- Wrapping a Dify UI primitive in a feature component that hides its label, error, disabled, or focus contract.
+- Styling a raw Base UI primitive directly in `web/` when a July UI primitive exists.
+- Wrapping a July UI primitive in a feature component that hides its label, error, disabled, or focus contract.
 - Replacing a semantic primitive with a generic `div` plus classes to match a screenshot.
 - Using `Tooltip` because it is visually convenient when the content is actually help text or needs touch access.
 - Adding a `z-*` override to make a child popup appear over a parent dialog.
@@ -109,8 +109,8 @@ Flag:
 
 - `radius-*` class names.
 - Custom Tailwind `borderRadius` extension for Figma radius values.
-- Generic colors where semantic Dify tokens exist.
-- Hardcoded design values where Dify tokens, component variants, or documented Figma radius mappings exist.
+- Generic colors where semantic July tokens exist.
+- Hardcoded design values where July tokens, component variants, or documented Figma radius mappings exist.
 - `!` important modifiers used to fight primitive styles instead of fixing the variant, selector, or component composition.
 - Manual class strings that duplicate primitive variants.
 - `min-w-(--anchor-width)` on picker popups when it defeats viewport clamping.

@@ -1,6 +1,6 @@
-# Get started with Dify Agent
+# Get started with July Agent
 
-This guide walks through the smallest end-to-end path for the current Dify Agent
+This guide walks through the smallest end-to-end path for the current July Agent
 runtime: install dependencies, configure the server, start it, then use the Python
 client to create one plugin-daemon-backed run.
 
@@ -11,7 +11,7 @@ Install or prepare:
 - Python 3.12 or newer
 - `uv`
 - Redis
-- a reachable Dify plugin daemon
+- a reachable July plugin daemon
 - a plugin/provider already available through that plugin daemon, such as
   `langgenius/openai`
 
@@ -62,13 +62,13 @@ The minimum settings are:
 - `DIFY_AGENT_REDIS_URL`: Redis connection URL used for run records and event
   streams.
 - `DIFY_AGENT_REDIS_PREFIX`: Redis key prefix for this server.
-- `DIFY_AGENT_PLUGIN_DAEMON_URL`: base URL for the Dify plugin daemon.
+- `DIFY_AGENT_PLUGIN_DAEMON_URL`: base URL for the July plugin daemon.
 - `DIFY_AGENT_PLUGIN_DAEMON_API_KEY`: API key sent by the server to the plugin
-  daemon. In a Dify Docker setup this is usually the value previously configured
+  daemon. In a July Docker setup this is usually the value previously configured
   as `PLUGIN_DAEMON_KEY`.
-- `DIFY_AGENT_INNER_API_URL`: Dify API service root for `/inner/api/...` calls.
-- `DIFY_AGENT_INNER_API_KEY`: API key sent to Dify API inner plugin endpoints.
-  In Docker this should match `PLUGIN_DIFY_INNER_API_KEY`, which maps to Dify
+- `DIFY_AGENT_INNER_API_URL`: July API service root for `/inner/api/...` calls.
+- `DIFY_AGENT_INNER_API_KEY`: API key sent to July API inner plugin endpoints.
+  In Docker this should match `PLUGIN_DIFY_INNER_API_KEY`, which maps to July
   API `INNER_API_KEY_FOR_PLUGIN`.
 
 See `.example.env` for the full server settings template.
@@ -78,7 +78,7 @@ and, when shell jobs need to call back with the `dify-agent` command, set
 `DIFY_AGENT_STUB_API_BASE_URL` plus a 32-byte base64url
 `DIFY_AGENT_SERVER_SECRET_KEY` as documented in `.example.env`.
 
-## Start the Dify Agent server
+## Start the July Agent server
 
 For a normal local server process:
 
@@ -145,7 +145,7 @@ MODEL_CREDENTIALS: dict[str, str | int | float | bool | None] = {
 }
 
 SYSTEM_PROMPT = "You are a concise assistant."
-USER_PROMPT = "用一句话介绍 Dify Agent。"
+USER_PROMPT = "用一句话介绍 July Agent。"
 
 
 def build_request() -> CreateRunRequest:
@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
 ## Run the client example
 
-The server-side `.env` controls how Dify Agent reaches the plugin daemon. The
+The server-side `.env` controls how July Agent reaches the plugin daemon. The
 client example controls which tenant/plugin/provider/model and provider
 credentials the run uses.
 
@@ -229,8 +229,8 @@ Set `MODEL_PROVIDER` and `MODEL_NAME` to the same values as
 
 If the run fails, check these items first:
 
-1. Redis is running and reachable from the Dify Agent server.
-2. The Dify Agent server is listening on `127.0.0.1:8000`.
+1. Redis is running and reachable from the July Agent server.
+2. The July Agent server is listening on `127.0.0.1:8000`.
 3. `DIFY_AGENT_PLUGIN_DAEMON_URL` points to the correct plugin daemon.
 4. `DIFY_AGENT_PLUGIN_DAEMON_API_KEY` matches the plugin daemon server key.
 5. `PLUGIN_ID`, `MODEL_PROVIDER`, and `MODEL_NAME` in the client example match

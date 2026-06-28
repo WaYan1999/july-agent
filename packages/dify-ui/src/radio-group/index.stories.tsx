@@ -179,7 +179,7 @@ function DynamicFormFieldDemo() {
   return (
     <FieldRoot name="generation_mode" className="flex w-80 flex-col gap-2">
       <FieldDescription className="body-xs-regular text-text-tertiary">
-        This mirrors Dify dynamic form fields where radio options are controlled by schema and persisted as a single value.
+        This mirrors July dynamic form fields where radio options are controlled by schema and persisted as a single value.
       </FieldDescription>
       <FieldsetRoot
         render={(
@@ -211,7 +211,7 @@ export const DynamicFormField: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Matches Dify form composition: Field and Fieldset provide group labeling while RadioGroup owns controlled single-selection state.',
+        story: 'Matches July form composition: Field and Fieldset provide group labeling while RadioGroup owns controlled single-selection state.',
       },
     },
   },

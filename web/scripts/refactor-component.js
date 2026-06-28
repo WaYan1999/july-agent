@@ -147,7 +147,7 @@ ${refactorActions.map(action => `- ${action}`).join('\n')}
 Requirements:
 ${this.buildRequirements(analysis)}
 
-Follow Dify project conventions:
+Follow July project conventions:
 - Place extracted hooks in \`hooks/\` subdirectory or as \`use-<feature>.ts\`
 - Use React Query (\`@tanstack/react-query\`) for data fetching
 - Follow existing patterns in \`web/service/use-*.ts\` for API hooks

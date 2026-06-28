@@ -1,4 +1,4 @@
-"""Client-safe DTOs for Dify plugin-backed Agenton business layers.
+"""Client-safe DTOs for July plugin-backed Agenton business layers.
 
 This module intentionally contains only public config schemas and scalar type
 aliases plus stable plugin business-layer type identifiers. Runtime objects
@@ -34,7 +34,7 @@ class DifyPluginToolOption(BaseModel):
     """Selectable tool option value exposed to the model.
 
     The DTO also accepts API-side option dumps and attribute objects. Fields
-    such as ``label`` or ``icon`` are intentionally ignored because Dify Agent
+    such as ``label`` or ``icon`` are intentionally ignored because July Agent
     only preserves the normalized option ``value`` for tool invocation and
     model-visible schema generation.
     """
@@ -87,7 +87,7 @@ class DifyPluginToolParameter(BaseModel):
 
     The DTO intentionally accepts both API-side ``ToolParameter`` dumps and
     attribute objects so callers can adapt existing tool runtime declarations
-    without coupling Dify Agent to API-internal model classes.
+    without coupling July Agent to API-internal model classes.
     """
 
     name: str
@@ -123,7 +123,7 @@ class DifyPluginToolConfig(LayerConfig):
     versus ``"oauth2"``. A wrong value can make invocation fail at runtime even
     when the config itself validates successfully.
 
-    ``runtime_parameters`` mirrors Dify's agent-node hidden/manual tool inputs:
+    ``runtime_parameters`` mirrors July's agent-node hidden/manual tool inputs:
     those values are merged into the actual daemon invocation but omitted from
     the tool schema shown to the model.
 
@@ -150,7 +150,7 @@ class DifyPluginToolConfig(LayerConfig):
 
 
 class DifyPluginToolsLayerConfig(LayerConfig):
-    """Public config for the Dify plugin tools layer.
+    """Public config for the July plugin tools layer.
 
     Callers configure the tools layer with this wrapper object and supply one
     or more prepared ``DifyPluginToolConfig`` entries in ``tools``.

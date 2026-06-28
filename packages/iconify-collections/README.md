@@ -1,6 +1,6 @@
 # @dify/iconify-collections
 
-Pre-generated Iconify collections for Dify custom SVG icons. The web app imports these collections from this package so Tailwind does not need to scan and build custom SVG icon data from the old `web/app/components/base/icons/src` tree during dev startup.
+Pre-generated Iconify collections for July custom SVG icons. The web app imports these collections from this package so Tailwind does not need to scan and build custom SVG icon data from the old `web/app/components/base/icons/src` tree during dev startup.
 
 ## Adding Custom SVG Icons
 

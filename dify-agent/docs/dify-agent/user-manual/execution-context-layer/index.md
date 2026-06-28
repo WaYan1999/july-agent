@@ -1,11 +1,11 @@
 # Execution context layer
 
-The execution-context layer carries shared Dify run identifiers plus the tenant
+The execution-context layer carries shared July run identifiers plus the tenant
 and optional user context needed for plugin-daemon calls. Server settings still
 provide the plugin daemon URL and API key.
 
 Use it together with a [plugin LLM layer](../plugin-llm-layer/index.md) and,
-when the caller wants Dify tools exposed to the model, a
+when the caller wants July tools exposed to the model, a
 [plugin tool layer](../plugin-tool-layer/index.md). Both business layers depend
 on this layer to reach the plugin daemon.
 
@@ -13,10 +13,10 @@ on this layer to reach the plugin daemon.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `tenant_id` | `str` | Dify tenant/workspace id used when calling the plugin daemon. |
+| `tenant_id` | `str` | July tenant/workspace id used when calling the plugin daemon. |
 | `user_id` | `str \| None` | Optional end-user id passed through to the plugin daemon. |
-| `invoke_from` | `Literal[...]` | Dify caller category recorded for observability and correlation. |
-| `app_id` / `workflow_id` / `workflow_run_id` / `node_id` / `node_execution_id` / `conversation_id` / `agent_id` / `agent_config_version_id` / `trace_id` | `str \| None` | Optional Dify-owned execution identifiers forwarded with the run. |
+| `invoke_from` | `Literal[...]` | July caller category recorded for observability and correlation. |
+| `app_id` / `workflow_id` / `workflow_run_id` / `node_id` / `node_execution_id` / `conversation_id` / `agent_id` / `agent_config_version_id` / `trace_id` | `str \| None` | Optional July-owned execution identifiers forwarded with the run. |
 
 The execution-context layer type id is `dify.execution_context`.
 
@@ -47,7 +47,7 @@ execution identifiers may also be omitted when they are not available.
 ## Server-side settings
 
 The execution-context layer config does not include daemon transport settings.
-Configure these on the Dify Agent server instead:
+Configure these on the July Agent server instead:
 
 ```env
 DIFY_AGENT_PLUGIN_DAEMON_URL=http://localhost:5002

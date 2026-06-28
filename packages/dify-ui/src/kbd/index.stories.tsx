@@ -24,7 +24,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Keyboard input primitives aligned with the Dify Key Set design. '
+          'Keyboard input primitives aligned with the July Key Set design. '
           + '`Kbd` renders a native `<kbd>` element for a single key or key-like token. '
           + '`KbdGroup` only groups multiple keycaps; it does not replace the individual `<kbd>` semantics.',
       },
@@ -194,7 +194,7 @@ export const InContextMenu: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'A compact context-menu composition based on the Dify Design Kit context menu example. The menu is intentionally small here because the story focuses on shortcut keycaps.',
+        story: 'A compact context-menu composition based on the July Design Kit context menu example. The menu is intentionally small here because the story focuses on shortcut keycaps.',
       },
     },
   },

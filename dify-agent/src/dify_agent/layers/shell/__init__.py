@@ -1,4 +1,4 @@
-"""Client-safe exports for the Dify shell layer DTOs.
+"""Client-safe exports for the July shell layer DTOs.
 
 The runtime layer implementation lives in ``layer.py`` and imports shellctl
 client code plus server-side lifecycle behavior. Keep this package root

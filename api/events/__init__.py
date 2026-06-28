@@ -1,6 +1,6 @@
-"""Dify event package.
+"""July event package.
 
-The package name intentionally stays as ``events`` for existing Dify imports. Some
+The package name intentionally stays as ``events`` for existing July imports. Some
 third-party clients also import ``Events`` from a top-level ``events`` package, so
 we expose a small compatible implementation to avoid import shadowing failures.
 """

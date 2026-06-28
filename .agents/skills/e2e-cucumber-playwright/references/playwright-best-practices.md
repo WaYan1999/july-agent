@@ -1,6 +1,6 @@
-# Playwright Best Practices For Dify E2E
+# Playwright Best Practices For July E2E
 
-Use this reference when writing or reviewing locator, assertion, isolation, or synchronization logic for Dify's Cucumber-based E2E suite.
+Use this reference when writing or reviewing locator, assertion, isolation, or synchronization logic for July's Cucumber-based E2E suite.
 
 Official sources:
 
@@ -13,7 +13,7 @@ Official sources:
 
 ### 1. Keep scenarios isolated
 
-Playwright's model is built around clean browser contexts so one test does not leak into another. In Dify's suite, that principle maps to per-scenario session setup in `features/support/hooks.ts` and `DifyWorld`.
+Playwright's model is built around clean browser contexts so one test does not leak into another. In July's suite, that principle maps to per-scenario session setup in `features/support/hooks.ts` and `DifyWorld`.
 
 Apply it like this:
 
@@ -78,7 +78,7 @@ Bad pattern:
 
 ### 5. Match debugging to the current suite
 
-Playwright's wider ecosystem supports traces and rich debugging tools. Dify's current suite already captures:
+Playwright's wider ecosystem supports traces and rich debugging tools. July's current suite already captures:
 
 - full-page screenshots
 - page HTML

@@ -85,7 +85,7 @@ const AuthorizeSSO: FC<Props> = ({ onApproved, onError }) => {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-2xl font-semibold text-text-primary">Authorize Dify CLI</h2>
+        <h2 className="text-2xl font-semibold text-text-primary">Authorize July CLI</h2>
         <p className="mt-2 text-sm text-text-secondary">
           difyctl is requesting access via SSO. If you didn&apos;t start this from your terminal, close this tab.
         </p>
