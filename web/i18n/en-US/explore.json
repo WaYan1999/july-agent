@@ -82,5 +82,11 @@
   "skills.empty": "No published skills found.",
   "skills.sourceTypes.official": "Official",
   "skills.sourceTypes.other": "Other source",
-  "skills.sourceTypes.site": "This site"
+  "skills.sourceTypes.site": "This site",
+  "skills.stars": "{{count}} stars",
+  "skills.resultCount": "{{count}} skills found",
+  "skills.loadMore": "Load more",
+  "skills.loading": "Loading...",
+  "skills.endOfList": "You've reached the end.",
+  "skills.viewSource": "View source"
 }

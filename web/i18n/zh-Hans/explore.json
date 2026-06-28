@@ -82,5 +82,11 @@
   "skills.empty": "暂无已发布的 Skill。",
   "skills.sourceTypes.official": "官网",
   "skills.sourceTypes.other": "其他来源",
-  "skills.sourceTypes.site": "本站"
+  "skills.sourceTypes.site": "本站",
+  "skills.stars": "{{count}} 个 GitHub Star",
+  "skills.resultCount": "找到 {{count}} 个 Skill",
+  "skills.loadMore": "加载更多",
+  "skills.loading": "加载中…",
+  "skills.endOfList": "已经到底啦",
+  "skills.viewSource": "查看来源"
 }

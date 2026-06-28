@@ -11,14 +11,16 @@ import {
 } from '@langgenius/dify-ui/dialog'
 import { Input } from '@langgenius/dify-ui/input'
 import { toast } from '@langgenius/dify-ui/toast'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Markdown } from '@/app/components/base/markdown'
+import { useMarketplaceContainerScroll } from '@/app/components/plugins/marketplace/hooks'
 import { fetchSkillDetail, fetchSkillList, getSkillDownloadUrl, recordSkillCopy } from '@/service/skills'
 import { getSkillSourceTypeLabel } from './source-type'
 
 const DEFAULT_LIMIT = 30
+const SKILL_GRID_CLASS_NAME = 'grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[1800px]:grid-cols-5'
 const GENERIC_TAXONOMY_VALUES = new Set([
   'api',
   'apis',
@@ -97,6 +99,41 @@ function TaxonomyPills({ items, limit = 3 }: { items: SkillTaxonomy[], limit?: n
   )
 }
 
+function SkillCardSkeleton() {
+  return (
+    <div
+      className="flex h-[148px] flex-col overflow-hidden rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-on-panel-item-bg shadow-xs"
+      aria-hidden="true"
+    >
+      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+        <div className="size-10 shrink-0 animate-pulse rounded-xl bg-background-section-burn" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="h-4 w-2/3 animate-pulse rounded-md bg-background-section-burn" />
+          <div className="h-3 w-2/5 animate-pulse rounded-md bg-background-section-burn" />
+        </div>
+      </div>
+      <div className="mx-4 mt-1 space-y-1.5">
+        <div className="h-3 w-full animate-pulse rounded-md bg-background-section-burn" />
+        <div className="h-3 w-4/5 animate-pulse rounded-md bg-background-section-burn" />
+      </div>
+      <div className="mt-auto flex items-center justify-between gap-2 px-4 pt-2 pb-4">
+        <div className="h-5 w-16 animate-pulse rounded-md bg-background-section-burn" />
+        <div className="h-5 w-24 animate-pulse rounded-md bg-background-section-burn" />
+      </div>
+    </div>
+  )
+}
+
+function SkillGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className={SKILL_GRID_CLASS_NAME} role="status" aria-busy="true">
+      {Array.from({ length: count }).map((_, index) => (
+        <SkillCardSkeleton key={index} />
+      ))}
+    </div>
+  )
+}
+
 function SkillCard({
   skill,
   onOpen,
@@ -108,12 +145,13 @@ function SkillCard({
   const contentType = normalizeValue(skill.latest_version?.content_type)
   const detailLabel = t('detailPanel.operation.detail', { ns: 'plugin' })
   const authorName = skill.author_name?.trim()
+  const githubStars = skill.github_stars ?? 0
 
   return (
     <button
       type="button"
       className={cn(
-        'group hover-bg-components-panel-on-panel-item-bg relative flex h-[148px] flex-col overflow-hidden rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-on-panel-item-bg text-left shadow-xs transition-all hover:bg-components-panel-on-panel-item-bg-hover hover:shadow-md focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden',
+        'group relative flex h-[148px] flex-col overflow-hidden rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-on-panel-item-bg text-left shadow-xs transition-all hover:bg-components-panel-on-panel-item-bg-hover hover:shadow-md focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden',
       )}
       aria-label={`${detailLabel}: ${skill.name}`}
       onClick={() => onOpen(skill)}
@@ -132,6 +170,15 @@ function SkillCard({
               </>
             )}
             <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: skill.install_count })}</span>
+            {githubStars > 0 && (
+              <>
+                <span className="shrink-0 text-text-quaternary" aria-hidden="true">/</span>
+                <span className="flex shrink-0 items-center gap-0.5 tabular-nums" title={t('skills.stars', { ns: 'explore', count: githubStars })}>
+                  <span className="i-ri-star-line size-3" aria-hidden="true" />
+                  {githubStars}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -337,6 +384,17 @@ function SkillDetailDialog({
                       {t('skills.copyMarkdown', { ns: 'explore' })}
                     </Button>
                   )}
+                  {detail.source_url && (
+                    <a
+                      className="flex h-8 items-center gap-1 rounded-lg border border-components-button-secondary-border bg-components-button-secondary-bg px-3 system-sm-medium text-components-button-secondary-text hover:bg-components-button-secondary-bg-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+                      href={detail.source_url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      {t('skills.viewSource', { ns: 'explore' })}
+                      <span aria-hidden="true" className="i-ri-external-link-line size-3.5" />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -477,18 +535,29 @@ export default function SkillLibrary() {
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [detailSkill, setDetailSkill] = useState<Skill | null>(null)
-  const listQuery = useQuery({
+  const listQuery = useInfiniteQuery({
     queryKey: ['explore', 'skills', 'list', keyword, category],
-    queryFn: () => fetchSkillList({
-      page: 1,
+    queryFn: ({ pageParam = 1 }) => fetchSkillList({
+      page: pageParam,
       limit: DEFAULT_LIMIT,
       keyword,
       category,
     }),
+    getNextPageParam: lastPage => lastPage.has_more ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
     retry: false,
   })
-  const skills = listQuery.data?.data ?? []
-  const categories = listQuery.data?.filters?.categories ?? []
+  const skills = listQuery.data?.pages.flatMap(page => page.data) ?? []
+  const firstPage = listQuery.data?.pages[0]
+  const categories = firstPage?.filters?.categories ?? []
+  const isInitialLoading = listQuery.isLoading && !listQuery.data
+  const { hasNextPage, fetchNextPage, isFetching } = listQuery
+  const handlePageChange = useCallback(() => {
+    if (hasNextPage && !isFetching)
+      void fetchNextPage()
+  }, [fetchNextPage, hasNextPage, isFetching])
+
+  useMarketplaceContainerScroll(handlePageChange, 'skills-library-container')
 
   return (
     <div id="skills-library-container" className="h-full min-h-0 overflow-y-auto border-l-[0.5px] border-divider-regular bg-background-body">
@@ -515,7 +584,7 @@ export default function SkillLibrary() {
               {t('skills.description', { ns: 'explore' })}
             </p>
             <div className="mt-5 inline-flex h-9 items-center rounded-full border border-white/50 bg-white/20 px-4 system-sm-semibold text-text-primary-on-surface shadow-xs backdrop-blur-[6px]">
-              {t('skills.total', { ns: 'explore', total: listQuery.data?.total ?? 0 })}
+              {t('skills.total', { ns: 'explore', total: firstPage?.total ?? 0 })}
             </div>
           </div>
         </header>
@@ -547,34 +616,59 @@ export default function SkillLibrary() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 px-3 pt-1">
-          {listQuery.isLoading && (
-            <div role="status" className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
-              {['card-1', 'card-2', 'card-3', 'card-4', 'card-5', 'card-6', 'card-7', 'card-8'].map(card => (
-                <div key={card} className="h-[148px] rounded-xl bg-background-section-burn" />
-              ))}
-            </div>
+        <div className="relative min-h-0 flex-1 px-3 pt-1">
+          {isInitialLoading && (
+            <SkillGridSkeleton />
           )}
           {listQuery.error && (
-            <div className="flex min-h-80 items-center justify-center rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
-              {t('skills.loadError', { ns: 'explore' })}
+            <div className="flex min-h-80 flex-col items-center justify-center gap-3 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
+              <span aria-hidden="true" className="i-ri-error-warning-line size-6 text-text-quaternary" />
+              <span>{t('skills.loadError', { ns: 'explore' })}</span>
+              <Button type="button" variant="secondary" size="small" onClick={() => listQuery.refetch()}>
+                {t('operation.retry', { ns: 'common' })}
+              </Button>
             </div>
           )}
           {!listQuery.isLoading && !listQuery.error && skills.length === 0 && (
-            <div className="flex min-h-80 items-center justify-center rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
-              {t('skills.empty', { ns: 'explore' })}
+            <div className="flex min-h-80 flex-col items-center justify-center gap-2 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
+              <span aria-hidden="true" className="i-ri-search-line size-6 text-text-quaternary" />
+              <span>{t('skills.empty', { ns: 'explore' })}</span>
             </div>
           )}
           {!listQuery.isLoading && !listQuery.error && skills.length > 0 && (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
-              {skills.map(skill => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  onOpen={setDetailSkill}
-                />
-              ))}
-            </div>
+            <>
+              <div className="sr-only" role="status" aria-live="polite">
+                {t('skills.resultCount', { ns: 'explore', count: firstPage?.total ?? skills.length })}
+              </div>
+              <div className={SKILL_GRID_CLASS_NAME}>
+                {skills.map(skill => (
+                  <SkillCard
+                    key={skill.id}
+                    skill={skill}
+                    onOpen={setDetailSkill}
+                  />
+                ))}
+              </div>
+              <div className="mt-6 flex items-center justify-center pb-2">
+                {hasNextPage
+                  ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="medium"
+                      loading={listQuery.isFetchingNextPage}
+                      onClick={() => handlePageChange()}
+                    >
+                      {listQuery.isFetchingNextPage ? t('skills.loading', { ns: 'explore' }) : t('skills.loadMore', { ns: 'explore' })}
+                    </Button>
+                    )
+                  : (
+                    <p className="system-xs-regular text-text-quaternary">
+                      {t('skills.endOfList', { ns: 'explore' })}
+                    </p>
+                    )}
+              </div>
+            </>
           )}
         </div>
       </div>
