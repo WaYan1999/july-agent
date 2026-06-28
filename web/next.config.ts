@@ -4,6 +4,7 @@ import { codeInspectorPlugin } from 'code-inspector-plugin'
 import { env } from './env'
 
 const isDev = process.env.NODE_ENV === 'development'
+const enableCodeInspector = process.env.ENABLE_CODE_INSPECTOR === 'true'
 const withMDX = createMDX()
 const allowedDevOrigins = process.env.NEXT_ALLOWED_DEV_ORIGINS?.split(',')
   .map(origin => origin.trim())
@@ -14,11 +15,15 @@ const nextConfig: NextConfig = {
   ...(allowedDevOrigins?.length ? { allowedDevOrigins } : {}),
   transpilePackages: ['@t3-oss/env-core', '@t3-oss/env-nextjs', 'echarts', 'zrender'],
   serverExternalPackages: ['loro-crdt'],
-  turbopack: {
-    rules: codeInspectorPlugin({
-      bundler: 'turbopack',
-    }),
-  },
+  ...(enableCodeInspector
+    ? {
+      turbopack: {
+        rules: codeInspectorPlugin({
+          bundler: 'turbopack',
+        }),
+      },
+    }
+    : {}),
   productionBrowserSourceMaps: false, // enable browser source map generation during the production build
   // Configure pageExtensions to include md and mdx
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
@@ -49,6 +54,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   compiler: {
     removeConsole: isDev ? false : { exclude: ['warn', 'error'] },
+  },
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
   },
 }
 

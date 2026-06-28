@@ -30,6 +30,14 @@ from .agent import (
     WorkflowAgentRuntimeSessionStatus,
 )
 from .api_based_extension import APIBasedExtension, APIBasedExtensionPoint
+from .auto_service import (
+    AutoService,
+    AutoServiceRunLog,
+    AutoServiceRunStatus,
+    AutoServiceScheduleType,
+    AutoServiceStatus,
+    AutoServiceType,
+)
 from .comment import (
     WorkflowComment,
     WorkflowCommentMention,
@@ -196,6 +204,12 @@ __all__ = [
     "AppTrigger",
     "AppTriggerStatus",
     "AppTriggerType",
+    "AutoService",
+    "AutoServiceRunLog",
+    "AutoServiceRunStatus",
+    "AutoServiceScheduleType",
+    "AutoServiceStatus",
+    "AutoServiceType",
     "BuiltinToolProvider",
     "CeleryTask",
     "CeleryTaskSet",

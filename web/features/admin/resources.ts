@@ -1,8 +1,9 @@
 import type { I18nKeysWithPrefix } from '@/types/i18n'
 
-export type AdminResourceName = 'accounts' | 'recommendedApps' | 'apps' | 'skills'
+export type AdminResourceName = 'accounts' | 'recommendedApps' | 'apps' | 'skills' | 'skillCategories' | 'skillTags' | 'autoServices'
 
 type AdminResourceTextKey = I18nKeysWithPrefix<'admin', 'resources.'>
+type AdminNavigationTextKey = I18nKeysWithPrefix<'admin', 'nav.'>
 
 export type AdminResourceDefinition = {
   name: AdminResourceName
@@ -53,7 +54,59 @@ export const adminResources = [
       deleteKey: 'resources.skills.deleteAction',
     },
   },
+  {
+    name: 'skillCategories',
+    endpoint: '/skill-categories',
+    meta: {
+      titleKey: 'resources.skillCategories.title',
+      descriptionKey: 'resources.skillCategories.description',
+      deleteKey: 'resources.skillCategories.deleteAction',
+    },
+  },
+  {
+    name: 'skillTags',
+    endpoint: '/skill-tags',
+    meta: {
+      titleKey: 'resources.skillTags.title',
+      descriptionKey: 'resources.skillTags.description',
+      deleteKey: 'resources.skillTags.deleteAction',
+    },
+  },
+  {
+    name: 'autoServices',
+    endpoint: '/auto-services',
+    meta: {
+      titleKey: 'resources.autoServices.title',
+      descriptionKey: 'resources.autoServices.description',
+      deleteKey: 'resources.autoServices.deleteAction',
+    },
+  },
 ] as const satisfies readonly AdminResourceDefinition[]
+
+export const adminResourceGroups = [
+  {
+    name: 'recommendedApps',
+  },
+  {
+    titleKey: 'nav.userManagement',
+    resources: ['accounts', 'apps'],
+  },
+  {
+    titleKey: 'nav.skillsManagement',
+    resources: ['skills', 'skillCategories', 'skillTags'],
+  },
+  {
+    name: 'autoServices',
+  },
+] as const satisfies readonly (
+  | {
+    name: AdminResourceName
+  }
+  | {
+    titleKey: AdminNavigationTextKey
+    resources: readonly AdminResourceName[]
+  }
+)[]
 
 export function getAdminResource(name: AdminResourceName) {
   return adminResources.find(resource => resource.name === name) ?? adminResources[0]

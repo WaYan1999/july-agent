@@ -61,11 +61,33 @@ class AdminSkillService:
         return db.paginate(select=stmt, page=page, per_page=limit, error_out=False)
 
     @staticmethod
+    def _paginate_categories(session: SessionLike, stmt: Select[tuple[SkillCategory]], *, page: int, limit: int):
+        return db.paginate(select=stmt, page=page, per_page=limit, error_out=False)
+
+    @staticmethod
+    def _paginate_tags(session: SessionLike, stmt: Select[tuple[SkillTag]], *, page: int, limit: int):
+        return db.paginate(select=stmt, page=page, per_page=limit, error_out=False)
+
+    @staticmethod
     def get_skill(session: SessionLike, skill_id: str) -> Skill:
         skill = session.get(Skill, skill_id)
         if skill is None:
             raise NotFound("Skill not found.")
         return skill
+
+    @staticmethod
+    def get_category(session: SessionLike, category_id: str) -> SkillCategory:
+        category = session.get(SkillCategory, category_id)
+        if category is None:
+            raise NotFound("Skill category not found.")
+        return category
+
+    @staticmethod
+    def get_tag(session: SessionLike, tag_id: str) -> SkillTag:
+        tag = session.get(SkillTag, tag_id)
+        if tag is None:
+            raise NotFound("Skill tag not found.")
+        return tag
 
     @classmethod
     def list_skills(
@@ -81,18 +103,12 @@ class AdminSkillService:
         category: str | None = None,
         updated_at_start: datetime | None = None,
         updated_at_end: datetime | None = None,
+        sort: str | None = None,
     ):
-        stmt = select(Skill).order_by(Skill.position.asc(), Skill.updated_at.desc())
+        stmt = select(Skill)
         if keyword:
             escaped_keyword = escape_like_pattern(keyword[:80])
-            stmt = stmt.where(
-                or_(
-                    Skill.name.ilike(f"%{escaped_keyword}%"),
-                    Skill.slug.ilike(f"%{escaped_keyword}%"),
-                    Skill.description.ilike(f"%{escaped_keyword}%"),
-                    Skill.author_name.ilike(f"%{escaped_keyword}%"),
-                )
-            )
+            stmt = stmt.where(Skill.name.ilike(f"%{escaped_keyword}%", escape="\\"))
         if publication_status:
             stmt = stmt.where(Skill.publication_status == publication_status)
         if source_type:
@@ -109,7 +125,56 @@ class AdminSkillService:
             stmt = stmt.where(Skill.updated_at >= updated_at_start)
         if updated_at_end:
             stmt = stmt.where(Skill.updated_at <= updated_at_end)
+        stmt = cls._apply_skill_sort(stmt, sort)
         return cls._paginate(session, stmt, page=page, limit=limit)
+
+    @staticmethod
+    def _apply_skill_sort(stmt: Select[tuple[Skill]], sort: str | None):
+        if sort == "downloads_desc":
+            return stmt.order_by(Skill.install_count.desc(), Skill.updated_at.desc(), Skill.id.desc())
+        if sort == "downloads_asc":
+            return stmt.order_by(Skill.install_count.asc(), Skill.updated_at.desc(), Skill.id.desc())
+        return stmt.order_by(Skill.position.asc(), Skill.updated_at.desc())
+
+    @classmethod
+    def list_categories(
+        cls,
+        session: SessionLike,
+        *,
+        page: int,
+        limit: int,
+        keyword: str | None = None,
+    ):
+        stmt = select(SkillCategory).order_by(SkillCategory.position.asc(), SkillCategory.name.asc())
+        if keyword:
+            escaped_keyword = escape_like_pattern(keyword[:80])
+            stmt = stmt.where(
+                or_(
+                    SkillCategory.name.ilike(f"%{escaped_keyword}%"),
+                    SkillCategory.slug.ilike(f"%{escaped_keyword}%"),
+                )
+            )
+        return cls._paginate_categories(session, stmt, page=page, limit=limit)
+
+    @classmethod
+    def list_tags(
+        cls,
+        session: SessionLike,
+        *,
+        page: int,
+        limit: int,
+        keyword: str | None = None,
+    ):
+        stmt = select(SkillTag).order_by(SkillTag.name.asc())
+        if keyword:
+            escaped_keyword = escape_like_pattern(keyword[:80])
+            stmt = stmt.where(
+                or_(
+                    SkillTag.name.ilike(f"%{escaped_keyword}%"),
+                    SkillTag.slug.ilike(f"%{escaped_keyword}%"),
+                )
+            )
+        return cls._paginate_tags(session, stmt, page=page, limit=limit)
 
     @staticmethod
     def validate_slug(slug: str) -> str:
@@ -164,6 +229,27 @@ class AdminSkillService:
         return skill
 
     @classmethod
+    def create_category(cls, session: SessionLike, values: Mapping[str, Any]) -> SkillCategory:
+        category = SkillCategory(
+            slug=cls.validate_slug(str(values["slug"])),
+            name=str(values["name"]),
+            position=int(values.get("position", 0)),
+        )
+        session.add(category)
+        session.commit()
+        return category
+
+    @classmethod
+    def create_tag(cls, session: SessionLike, values: Mapping[str, Any]) -> SkillTag:
+        tag = SkillTag(
+            slug=cls.validate_slug(str(values["slug"])),
+            name=str(values["name"]),
+        )
+        session.add(tag)
+        session.commit()
+        return tag
+
+    @classmethod
     def update_skill(cls, session: SessionLike, skill_id: str, values: Mapping[str, Any]) -> Skill:
         skill = cls.get_skill(session, skill_id)
         if "slug" in values:
@@ -196,8 +282,40 @@ class AdminSkillService:
             skill.publication_status = next_status
             if next_status == SkillPublicationStatus.PUBLISHED and skill.published_at is None:
                 skill.published_at = naive_utc_now()
+        if "content_type" in values or "skill_markdown" in values:
+            version = cls.get_latest_version(session, skill.id)
+            if version is None:
+                version = SkillVersion(skill_id=skill.id, is_latest=True)
+                session.add(version)
+                session.flush()
+            if "content_type" in values:
+                version.content_type = values["content_type"]
+            if "skill_markdown" in values:
+                version.skill_markdown = values["skill_markdown"]
         session.commit()
         return skill
+
+    @classmethod
+    def update_category(cls, session: SessionLike, category_id: str, values: Mapping[str, Any]) -> SkillCategory:
+        category = cls.get_category(session, category_id)
+        if "slug" in values:
+            category.slug = cls.validate_slug(str(values["slug"]))
+        if "name" in values:
+            category.name = str(values["name"])
+        if "position" in values:
+            category.position = int(values["position"])
+        session.commit()
+        return category
+
+    @classmethod
+    def update_tag(cls, session: SessionLike, tag_id: str, values: Mapping[str, Any]) -> SkillTag:
+        tag = cls.get_tag(session, tag_id)
+        if "slug" in values:
+            tag.slug = cls.validate_slug(str(values["slug"]))
+        if "name" in values:
+            tag.name = str(values["name"])
+        session.commit()
+        return tag
 
     @staticmethod
     def archive_skill(session: SessionLike, skill_id: str) -> Skill:
@@ -205,6 +323,18 @@ class AdminSkillService:
         skill.publication_status = SkillPublicationStatus.ARCHIVED
         session.commit()
         return skill
+
+    @classmethod
+    def delete_category(cls, session: SessionLike, category_id: str) -> None:
+        category = cls.get_category(session, category_id)
+        session.delete(category)
+        session.commit()
+
+    @classmethod
+    def delete_tag(cls, session: SessionLike, tag_id: str) -> None:
+        tag = cls.get_tag(session, tag_id)
+        session.delete(tag)
+        session.commit()
 
     @staticmethod
     def create_version(session: SessionLike, skill_id: str, values: Mapping[str, Any]) -> SkillVersion:

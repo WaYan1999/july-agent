@@ -17,8 +17,6 @@ from extensions.ext_database import db
 from libs.helper import escape_like_pattern
 from models.account import Account, AccountStatus, Tenant, TenantAccountJoin, TenantAccountRole
 from models.model import App, RecommendedApp
-from services import app_service as app_service_module
-from services.app_service import AppService
 
 SessionLike = Session | scoped_session
 
@@ -221,6 +219,8 @@ class AdminService:
 
         identity_fields = {"name", "description", "icon_type", "icon", "icon_background", "max_active_requests"}
         if any(field_name in values for field_name in identity_fields):
+            from services.app_service import AppService
+
             args: AppService.ArgsDict = {
                 "name": values.get("name", app.name),
                 "description": values.get("description", app.description),
@@ -234,9 +234,13 @@ class AdminService:
                 app = AppService().update_app(app, args)
 
         if "enable_site" in values:
+            from services.app_service import AppService
+
             with patched_current_user(operator):
                 app = AppService().update_app_site_status(app, values["enable_site"])
         if "enable_api" in values:
+            from services.app_service import AppService
+
             with patched_current_user(operator):
                 app = AppService().update_app_api_status(app, values["enable_api"])
 
@@ -254,6 +258,8 @@ class AdminService:
     @staticmethod
     def delete_app(session: SessionLike, app_id: str) -> None:
         app = AdminService.get_app(session, app_id)
+        from services.app_service import AppService
+
         with patched_current_user(SimpleNamespace(id="system-admin")):
             AppService().delete_app(app)
 
@@ -268,6 +274,8 @@ class AdminService:
 @contextmanager
 def patched_current_user(user: SimpleNamespace) -> Iterator[None]:
     """临时把 AppService 需要的 current_user 设置为后台系统操作者。"""
+
+    from services import app_service as app_service_module
 
     original = app_service_module.current_user
     app_service_module.current_user = user

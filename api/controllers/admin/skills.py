@@ -34,6 +34,7 @@ class SkillListQuery(BaseModel):
     audit_status: str | None = Field(default=None, max_length=32)
     updated_at_start: datetime | None = None
     updated_at_end: datetime | None = None
+    sort: str | None = Field(default=None, max_length=32)
 
     @field_validator("updated_at_start", mode="before")
     @classmethod
@@ -94,6 +95,44 @@ class SkillUpdatePayload(BaseModel):
     install_count: int | None = Field(default=None, ge=0)
     github_stars: int | None = Field(default=None, ge=0)
     position: int | None = Field(default=None, ge=0)
+    content_type: SkillContentType | None = None
+    skill_markdown: str | None = None
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillTaxonomyListQuery(BaseModel):
+    page: int = Field(default=1, ge=1, le=99999)
+    limit: int = Field(default=20, ge=1, le=100)
+    keyword: str | None = Field(default=None, max_length=80)
+
+
+class SkillCategoryCreatePayload(BaseModel):
+    slug: str = Field(min_length=1, max_length=255)
+    name: str = Field(min_length=1, max_length=255)
+    position: int = Field(default=0, ge=0)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillCategoryUpdatePayload(BaseModel):
+    slug: str | None = Field(default=None, min_length=1, max_length=255)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    position: int | None = Field(default=None, ge=0)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillTagCreatePayload(BaseModel):
+    slug: str = Field(min_length=1, max_length=255)
+    name: str = Field(min_length=1, max_length=255)
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SkillTagUpdatePayload(BaseModel):
+    slug: str | None = Field(default=None, min_length=1, max_length=255)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -131,6 +170,17 @@ class SkillTaxonomyResponse(ResponseModel):
     id: str | None = None
     slug: str
     name: str
+
+
+class SkillCategoryResponse(SkillTaxonomyResponse):
+    position: int
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class SkillTagResponse(SkillTaxonomyResponse):
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class SkillAssetResponse(ResponseModel):
@@ -190,14 +240,45 @@ class SkillPaginationResponse(ResponseModel):
     total: int
 
 
-register_schema_models(admin_ns, SkillListQuery, SkillCreatePayload, SkillUpdatePayload, SkillVersionCreatePayload)
+class SkillCategoryPaginationResponse(ResponseModel):
+    data: list[SkillCategoryResponse]
+    has_more: bool
+    limit: int
+    page: int
+    total: int
+
+
+class SkillTagPaginationResponse(ResponseModel):
+    data: list[SkillTagResponse]
+    has_more: bool
+    limit: int
+    page: int
+    total: int
+
+
+register_schema_models(
+    admin_ns,
+    SkillListQuery,
+    SkillCreatePayload,
+    SkillUpdatePayload,
+    SkillVersionCreatePayload,
+    SkillTaxonomyListQuery,
+    SkillCategoryCreatePayload,
+    SkillCategoryUpdatePayload,
+    SkillTagCreatePayload,
+    SkillTagUpdatePayload,
+)
 register_response_schema_models(
     admin_ns,
     SkillVersionResponse,
     SkillTaxonomyResponse,
+    SkillCategoryResponse,
+    SkillTagResponse,
     SkillAssetResponse,
     SkillResponse,
     SkillPaginationResponse,
+    SkillCategoryPaginationResponse,
+    SkillTagPaginationResponse,
 )
 
 
@@ -227,6 +308,27 @@ def _serialize_taxonomy_items(items: Any) -> list[dict[str, object]]:
         }
         for item in items or []
     ]
+
+
+def _serialize_category(category: Any) -> dict[str, object]:
+    return {
+        "id": category.id,
+        "slug": category.slug,
+        "name": category.name,
+        "position": category.position,
+        "created_at": category.created_at,
+        "updated_at": category.updated_at,
+    }
+
+
+def _serialize_tag(tag: Any) -> dict[str, object]:
+    return {
+        "id": tag.id,
+        "slug": tag.slug,
+        "name": tag.name,
+        "created_at": tag.created_at,
+        "updated_at": tag.updated_at,
+    }
 
 
 def _serialize_skill(skill: Any, version: Any | None) -> dict[str, object]:
@@ -290,6 +392,7 @@ class AdminSkillListApi(Resource):
             audit_status=query.audit_status,
             updated_at_start=query.updated_at_start,
             updated_at_end=query.updated_at_end,
+            sort=query.sort,
         )
         SkillService.hydrate_taxonomy_items(db.session, pagination.items)
         return dump_response(
@@ -367,3 +470,115 @@ class AdminSkillAssetListApi(Resource):
             raise BadRequest("Skill asset file is required.")
         asset = AdminSkillService.upload_asset_file(db.session, skill_id, file)
         return dump_response(SkillAssetResponse, _serialize_asset(asset))
+
+
+@admin_ns.route("/skill-categories")
+class AdminSkillCategoryListApi(Resource):
+    @admin_ns.doc(params=query_params_from_model(SkillTaxonomyListQuery))
+    @admin_ns.response(200, "Success", admin_ns.models[SkillCategoryPaginationResponse.__name__])
+    @admin_required
+    def get(self):
+        query = SkillTaxonomyListQuery.model_validate(request.args.to_dict(flat=True))
+        pagination = AdminSkillService.list_categories(
+            db.session,
+            page=query.page,
+            limit=query.limit,
+            keyword=query.keyword,
+        )
+        return dump_response(
+            SkillCategoryPaginationResponse,
+            {
+                "data": [_serialize_category(category) for category in pagination.items],
+                "has_more": pagination.has_next,
+                "limit": query.limit,
+                "page": query.page,
+                "total": pagination.total,
+            },
+        )
+
+    @admin_ns.expect(admin_ns.models[SkillCategoryCreatePayload.__name__])
+    @admin_ns.response(200, "Success", admin_ns.models[SkillCategoryResponse.__name__])
+    @admin_required
+    def post(self):
+        payload = SkillCategoryCreatePayload.model_validate(admin_ns.payload or {})
+        category = AdminSkillService.create_category(db.session, payload.model_dump())
+        return dump_response(SkillCategoryResponse, _serialize_category(category))
+
+
+@admin_ns.route("/skill-categories/<category_id>")
+class AdminSkillCategoryApi(Resource):
+    @admin_ns.response(200, "Success", admin_ns.models[SkillCategoryResponse.__name__])
+    @admin_required
+    def get(self, category_id: str):
+        category = AdminSkillService.get_category(db.session, category_id)
+        return dump_response(SkillCategoryResponse, _serialize_category(category))
+
+    @admin_ns.expect(admin_ns.models[SkillCategoryUpdatePayload.__name__])
+    @admin_ns.response(200, "Success", admin_ns.models[SkillCategoryResponse.__name__])
+    @admin_required
+    def patch(self, category_id: str):
+        payload = SkillCategoryUpdatePayload.model_validate(admin_ns.payload or {})
+        category = AdminSkillService.update_category(db.session, category_id, payload.model_dump(exclude_unset=True))
+        return dump_response(SkillCategoryResponse, _serialize_category(category))
+
+    @admin_ns.response(204, "Skill category deleted")
+    @admin_required
+    def delete(self, category_id: str):
+        AdminSkillService.delete_category(db.session, category_id)
+        return "", 204
+
+
+@admin_ns.route("/skill-tags")
+class AdminSkillTagListApi(Resource):
+    @admin_ns.doc(params=query_params_from_model(SkillTaxonomyListQuery))
+    @admin_ns.response(200, "Success", admin_ns.models[SkillTagPaginationResponse.__name__])
+    @admin_required
+    def get(self):
+        query = SkillTaxonomyListQuery.model_validate(request.args.to_dict(flat=True))
+        pagination = AdminSkillService.list_tags(
+            db.session,
+            page=query.page,
+            limit=query.limit,
+            keyword=query.keyword,
+        )
+        return dump_response(
+            SkillTagPaginationResponse,
+            {
+                "data": [_serialize_tag(tag) for tag in pagination.items],
+                "has_more": pagination.has_next,
+                "limit": query.limit,
+                "page": query.page,
+                "total": pagination.total,
+            },
+        )
+
+    @admin_ns.expect(admin_ns.models[SkillTagCreatePayload.__name__])
+    @admin_ns.response(200, "Success", admin_ns.models[SkillTagResponse.__name__])
+    @admin_required
+    def post(self):
+        payload = SkillTagCreatePayload.model_validate(admin_ns.payload or {})
+        tag = AdminSkillService.create_tag(db.session, payload.model_dump())
+        return dump_response(SkillTagResponse, _serialize_tag(tag))
+
+
+@admin_ns.route("/skill-tags/<tag_id>")
+class AdminSkillTagApi(Resource):
+    @admin_ns.response(200, "Success", admin_ns.models[SkillTagResponse.__name__])
+    @admin_required
+    def get(self, tag_id: str):
+        tag = AdminSkillService.get_tag(db.session, tag_id)
+        return dump_response(SkillTagResponse, _serialize_tag(tag))
+
+    @admin_ns.expect(admin_ns.models[SkillTagUpdatePayload.__name__])
+    @admin_ns.response(200, "Success", admin_ns.models[SkillTagResponse.__name__])
+    @admin_required
+    def patch(self, tag_id: str):
+        payload = SkillTagUpdatePayload.model_validate(admin_ns.payload or {})
+        tag = AdminSkillService.update_tag(db.session, tag_id, payload.model_dump(exclude_unset=True))
+        return dump_response(SkillTagResponse, _serialize_tag(tag))
+
+    @admin_ns.response(204, "Skill tag deleted")
+    @admin_required
+    def delete(self, tag_id: str):
+        AdminSkillService.delete_tag(db.session, tag_id)
+        return "", 204

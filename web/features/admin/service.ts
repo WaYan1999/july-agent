@@ -77,6 +77,19 @@ export type AdminSkillTaxonomy = {
   name: string
 }
 
+export type AdminSkillCategory = AdminSkillTaxonomy & {
+  id: string
+  position: number
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export type AdminSkillTag = AdminSkillTaxonomy & {
+  id: string
+  created_at?: string | null
+  updated_at?: string | null
+}
+
 export type AdminSkill = {
   id: string
   slug: string
@@ -107,6 +120,55 @@ export type AdminSkill = {
   } | null
 }
 
+export type AdminAutoServiceRunLog = {
+  id: string
+  auto_service_id: string
+  status: string
+  trigger_type: string
+  celery_task_id?: string | null
+  started_at?: string | null
+  finished_at?: string | null
+  duration_ms?: number | null
+  result?: Record<string, unknown> | null
+  error?: string | null
+  snapshot_path?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export type AdminAutoService = {
+  id: string
+  code: string
+  name: string
+  description?: string | null
+  service_type: string
+  status: string
+  schedule_type: string
+  interval_minutes?: number | null
+  cron_expression?: string | null
+  timezone: string
+  config: Record<string, unknown>
+  last_run_at?: string | null
+  last_run_status?: string | null
+  next_run_at?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+  latest_run_log?: AdminAutoServiceRunLog | null
+}
+
+export type AdminAutoServiceCreatePayload = {
+  code: string
+  name: string
+  description?: string | null
+  service_type: string
+  status?: string
+  schedule_type?: string
+  interval_minutes?: number | null
+  cron_expression?: string | null
+  timezone?: string
+  config?: Record<string, unknown>
+}
+
 export type AdminSkillCreatePayload = {
   slug: string
   name: string
@@ -130,11 +192,20 @@ export type AdminSkillCreatePayload = {
   skill_markdown?: string | null
 }
 
+export type AdminSkillVersionCreatePayload = {
+  content_type?: string | null
+  skill_markdown?: string | null
+  is_latest?: boolean
+}
+
 export type AdminResourceItemMap = {
   accounts: AdminAccount
   recommendedApps: AdminRecommendedApp
   apps: AdminApp
   skills: AdminSkill
+  skillCategories: AdminSkillCategory
+  skillTags: AdminSkillTag
+  autoServices: AdminAutoService
 }
 
 type AdminCreateResourcePayloadMap = {
@@ -142,6 +213,9 @@ type AdminCreateResourcePayloadMap = {
   recommendedApps: Partial<AdminRecommendedApp>
   apps: Partial<AdminApp>
   skills: AdminSkillCreatePayload
+  skillCategories: Partial<AdminSkillCategory>
+  skillTags: Partial<AdminSkillTag>
+  autoServices: AdminAutoServiceCreatePayload
 }
 
 export type AdminListParams = {
@@ -151,6 +225,7 @@ export type AdminListParams = {
   limit: number
   keyword?: string
   filters?: Record<string, string | boolean | undefined>
+  sort?: string
 }
 
 type AdminRequestOptions = {
@@ -158,6 +233,48 @@ type AdminRequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   body?: unknown
   searchParams?: URLSearchParams
+}
+
+export class AdminRequestError extends Error {
+  status: number
+  responseMessage?: string
+
+  constructor(status: number, responseMessage?: string) {
+    super(responseMessage ? `Admin request failed with status ${status}: ${responseMessage}` : `Admin request failed with status ${status}.`)
+    this.name = 'AdminRequestError'
+    this.status = status
+    this.responseMessage = responseMessage
+  }
+}
+
+async function readAdminErrorMessage(response: Response) {
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    try {
+      const payload = await response.json() as unknown
+      if (payload && typeof payload === 'object') {
+        const errorPayload = payload as Record<string, unknown>
+        const message = errorPayload.message ?? errorPayload.error ?? errorPayload.detail
+        if (typeof message === 'string')
+          return message
+        if (Array.isArray(message))
+          return message.map(item => String(item)).join(', ')
+        if (message && typeof message === 'object')
+          return JSON.stringify(message)
+      }
+    }
+    catch {
+      return undefined
+    }
+  }
+
+  try {
+    const message = await response.text()
+    return message.trim() || undefined
+  }
+  catch {
+    return undefined
+  }
 }
 
 function buildAdminUrl(path: string, searchParams?: URLSearchParams) {
@@ -197,7 +314,7 @@ async function adminRequest<T>(path: string, {
   })
 
   if (!response.ok)
-    throw new Error(`Admin request failed with status ${response.status}.`)
+    throw new AdminRequestError(response.status, await readAdminErrorMessage(response))
 
   if (response.status === 204)
     return undefined as T
@@ -212,6 +329,7 @@ export async function fetchAdminResourceList<TResource extends AdminResourceName
   limit,
   keyword,
   filters,
+  sort,
 }: AdminListParams): Promise<AdminPagination<AdminResourceItemMap[TResource]>> {
   const definition = getAdminResource(resource)
   const searchParams = new URLSearchParams()
@@ -219,6 +337,8 @@ export async function fetchAdminResourceList<TResource extends AdminResourceName
   searchParams.set('limit', String(limit))
   if (keyword?.trim())
     searchParams.set('keyword', keyword.trim())
+  if (sort?.trim())
+    searchParams.set('sort', sort.trim())
 
   Object.entries(filters ?? {}).forEach(([key, value]) => {
     if (value !== undefined && value !== '')
@@ -254,6 +374,14 @@ export function updateAdminResource<TResource extends AdminResourceName>(
   })
 }
 
+export function createAdminSkillVersion(apiKey: string, skillId: string, body: AdminSkillVersionCreatePayload) {
+  return adminRequest<NonNullable<AdminSkill['latest_version']>>(`/skills/${encodeURIComponent(skillId)}/versions`, {
+    apiKey,
+    method: 'POST',
+    body,
+  })
+}
+
 export function deleteAdminResource(apiKey: string, resource: AdminResourceName, id: string) {
   const definition = getAdminResource(resource)
   return adminRequest<void>(`${definition.endpoint}/${id}`, {
@@ -273,6 +401,31 @@ export async function uploadAdminSkillAsset(apiKey: string, skillId: string, fil
     body: formData,
   })
   if (!response.ok)
-    throw new Error(`Admin upload failed with status ${response.status}.`)
+    throw new AdminRequestError(response.status, await readAdminErrorMessage(response))
   return response.json() as Promise<unknown>
+}
+
+export function runAdminAutoService(apiKey: string, serviceId: string) {
+  return adminRequest<AdminAutoServiceRunLog>(`/auto-services/${encodeURIComponent(serviceId)}/run`, {
+    apiKey,
+    method: 'POST',
+  })
+}
+
+export function fetchAdminAutoServiceLogs(
+  apiKey: string,
+  serviceId: string,
+  page: number,
+  limit: number,
+) {
+  const searchParams = new URLSearchParams()
+  searchParams.set('page', String(page))
+  searchParams.set('limit', String(limit))
+  return adminRequest<AdminPagination<AdminAutoServiceRunLog>>(
+    `/auto-services/${encodeURIComponent(serviceId)}/logs`,
+    {
+      apiKey,
+      searchParams,
+    },
+  )
 }

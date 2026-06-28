@@ -42,7 +42,6 @@ import { spec } from './spec/orpc.gen'
 import { systemFeatures } from './system-features/orpc.gen'
 import { tagBindings } from './tag-bindings/orpc.gen'
 import { tags } from './tags/orpc.gen'
-import { test } from './test/orpc.gen'
 import { trialApps } from './trial-apps/orpc.gen'
 import { trialModels } from './trial-models/orpc.gen'
 import { website } from './website/orpc.gen'
@@ -93,7 +92,6 @@ export const contract = {
   systemFeatures,
   tagBindings,
   tags,
-  test,
   trialApps,
   trialModels,
   website,

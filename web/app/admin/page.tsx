@@ -1,15 +1,21 @@
 'use client'
 
-import type { FormEvent } from 'react'
+import type { TFunction } from 'i18next'
+import type { FormEvent, ReactNode } from 'react'
 import type { AdminResourceName } from '@/features/admin/resources'
 import type {
   AdminAccount,
   AdminApp,
+  AdminAutoService,
+  AdminAutoServiceCreatePayload,
+  AdminAutoServiceRunLog,
   AdminPagination,
   AdminRecommendedApp,
   AdminResourceItemMap,
   AdminSkill,
+  AdminSkillCategory,
   AdminSkillCreatePayload,
+  AdminSkillTag,
 } from '@/features/admin/service'
 import type { I18nKeysWithPrefix } from '@/types/i18n'
 import {
@@ -23,6 +29,23 @@ import {
 } from '@langgenius/dify-ui/alert-dialog'
 import { Button } from '@langgenius/dify-ui/button'
 import { cn } from '@langgenius/dify-ui/cn'
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChipRemove,
+  ComboboxChips,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxInputGroup,
+  ComboboxInputTrigger,
+  ComboboxItem,
+  ComboboxItemIndicator,
+  ComboboxItemText,
+  ComboboxList,
+  ComboboxStatus,
+  ComboboxValue,
+} from '@langgenius/dify-ui/combobox'
 import { Dialog, DialogCloseButton, DialogContent, DialogTitle } from '@langgenius/dify-ui/dialog'
 import { Input } from '@langgenius/dify-ui/input'
 import { Select, SelectContent, SelectItem, SelectItemIndicator, SelectItemText, SelectTrigger } from '@langgenius/dify-ui/select'
@@ -30,37 +53,56 @@ import { Switch } from '@langgenius/dify-ui/switch'
 import { Textarea } from '@langgenius/dify-ui/textarea'
 import { toast } from '@langgenius/dify-ui/toast'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { adminResourceLimit, adminResources, getAdminResource } from '@/features/admin/resources'
+import { adminResourceGroups, adminResourceLimit, getAdminResource } from '@/features/admin/resources'
 import {
+  AdminRequestError,
   createAdminResource,
+  createAdminSkillVersion,
   deleteAdminResource,
+  fetchAdminAutoServiceLogs,
   fetchAdminResourceDetail,
   fetchAdminResourceList,
+  runAdminAutoService,
   updateAdminResource,
   uploadAdminSkillAsset,
 } from '@/features/admin/service'
 import useDocumentTitle from '@/hooks/use-document-title'
 
 const ADMIN_API_KEY_STORAGE_KEY = 'dify-admin-api-key'
+const SELECT_ALL_VALUE = '__all__'
+const DEFAULT_AUTO_SERVICE_TIMEZONE = 'Asia/Shanghai'
 
 const adminApiKeyListeners = new Set<() => void>()
 
-type AdminItem = AdminAccount | AdminRecommendedApp | AdminApp | AdminSkill
+type AdminItem = AdminAccount | AdminRecommendedApp | AdminApp | AdminSkill | AdminSkillCategory | AdminSkillTag | AdminAutoService
 
 type EditableValue = string | number | boolean | null | undefined
+type EditableFieldValue = EditableValue | string[]
+type EditablePayloadValue = EditableValue | string[] | Record<string, unknown>
 type AdminFieldLabelKey = I18nKeysWithPrefix<'admin', 'fields.'>
+type SkillSort = '' | 'downloads_desc' | 'downloads_asc'
+type TaxonomyOption = {
+  value: string
+  label: string
+}
 
 type FieldConfig = {
   name: string
   labelKey: AdminFieldLabelKey
-  type: 'text' | 'textarea' | 'number' | 'switch' | 'select'
-  value: EditableValue
+  type: 'text' | 'textarea' | 'number' | 'switch' | 'select' | 'taxonomy-multi'
+  value: EditableFieldValue
+  layout?: 'half' | 'full'
+  inputClassName?: string
+  required?: boolean
+  submitName?: string
+  includeInPayload?: boolean
   options?: Array<{
     value: string
     labelKey: AdminFieldLabelKey
   }>
+  taxonomyResource?: TaxonomyResourceName
 }
 
 type CreateSkillFormValues = {
@@ -74,8 +116,8 @@ type CreateSkillFormValues = {
   publication_status: string
   audit_status: string
   audit_notes: string
-  categories: string
-  tags: string
+  categories: string[]
+  tags: string[]
   install_count: string
   github_stars: string
   position: string
@@ -89,10 +131,34 @@ type SkillFilters = {
   publication_status: string
   updated_at_start: string
   updated_at_end: string
+  sort: SkillSort
+}
+
+type CreateAutoServiceFormValues = {
+  code: string
+  name: string
+  description: string
+  service_type: string
+  status: string
+  schedule_type: string
+  interval_minutes: string
+  cron_expression: string
+  timezone: string
+  config: string
+}
+
+type TaxonomyResourceName = 'skillCategories' | 'skillTags'
+
+type CreateTaxonomyFormValues = {
+  name: string
+  slug: string
+  position: string
 }
 
 type SkillLabelKind = 'sourceType' | 'publicationStatus' | 'contentType'
-type AdminFieldTranslator = (key: AdminFieldLabelKey) => string
+type AutoServiceLabelKind = 'serviceType' | 'serviceStatus' | 'scheduleType' | 'runStatus'
+type AdminTranslator = TFunction<'admin'>
+type AdminFieldTranslator = (_key: AdminFieldLabelKey) => string
 
 const skillSourceTypeOptions = [
   { value: 'github', labelKey: 'fields.sourceTypeGithub' },
@@ -121,6 +187,83 @@ const skillContentTypeOptions = [
   { value: 'markdown_file', labelKey: 'fields.contentTypeMarkdown' },
 ] satisfies FieldConfig['options']
 
+const autoServiceTypeOptions = [
+  { value: 'skill_crawler_sync', labelKey: 'fields.autoServiceTypeSkillCrawler' },
+  { value: 'dataset_queue_monitor', labelKey: 'fields.autoServiceTypeDatasetQueue' },
+] satisfies FieldConfig['options']
+
+const autoServiceStatusOptions = [
+  { value: 'enabled', labelKey: 'fields.autoServiceStatusEnabled' },
+  { value: 'disabled', labelKey: 'fields.autoServiceStatusDisabled' },
+] satisfies FieldConfig['options']
+
+const autoServiceScheduleTypeOptions = [
+  { value: 'interval', labelKey: 'fields.scheduleTypeInterval' },
+  { value: 'cron', labelKey: 'fields.scheduleTypeCron' },
+  { value: 'manual', labelKey: 'fields.scheduleTypeManual' },
+] satisfies FieldConfig['options']
+
+const adminUpdateFieldNamesByResource = {
+  accounts: ['name', 'email', 'interface_language', 'interface_theme', 'timezone', 'status'],
+  recommendedApps: ['categories', 'position', 'is_listed', 'is_learn_dify', 'custom_disclaimer', 'site'],
+  apps: [
+    'name',
+    'description',
+    'icon_type',
+    'icon',
+    'icon_background',
+    'enable_site',
+    'enable_api',
+    'is_public',
+    'maintainer',
+    'max_active_requests',
+    'api_rpm',
+    'api_rph',
+  ],
+  skills: [
+    'slug',
+    'name',
+    'description',
+    'author_name',
+    'source_type',
+    'source_url',
+    'install_command',
+    'icon',
+    'icon_background',
+    'icon_url',
+    'publication_status',
+    'audit_status',
+    'audit_notes',
+    'categories',
+    'tags',
+    'install_count',
+    'github_stars',
+    'position',
+  ],
+  skillCategories: ['name', 'slug', 'position'],
+  skillTags: ['name', 'slug'],
+  autoServices: [
+    'code',
+    'name',
+    'description',
+    'service_type',
+    'status',
+    'schedule_type',
+    'interval_minutes',
+    'cron_expression',
+    'config',
+  ],
+} satisfies Record<AdminResourceName, readonly string[]>
+
+const fullWidthEditorFieldNames = new Set([
+  'description',
+  'install_command',
+  'audit_notes',
+  'skill_markdown',
+  'config',
+  'custom_disclaimer',
+])
+
 const createSkillInitialValues: CreateSkillFormValues = {
   name: '',
   slug: '',
@@ -132,8 +275,8 @@ const createSkillInitialValues: CreateSkillFormValues = {
   publication_status: 'draft',
   audit_status: 'pending',
   audit_notes: '',
-  categories: '',
-  tags: '',
+  categories: [],
+  tags: [],
   install_count: '0',
   github_stars: '0',
   position: '0',
@@ -147,11 +290,16 @@ const skillFilterInitialValues: SkillFilters = {
   publication_status: '',
   updated_at_start: '',
   updated_at_end: '',
+  sort: '',
 }
 
 function getItemTitle(resource: AdminResourceName, item: AdminItem) {
   if (resource === 'skills')
     return (item as AdminSkill).name || item.id
+  if (resource === 'skillCategories' || resource === 'skillTags')
+    return (item as AdminSkillCategory | AdminSkillTag).name || item.id
+  if (resource === 'autoServices')
+    return (item as AdminAutoService).name || item.id
   if (resource === 'recommendedApps') {
     const recommendedApp = item as AdminRecommendedApp
     return recommendedApp.app?.name ?? recommendedApp.app_id
@@ -162,6 +310,10 @@ function getItemTitle(resource: AdminResourceName, item: AdminItem) {
 function getItemSubtitle(resource: AdminResourceName, item: AdminItem) {
   if (resource === 'skills')
     return (item as AdminSkill).slug
+  if (resource === 'skillCategories' || resource === 'skillTags')
+    return (item as AdminSkillCategory | AdminSkillTag).slug
+  if (resource === 'autoServices')
+    return (item as AdminAutoService).code
   if (resource === 'accounts')
     return (item as AdminAccount).email ?? item.id
   if (resource === 'recommendedApps')
@@ -172,6 +324,10 @@ function getItemSubtitle(resource: AdminResourceName, item: AdminItem) {
 function getItemStatus(resource: AdminResourceName, item: AdminItem) {
   if (resource === 'skills')
     return (item as AdminSkill).publication_status ?? '-'
+  if (resource === 'skillCategories' || resource === 'skillTags')
+    return formatDateTime((item as AdminSkillCategory | AdminSkillTag).updated_at)
+  if (resource === 'autoServices')
+    return (item as AdminAutoService).status ?? '-'
   if (resource === 'recommendedApps')
     return (item as AdminRecommendedApp).is_listed ? 'listed' : 'hidden'
   return (item as AdminAccount | AdminApp).status ?? '-'
@@ -185,6 +341,12 @@ function getAccountSpaceIds(account: AdminAccount) {
 function getItemMetric(resource: AdminResourceName, item: AdminItem) {
   if (resource === 'skills')
     return (item as AdminSkill).latest_version?.content_type ?? '-'
+  if (resource === 'skillCategories')
+    return String((item as AdminSkillCategory).position)
+  if (resource === 'skillTags')
+    return formatDateTime((item as AdminSkillTag).created_at)
+  if (resource === 'autoServices')
+    return formatDateTime((item as AdminAutoService).next_run_at)
   if (resource === 'accounts')
     return getAccountSpaceIds(item as AdminAccount)
   if (resource === 'recommendedApps')
@@ -196,6 +358,12 @@ function getItemMetric(resource: AdminResourceName, item: AdminItem) {
 function getItemMetricLabel(resource: AdminResourceName) {
   if (resource === 'skills')
     return 'table.resourceType'
+  if (resource === 'skillCategories')
+    return 'fields.position'
+  if (resource === 'skillTags')
+    return 'table.createdAt'
+  if (resource === 'autoServices')
+    return 'table.nextRunAt'
   return resource === 'accounts' ? 'table.boundSpaceIds' : 'table.metric'
 }
 
@@ -240,21 +408,30 @@ function getSkillDisplayLabel(
   return labelKey ? t(labelKey) : value || '-'
 }
 
-function taxonomyToText(items: Array<{ slug: string }>) {
-  return items.map(item => item.slug).join(', ')
+function taxonomyToSlugs(items: Array<{ slug: string }>) {
+  return items.map(item => item.slug)
 }
 
 function taxonomyToDisplayText(items: Array<{ name?: string | null, slug: string }>) {
   return items.map(item => item.name || item.slug).join(', ') || '-'
 }
 
+function parseBackendDateTime(value: string) {
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/u.test(normalized)
+  return new Date(hasTimezone ? normalized : `${normalized}Z`)
+}
+
 function formatDateTime(value: string | null | undefined) {
   if (!value)
     return '-'
-  const date = new Date(value)
+  const date = parseBackendDateTime(value)
   if (Number.isNaN(date.getTime()))
     return value
-  return date.toLocaleString()
+  return date.toLocaleString('zh-CN', {
+    timeZone: DEFAULT_AUTO_SERVICE_TIMEZONE,
+    hour12: false,
+  })
 }
 
 function commaSeparatedTextToArray(value: string) {
@@ -281,8 +458,8 @@ function buildCreateSkillPayload(values: CreateSkillFormValues): AdminSkillCreat
     publication_status: values.publication_status,
     audit_status: values.audit_status,
     audit_notes: emptyStringToNull(values.audit_notes),
-    categories: commaSeparatedTextToArray(values.categories),
-    tags: commaSeparatedTextToArray(values.tags),
+    categories: values.categories,
+    tags: values.tags,
     install_count: values.install_count.trim() ? Number(values.install_count) : 0,
     github_stars: values.github_stars.trim() ? Number(values.github_stars) : 0,
     position: values.position.trim() ? Number(values.position) : 0,
@@ -291,12 +468,80 @@ function buildCreateSkillPayload(values: CreateSkillFormValues): AdminSkillCreat
   }
 }
 
+function parseJsonObject(value: string): Record<string, unknown> {
+  if (!value.trim())
+    return {}
+  const parsed = JSON.parse(value) as unknown
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object')
+    throw new Error('config must be a JSON object')
+  return parsed as Record<string, unknown>
+}
+
+function getAutoServiceIntervalMinutesPayload(values: Pick<CreateAutoServiceFormValues, 'schedule_type' | 'interval_minutes'>) {
+  if (values.schedule_type !== 'interval')
+    return null
+  return values.interval_minutes.trim() ? Number(values.interval_minutes) : null
+}
+
+function getAutoServiceCronExpressionPayload(values: Pick<CreateAutoServiceFormValues, 'schedule_type' | 'cron_expression'>) {
+  if (values.schedule_type !== 'cron')
+    return null
+  return emptyStringToNull(values.cron_expression)
+}
+
+function buildCreateAutoServicePayload(values: CreateAutoServiceFormValues): AdminAutoServiceCreatePayload {
+  return {
+    code: values.code.trim(),
+    name: values.name.trim(),
+    description: emptyStringToNull(values.description),
+    service_type: values.service_type,
+    status: values.status,
+    schedule_type: values.schedule_type,
+    interval_minutes: getAutoServiceIntervalMinutesPayload(values),
+    cron_expression: getAutoServiceCronExpressionPayload(values),
+    timezone: DEFAULT_AUTO_SERVICE_TIMEZONE,
+    config: parseJsonObject(values.config),
+  }
+}
+
+function filterAutoServiceScheduleFields<T extends string>(fieldNames: T[], scheduleType: string): T[] {
+  return fieldNames.filter((fieldName) => {
+    if (fieldName === 'timezone')
+      return false
+    if (fieldName === 'interval_minutes')
+      return scheduleType === 'interval'
+    if (fieldName === 'cron_expression')
+      return scheduleType === 'cron'
+    return true
+  })
+}
+
+function filterAutoServiceFieldsBySchedule(fields: FieldConfig[], scheduleType: string) {
+  const visibleFieldNames = new Set(filterAutoServiceScheduleFields(fields.map(field => field.name), scheduleType))
+  return fields.filter(field => visibleFieldNames.has(field.name))
+}
+
+function buildCreateTaxonomyPayload(resource: TaxonomyResourceName, values: CreateTaxonomyFormValues) {
+  if (resource === 'skillCategories') {
+    return {
+      slug: values.slug.trim(),
+      name: values.name.trim(),
+      position: values.position.trim() ? Number(values.position) : 0,
+    } satisfies Partial<AdminSkillCategory>
+  }
+
+  return {
+    slug: values.slug.trim(),
+    name: values.name.trim(),
+  } satisfies Partial<AdminSkillTag>
+}
+
 function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldConfig[] {
   if (resource === 'accounts') {
     const account = item as AdminAccount
     return [
-      { name: 'name', labelKey: 'fields.name', type: 'text', value: account.name },
-      { name: 'email', labelKey: 'fields.email', type: 'text', value: account.email },
+      { name: 'name', labelKey: 'fields.name', type: 'text', value: account.name, required: true },
+      { name: 'email', labelKey: 'fields.email', type: 'text', value: account.email, required: true },
       { name: 'interface_language', labelKey: 'fields.language', type: 'text', value: account.interface_language },
       { name: 'interface_theme', labelKey: 'fields.theme', type: 'text', value: account.interface_theme },
       { name: 'timezone', labelKey: 'fields.timezone', type: 'text', value: account.timezone },
@@ -318,9 +563,9 @@ function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldC
   if (resource === 'skills') {
     const skill = item as AdminSkill
     return [
-      { name: 'name', labelKey: 'fields.name', type: 'text', value: skill.name },
-      { name: 'slug', labelKey: 'fields.slug', type: 'text', value: skill.slug },
-      { name: 'description', labelKey: 'fields.description', type: 'textarea', value: skill.description },
+      { name: 'name', labelKey: 'fields.name', type: 'text', value: skill.name, required: true },
+      { name: 'slug', labelKey: 'fields.slug', type: 'text', value: skill.slug, required: true },
+      { name: 'description', labelKey: 'fields.description', type: 'textarea', value: skill.description, required: true },
       { name: 'author_name', labelKey: 'fields.author', type: 'text', value: skill.author_name },
       { name: 'source_type', labelKey: 'fields.sourceType', type: 'select', value: skill.source_type, options: skillSourceTypeOptions },
       { name: 'source_url', labelKey: 'fields.sourceUrl', type: 'text', value: skill.source_url },
@@ -328,17 +573,57 @@ function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldC
       { name: 'publication_status', labelKey: 'fields.publicationStatus', type: 'select', value: skill.publication_status, options: skillPublicationStatusOptions },
       { name: 'audit_status', labelKey: 'fields.auditStatus', type: 'select', value: skill.audit_status, options: skillAuditStatusOptions },
       { name: 'audit_notes', labelKey: 'fields.auditNotes', type: 'textarea', value: skill.audit_notes },
-      { name: 'categories', labelKey: 'fields.categories', type: 'text', value: taxonomyToText(skill.categories) },
-      { name: 'tags', labelKey: 'fields.tags', type: 'text', value: taxonomyToText(skill.tags) },
+      { name: 'categories', labelKey: 'fields.categories', type: 'taxonomy-multi', value: taxonomyToSlugs(skill.categories), taxonomyResource: 'skillCategories' },
+      { name: 'tags', labelKey: 'fields.tags', type: 'taxonomy-multi', value: taxonomyToSlugs(skill.tags), taxonomyResource: 'skillTags' },
       { name: 'install_count', labelKey: 'fields.installCount', type: 'number', value: skill.install_count },
       { name: 'github_stars', labelKey: 'fields.githubStars', type: 'number', value: skill.github_stars },
       { name: 'position', labelKey: 'fields.position', type: 'number', value: skill.position },
+      { name: 'content_type', labelKey: 'fields.contentType', type: 'select', value: skill.latest_version?.content_type ?? 'remote_reference', options: skillContentTypeOptions },
+      { name: 'skill_markdown', labelKey: 'fields.skillMarkdown', type: 'textarea', value: skill.latest_version?.skill_markdown },
+    ]
+  }
+
+  if (resource === 'skillCategories') {
+    const category = item as AdminSkillCategory
+    return [
+      { name: 'name', labelKey: 'fields.name', type: 'text', value: category.name, required: true },
+      { name: 'slug', labelKey: 'fields.slug', type: 'text', value: category.slug, required: true },
+      { name: 'position', labelKey: 'fields.position', type: 'number', value: category.position },
+    ]
+  }
+
+  if (resource === 'skillTags') {
+    const tag = item as AdminSkillTag
+    return [
+      { name: 'name', labelKey: 'fields.name', type: 'text', value: tag.name, required: true },
+      { name: 'slug', labelKey: 'fields.slug', type: 'text', value: tag.slug, required: true },
+    ]
+  }
+
+  if (resource === 'autoServices') {
+    const service = item as AdminAutoService
+    return [
+      { name: 'name', labelKey: 'fields.name', type: 'text', value: service.name, required: true },
+      { name: 'code', labelKey: 'fields.code', type: 'text', value: service.code, required: true },
+      { name: 'description', labelKey: 'fields.description', type: 'textarea', value: service.description },
+      { name: 'service_type', labelKey: 'fields.autoServiceType', type: 'select', value: service.service_type, options: autoServiceTypeOptions, required: true },
+      { name: 'status', labelKey: 'fields.autoServiceStatus', type: 'select', value: service.status, options: autoServiceStatusOptions },
+      { name: 'schedule_type', labelKey: 'fields.scheduleType', type: 'select', value: service.schedule_type, options: autoServiceScheduleTypeOptions },
+      { name: 'interval_minutes', labelKey: 'fields.intervalMinutes', type: 'number', value: service.interval_minutes },
+      { name: 'cron_expression', labelKey: 'fields.cronExpression', type: 'text', value: service.cron_expression },
+      {
+        name: 'config',
+        labelKey: 'fields.configJson',
+        type: 'textarea',
+        value: JSON.stringify(service.config ?? {}, null, 2),
+        inputClassName: 'min-h-56',
+      },
     ]
   }
 
   const app = item as AdminApp
   return [
-    { name: 'name', labelKey: 'fields.name', type: 'text', value: app.name },
+    { name: 'name', labelKey: 'fields.name', type: 'text', value: app.name, required: true },
     { name: 'description', labelKey: 'fields.description', type: 'textarea', value: app.description },
     { name: 'enable_site', labelKey: 'fields.enableSite', type: 'switch', value: app.enable_site },
     { name: 'enable_api', labelKey: 'fields.enableApi', type: 'switch', value: app.enable_api },
@@ -348,17 +633,25 @@ function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldC
   ]
 }
 
-function buildPayload(resource: AdminResourceName, fields: FieldConfig[], values: Record<string, EditableValue>) {
-  const payload: Record<string, EditableValue | string[]> = {}
+function buildPayload(resource: AdminResourceName, fields: FieldConfig[], values: Record<string, EditableFieldValue>) {
+  const payload: Record<string, EditablePayloadValue> = {}
+  const updateFieldNames = adminUpdateFieldNamesByResource[resource]
 
   for (const field of fields) {
+    if (field.includeInPayload === false)
+      continue
+
+    const payloadName = field.submitName ?? field.name
+    if (!updateFieldNames.includes(payloadName))
+      continue
+
     const value = values[field.name]
     if (field.type === 'number') {
-      payload[field.name] = value === '' || value === null || value === undefined ? null : Number(value)
+      payload[payloadName] = value === '' || value === null || value === undefined ? null : Number(value)
       continue
     }
     if (field.type === 'switch') {
-      payload[field.name] = Boolean(value)
+      payload[payloadName] = Boolean(value)
       continue
     }
     if (resource === 'recommendedApps' && field.name === 'categories') {
@@ -369,16 +662,110 @@ function buildPayload(resource: AdminResourceName, fields: FieldConfig[], values
       continue
     }
     if (resource === 'skills' && (field.name === 'categories' || field.name === 'tags')) {
-      payload[field.name] = String(value ?? '')
-        .split(',')
-        .map(item => item.trim())
-        .filter(Boolean)
+      payload[payloadName] = Array.isArray(value)
+        ? value
+        : String(value ?? '')
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean)
       continue
     }
-    payload[field.name] = value
+    if (resource === 'autoServices' && field.name === 'config') {
+      payload.config = parseJsonObject(String(value ?? '{}'))
+      continue
+    }
+    payload[payloadName] = value
+  }
+
+  if (resource === 'autoServices') {
+    const scheduleType = String(values.schedule_type ?? payload.schedule_type ?? '')
+    payload.timezone = DEFAULT_AUTO_SERVICE_TIMEZONE
+    payload.interval_minutes = scheduleType === 'interval'
+      ? (values.interval_minutes === '' || values.interval_minutes === null || values.interval_minutes === undefined
+          ? null
+          : Number(values.interval_minutes))
+      : null
+    payload.cron_expression = scheduleType === 'cron'
+      ? emptyStringToNull(String(values.cron_expression ?? ''))
+      : null
   }
 
   return payload
+}
+
+function getFieldLayout(field: FieldConfig) {
+  if (field.layout)
+    return field.layout
+  if (field.type === 'textarea' || field.type === 'taxonomy-multi')
+    return 'full'
+  if (fullWidthEditorFieldNames.has(field.name))
+    return 'full'
+  return 'half'
+}
+
+function getFieldLayoutClassName(field: FieldConfig) {
+  return getFieldLayout(field) === 'full' ? 'md:col-span-2' : undefined
+}
+
+function getAdminFieldErrorMessage(t: AdminTranslator, field: FieldConfig, errorType: 'required' | 'invalidJson') {
+  const fieldLabel = t(field.labelKey)
+  if (errorType === 'invalidJson')
+    return t('errorMsg.invalidJson', { ns: 'workflow', field: fieldLabel })
+  return t('errorMsg.fieldRequired', { ns: 'common', field: fieldLabel })
+}
+
+function validateResourceEditorValues(
+  fields: FieldConfig[],
+  values: Record<string, EditableFieldValue>,
+  t: AdminTranslator,
+) {
+  for (const field of fields) {
+    if (field.required && !String(values[field.name] ?? '').trim())
+      return getAdminFieldErrorMessage(t, field, 'required')
+  }
+
+  const configField = fields.find(field => field.name === 'config')
+  if (configField) {
+    try {
+      parseJsonObject(String(values.config ?? '{}'))
+    }
+    catch {
+      return getAdminFieldErrorMessage(t, configField, 'invalidJson')
+    }
+  }
+
+  return null
+}
+
+function getAdminMutationErrorMessage(error: unknown, fallbackMessage: string) {
+  if (!(error instanceof AdminRequestError))
+    return fallbackMessage
+
+  const responseMessage = error.responseMessage?.trim()
+  if (responseMessage)
+    return `${fallbackMessage} (${error.status}): ${responseMessage}`
+
+  return `${fallbackMessage} (${error.status})`
+}
+
+function getSkillVersionValue(values: Record<string, EditableFieldValue>, name: 'content_type' | 'skill_markdown') {
+  return String(values[name] ?? '').trim()
+}
+
+function shouldCreateSkillVersion(
+  initialValues: Record<string, EditableFieldValue>,
+  values: Record<string, EditableFieldValue>,
+) {
+  return getSkillVersionValue(initialValues, 'content_type') !== getSkillVersionValue(values, 'content_type')
+    || getSkillVersionValue(initialValues, 'skill_markdown') !== getSkillVersionValue(values, 'skill_markdown')
+}
+
+function buildSkillVersionPayload(values: Record<string, EditableFieldValue>) {
+  return {
+    content_type: getSkillVersionValue(values, 'content_type') || 'remote_reference',
+    skill_markdown: emptyStringToNull(String(values.skill_markdown ?? '')),
+    is_latest: true,
+  }
 }
 
 function getStoredAdminApiKey() {
@@ -403,17 +790,82 @@ function emitAdminApiKeyChange() {
 function useAdminApiKey() {
   const apiKey = useSyncExternalStore(subscribeAdminApiKey, getStoredAdminApiKey, () => '')
 
-  const saveApiKey = (nextApiKey: string) => {
+  const saveApiKey = useCallback((nextApiKey: string) => {
     window.sessionStorage.setItem(ADMIN_API_KEY_STORAGE_KEY, nextApiKey)
     emitAdminApiKeyChange()
-  }
+  }, [])
 
-  const clearApiKey = () => {
+  const clearApiKey = useCallback(() => {
     window.sessionStorage.removeItem(ADMIN_API_KEY_STORAGE_KEY)
     emitAdminApiKeyChange()
-  }
+  }, [])
 
   return { apiKey, saveApiKey, clearApiKey }
+}
+
+function getAutoServiceLabelKey(kind: AutoServiceLabelKind, value: string | null | undefined): AdminFieldLabelKey | null {
+  if (kind === 'serviceType') {
+    if (value === 'skill_crawler_sync')
+      return 'fields.autoServiceTypeSkillCrawler'
+    if (value === 'dataset_queue_monitor')
+      return 'fields.autoServiceTypeDatasetQueue'
+    return null
+  }
+  if (kind === 'serviceStatus') {
+    if (value === 'enabled')
+      return 'fields.autoServiceStatusEnabled'
+    if (value === 'disabled')
+      return 'fields.autoServiceStatusDisabled'
+    return null
+  }
+  if (kind === 'scheduleType') {
+    if (value === 'interval')
+      return 'fields.scheduleTypeInterval'
+    if (value === 'cron')
+      return 'fields.scheduleTypeCron'
+    if (value === 'manual')
+      return 'fields.scheduleTypeManual'
+    return null
+  }
+  if (value === 'queued')
+    return 'fields.runStatusQueued'
+  if (value === 'running')
+    return 'fields.runStatusRunning'
+  if (value === 'success')
+    return 'fields.runStatusSuccess'
+  if (value === 'failed')
+    return 'fields.runStatusFailed'
+  if (value === 'skipped')
+    return 'fields.runStatusSkipped'
+  return null
+}
+
+function getAutoServiceDisplayLabel(
+  t: AdminFieldTranslator,
+  kind: AutoServiceLabelKind,
+  value: string | null | undefined,
+) {
+  const labelKey = getAutoServiceLabelKey(kind, value)
+  return labelKey ? t(labelKey) : value || '-'
+}
+
+const createAutoServiceInitialValues: CreateAutoServiceFormValues = {
+  code: '',
+  name: '',
+  description: '',
+  service_type: 'skill_crawler_sync',
+  status: 'disabled',
+  schedule_type: 'interval',
+  interval_minutes: '60',
+  cron_expression: '',
+  timezone: DEFAULT_AUTO_SERVICE_TIMEZONE,
+  config: '{}',
+}
+
+const createTaxonomyInitialValues: CreateTaxonomyFormValues = {
+  name: '',
+  slug: '',
+  position: '0',
 }
 
 function SkeletonRows() {
@@ -437,12 +889,60 @@ function EmptyState({ message, action }: { message: string, action: string }) {
   )
 }
 
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  allLabel,
+  className,
+}: {
+  label: string
+  value: string
+  options: NonNullable<FieldConfig['options']>
+  onChange: (_value: string) => void
+  allLabel: string
+  className?: string
+}) {
+  const { t } = useTranslation('admin')
+  const selectedOption = options.find(option => option.value === value)
+  const displayLabel = selectedOption ? t(selectedOption.labelKey) : allLabel
+
+  return (
+    <label className={cn('system-sm-medium text-text-secondary', className)}>
+      {label}
+      <Select
+        value={value || SELECT_ALL_VALUE}
+        onValueChange={nextValue => onChange(nextValue === SELECT_ALL_VALUE ? '' : nextValue ?? '')}
+      >
+        <SelectTrigger className="mt-1 w-full" aria-label={label}>
+          {displayLabel}
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SELECT_ALL_VALUE}>
+            <SelectItemText>{allLabel}</SelectItemText>
+            <SelectItemIndicator />
+          </SelectItem>
+          {options.map(option => (
+            <SelectItem key={option.value} value={option.value}>
+              <SelectItemText>{t(option.labelKey)}</SelectItemText>
+              <SelectItemIndicator />
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </label>
+  )
+}
+
 function SkillFilterControls({
+  apiKey,
   values,
   onChange,
 }: {
+  apiKey: string
   values: SkillFilters
-  onChange: (values: SkillFilters) => void
+  onChange: (_values: SkillFilters) => void
 }) {
   const { t } = useTranslation('admin')
 
@@ -450,39 +950,28 @@ function SkillFilterControls({
     <>
       <label className="min-w-40 system-sm-medium text-text-secondary">
         {t('filters.category')}
-        <Input
-          className="mt-1"
+        <TaxonomySingleFilter
+          apiKey={apiKey}
           value={values.category}
-          placeholder={t('filters.categoryPlaceholder')}
-          onChange={event => onChange({ ...values, category: event.target.value })}
+          onChange={category => onChange({ ...values, category })}
         />
       </label>
-      <label className="min-w-40 system-sm-medium text-text-secondary">
-        {t('filters.sourceType')}
-        <select
-          className="mt-1 h-8 w-full rounded-lg border border-components-input-border bg-components-input-bg-normal px-2 system-sm-regular text-components-input-text-filled outline-hidden focus:border-components-input-border-active"
-          value={values.source_type}
-          onChange={event => onChange({ ...values, source_type: event.target.value })}
-        >
-          <option value="">{t('filters.all')}</option>
-          {skillSourceTypeOptions.map(option => (
-            <option key={option.value} value={option.value}>{t(option.labelKey)}</option>
-          ))}
-        </select>
-      </label>
-      <label className="min-w-40 system-sm-medium text-text-secondary">
-        {t('filters.publicationStatus')}
-        <select
-          className="mt-1 h-8 w-full rounded-lg border border-components-input-border bg-components-input-bg-normal px-2 system-sm-regular text-components-input-text-filled outline-hidden focus:border-components-input-border-active"
-          value={values.publication_status}
-          onChange={event => onChange({ ...values, publication_status: event.target.value })}
-        >
-          <option value="">{t('filters.all')}</option>
-          {skillPublicationStatusOptions.map(option => (
-            <option key={option.value} value={option.value}>{t(option.labelKey)}</option>
-          ))}
-        </select>
-      </label>
+      <SelectField
+        className="min-w-40"
+        label={t('filters.sourceType')}
+        value={values.source_type}
+        allLabel={t('filters.all')}
+        options={skillSourceTypeOptions}
+        onChange={source_type => onChange({ ...values, source_type })}
+      />
+      <SelectField
+        className="min-w-40"
+        label={t('filters.publicationStatus')}
+        value={values.publication_status}
+        allLabel={t('filters.all')}
+        options={skillPublicationStatusOptions}
+        onChange={publication_status => onChange({ ...values, publication_status })}
+      />
       <label className="min-w-36 system-sm-medium text-text-secondary">
         {t('filters.updatedAtStart')}
         <Input
@@ -501,6 +990,17 @@ function SkillFilterControls({
           onChange={event => onChange({ ...values, updated_at_end: event.target.value })}
         />
       </label>
+      <SelectField
+        className="min-w-40"
+        label={t('filters.sort')}
+        value={values.sort}
+        allLabel={t('filters.defaultSort')}
+        options={[
+          { value: 'downloads_desc', labelKey: 'fields.sortDownloadsDesc' },
+          { value: 'downloads_asc', labelKey: 'fields.sortDownloadsAsc' },
+        ]}
+        onChange={sort => onChange({ ...values, sort: sort as SkillSort })}
+      />
     </>
   )
 }
@@ -510,11 +1010,15 @@ function ResourceTable({
   data,
   onSelect,
   onDelete,
+  onRunAutoService,
+  onViewAutoServiceLogs,
 }: {
   resource: AdminResourceName
   data: AdminItem[]
-  onSelect: (item: AdminItem) => void
-  onDelete: (item: AdminItem) => void
+  onSelect: (_item: AdminItem) => void
+  onDelete: (_item: AdminItem) => void
+  onRunAutoService?: (_item: AdminAutoService) => void
+  onViewAutoServiceLogs?: (_item: AdminAutoService) => void
 }) {
   const { t } = useTranslation('admin')
 
@@ -580,6 +1084,51 @@ function ResourceTable({
     )
   }
 
+  if (resource === 'skillCategories' || resource === 'skillTags') {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-180 table-fixed">
+          <thead>
+            <tr className="border-b border-divider-subtle bg-background-section-burn text-left system-xs-medium text-text-tertiary">
+              <th className="w-14 px-4 py-3">{t('table.index')}</th>
+              <th className="w-[30%] px-4 py-3">{t('table.id')}</th>
+              <th className="w-[24%] px-4 py-3">{t('table.primary')}</th>
+              <th className="w-[20%] px-4 py-3">{t('table.createdAt')}</th>
+              <th className="w-[18%] px-4 py-3 text-right">{t('table.actions')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-divider-subtle">
+            {data.map((item, index) => {
+              const taxonomy = item as AdminSkillCategory | AdminSkillTag
+              return (
+                <tr key={taxonomy.id} className="bg-background-default">
+                  <td className="px-4 py-3 system-sm-regular text-text-tertiary tabular-nums">{index + 1}</td>
+                  <td className="px-4 py-3">
+                    <span className="block truncate system-sm-regular text-text-secondary">{taxonomy.id}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="truncate system-sm-medium text-text-primary">{taxonomy.name}</div>
+                  </td>
+                  <td className="px-4 py-3 system-sm-regular text-text-secondary">{formatDateTime(taxonomy.created_at)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-2">
+                      <Button size="small" variant="secondary" onClick={() => onSelect(item)}>
+                        {t('actions.details')}
+                      </Button>
+                      <Button size="small" variant="secondary" tone="destructive" onClick={() => onDelete(item)}>
+                        {t(getAdminResource(resource).meta.deleteKey)}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-180 table-fixed">
@@ -600,7 +1149,11 @@ function ResourceTable({
               </td>
               <td className="px-4 py-3">
                 <span className="inline-flex max-w-full rounded-md bg-background-section-burn px-2 py-1 system-xs-medium text-text-secondary">
-                  <span className="truncate">{getItemStatus(resource, item)}</span>
+                  <span className="truncate">
+                    {resource === 'autoServices'
+                      ? getAutoServiceDisplayLabel(t, 'serviceStatus', (item as AdminAutoService).status)
+                      : getItemStatus(resource, item)}
+                  </span>
                 </span>
               </td>
               <td className="px-4 py-3 system-sm-regular text-text-secondary tabular-nums">
@@ -611,6 +1164,16 @@ function ResourceTable({
                   <Button size="small" variant="secondary" onClick={() => onSelect(item)}>
                     {t('actions.details')}
                   </Button>
+                  {resource === 'autoServices' && (
+                    <>
+                      <Button size="small" variant="secondary" onClick={() => onRunAutoService?.(item as AdminAutoService)}>
+                        {t('actions.run')}
+                      </Button>
+                      <Button size="small" variant="secondary" onClick={() => onViewAutoServiceLogs?.(item as AdminAutoService)}>
+                        {t('actions.logs')}
+                      </Button>
+                    </>
+                  )}
                   <Button size="small" variant="secondary" tone="destructive" onClick={() => onDelete(item)}>
                     {t(getAdminResource(resource).meta.deleteKey)}
                   </Button>
@@ -625,33 +1188,248 @@ function ResourceTable({
 }
 
 function getInitialFieldValues(fields: FieldConfig[]) {
-  return fields.reduce<Record<string, EditableValue>>((nextValues, field) => {
-    nextValues[field.name] = field.value ?? ''
+  return fields.reduce<Record<string, EditableFieldValue>>((nextValues, field) => {
+    nextValues[field.name] = Array.isArray(field.value) ? field.value : field.value ?? ''
     return nextValues
   }, {})
 }
 
 function getFieldStateKey(fields: FieldConfig[]) {
   return fields
-    .map(field => `${field.name}:${String(field.value ?? '')}`)
+    .map(field => `${field.name}:${Array.isArray(field.value) ? field.value.join(',') : String(field.value ?? '')}`)
     .join('|')
 }
 
-function FieldInput({
+function isUnauthorizedAdminError(error: unknown) {
+  return error instanceof AdminRequestError && error.status === 401
+}
+
+function createTaxonomyOption(slug: string, label?: string | null): TaxonomyOption {
+  return {
+    value: slug,
+    label: label || slug,
+  }
+}
+
+function getTaxonomyOptionLabel(option: TaxonomyOption) {
+  return option.label
+}
+
+function renderTaxonomyOption(option: TaxonomyOption) {
+  return (
+    <ComboboxItem key={option.value} value={option}>
+      <ComboboxItemText>{option.label}</ComboboxItemText>
+      <ComboboxItemIndicator />
+    </ComboboxItem>
+  )
+}
+
+function fetchAdminTaxonomyOptions({
+  apiKey,
+  resource,
+  keyword,
+}: {
+  apiKey: string
+  resource: TaxonomyResourceName
+  keyword: string
+}): Promise<AdminPagination<AdminSkillCategory | AdminSkillTag>> {
+  if (resource === 'skillCategories') {
+    return fetchAdminResourceList<'skillCategories'>({
+      apiKey,
+      resource,
+      page: 1,
+      limit: 100,
+      keyword,
+    })
+  }
+
+  return fetchAdminResourceList<'skillTags'>({
+    apiKey,
+    resource,
+    page: 1,
+    limit: 100,
+    keyword,
+  })
+}
+
+function TaxonomyMultiField({
+  apiKey,
   field,
   value,
   onChange,
 }: {
+  apiKey: string
   field: FieldConfig
-  value: EditableValue
-  onChange: (value: EditableValue) => void
+  value: string[]
+  onChange: (_value: string[]) => void
 }) {
   const { t } = useTranslation('admin')
+  const [searchValue, setSearchValue] = useState('')
+  const taxonomyResource = field.taxonomyResource ?? 'skillCategories'
+  const selectedValues = useMemo(() => value.map(slug => createTaxonomyOption(slug)), [value])
+  const taxonomyQuery = useQuery<AdminPagination<AdminSkillCategory | AdminSkillTag>>({
+    queryKey: ['admin', 'taxonomy-options', taxonomyResource, apiKey, searchValue],
+    queryFn: () => fetchAdminTaxonomyOptions({
+      apiKey,
+      resource: taxonomyResource,
+      keyword: searchValue,
+    }),
+    enabled: Boolean(apiKey),
+    retry: false,
+  })
+  const options = useMemo(() => {
+    const optionMap = new Map<string, TaxonomyOption>()
+    taxonomyQuery.data?.data.forEach(item => optionMap.set(item.slug, createTaxonomyOption(item.slug, item.name)))
+    selectedValues.forEach(option => optionMap.set(option.value, option))
+    const trimmedSearchValue = searchValue.trim()
+    if (trimmedSearchValue && !optionMap.has(trimmedSearchValue))
+      optionMap.set(trimmedSearchValue, createTaxonomyOption(trimmedSearchValue))
+    return Array.from(optionMap.values())
+  }, [searchValue, selectedValues, taxonomyQuery.data?.data])
+
+  return (
+    <Combobox
+      items={options}
+      itemToStringLabel={getTaxonomyOptionLabel}
+      multiple
+      filter={null}
+      value={selectedValues}
+      onValueChange={nextValues => onChange(nextValues.map(option => option.value))}
+      onInputValueChange={(nextSearchValue, { reason }) => {
+        if (reason !== 'item-press')
+          setSearchValue(nextSearchValue)
+      }}
+    >
+      <ComboboxInputGroup className="mt-1 h-auto min-h-8 items-start py-1">
+        <ComboboxChips>
+          <ComboboxValue>
+            {(selectedOptions: TaxonomyOption[]) => (
+              <>
+                {selectedOptions.map(option => (
+                  <ComboboxChip key={option.value} aria-label={option.label}>
+                    <span className="max-w-36 truncate">{option.label}</span>
+                    <ComboboxChipRemove aria-label={t('filters.removeTaxonomy', { name: option.label })} />
+                  </ComboboxChip>
+                ))}
+                <ComboboxInput
+                  aria-label={t(field.labelKey)}
+                  placeholder={selectedOptions.length ? '' : t('filters.taxonomyPlaceholder')}
+                  className="min-w-28 px-1 py-0.5"
+                />
+              </>
+            )}
+          </ComboboxValue>
+        </ComboboxChips>
+        <ComboboxInputTrigger className="mt-0.5 mr-1" aria-label={t('filters.openTaxonomyOptions')} />
+      </ComboboxInputGroup>
+      <ComboboxContent popupClassName="w-[420px]" popupProps={{ 'aria-busy': taxonomyQuery.isFetching || undefined }}>
+        <ComboboxStatus className="border-b border-divider-subtle">
+          {taxonomyQuery.isFetching ? t('states.loading') : t('filters.taxonomyStatus', { total: options.length })}
+        </ComboboxStatus>
+        <ComboboxList>{options.map(renderTaxonomyOption)}</ComboboxList>
+        <ComboboxEmpty>{t('filters.taxonomyEmpty')}</ComboboxEmpty>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
+
+function TaxonomySingleFilter({
+  apiKey,
+  value,
+  onChange,
+}: {
+  apiKey: string
+  value: string
+  onChange: (_value: string) => void
+}) {
+  const { t } = useTranslation('admin')
+  const searchValue = value
+  const selectedOption = useMemo(() => value ? createTaxonomyOption(value) : null, [value])
+  const taxonomyQuery = useQuery<AdminPagination<AdminSkillCategory | AdminSkillTag>>({
+    queryKey: ['admin', 'taxonomy-options', 'skillCategories', apiKey, searchValue],
+    queryFn: () => fetchAdminTaxonomyOptions({
+      apiKey,
+      resource: 'skillCategories',
+      keyword: searchValue,
+    }),
+    enabled: Boolean(apiKey),
+    retry: false,
+  })
+  const options = useMemo(() => {
+    const optionMap = new Map<string, TaxonomyOption>()
+    taxonomyQuery.data?.data.forEach(item => optionMap.set(item.slug, createTaxonomyOption(item.slug, item.name)))
+    if (selectedOption)
+      optionMap.set(selectedOption.value, selectedOption)
+    const trimmedSearchValue = searchValue.trim()
+    if (trimmedSearchValue && !optionMap.has(trimmedSearchValue))
+      optionMap.set(trimmedSearchValue, createTaxonomyOption(trimmedSearchValue))
+    return Array.from(optionMap.values())
+  }, [searchValue, selectedOption, taxonomyQuery.data?.data])
+
+  return (
+    <Combobox<TaxonomyOption>
+      items={options}
+      value={selectedOption ?? undefined}
+      inputValue={searchValue}
+      itemToStringLabel={getTaxonomyOptionLabel}
+      filter={null}
+      onValueChange={(nextOption) => {
+        const nextValue = nextOption?.value ?? ''
+        onChange(nextValue)
+      }}
+      onInputValueChange={(nextSearchValue, { reason }) => {
+        if (reason === 'item-press')
+          return
+        onChange(nextSearchValue.trim())
+      }}
+    >
+      <ComboboxInputGroup className="mt-1 h-8 min-h-8 px-2">
+        <ComboboxInput
+          aria-label={t('filters.category')}
+          placeholder={t('filters.categoryPlaceholder')}
+          className="block h-4.5 grow px-1 py-0 system-sm-regular text-components-input-text-filled"
+        />
+        <ComboboxInputTrigger className="mr-0" aria-label={t('filters.openTaxonomyOptions')} />
+      </ComboboxInputGroup>
+      <ComboboxContent popupClassName="w-[320px]" popupProps={{ 'aria-busy': taxonomyQuery.isFetching || undefined }}>
+        <ComboboxStatus className="border-b border-divider-subtle">
+          {taxonomyQuery.isFetching ? t('states.loading') : t('filters.taxonomyStatus', { total: options.length })}
+        </ComboboxStatus>
+        <ComboboxList>{options.map(renderTaxonomyOption)}</ComboboxList>
+        <ComboboxEmpty>{t('filters.taxonomyEmpty')}</ComboboxEmpty>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
+
+function FieldInput({
+  apiKey,
+  field,
+  value,
+  onChange,
+}: {
+  apiKey?: string
+  field: FieldConfig
+  value: EditableFieldValue
+  onChange: (_value: EditableFieldValue) => void
+}) {
+  const { t } = useTranslation('admin')
+
+  if (field.type === 'taxonomy-multi') {
+    return (
+      <TaxonomyMultiField
+        apiKey={apiKey ?? ''}
+        field={field}
+        value={Array.isArray(value) ? value : commaSeparatedTextToArray(String(value ?? ''))}
+        onChange={onChange}
+      />
+    )
+  }
 
   if (field.type === 'textarea') {
     return (
       <Textarea
-        className="mt-1"
+        className={cn('mt-1', field.inputClassName)}
         value={String(value ?? '')}
         onValueChange={onChange}
       />
@@ -709,63 +1487,151 @@ function FieldInput({
   )
 }
 
+function AdminDialogLayout({
+  title,
+  description,
+  closeLabel,
+  children,
+  widthClassName = 'w-[720px]!',
+}: {
+  title: ReactNode
+  description: ReactNode
+  closeLabel: string
+  children: ReactNode
+  widthClassName?: string
+}) {
+  return (
+    <DialogContent className={cn('flex max-h-[80dvh] max-w-[calc(100vw-2rem)]! flex-col overflow-hidden! border-none p-0! text-left align-middle', widthClassName)}>
+      <div className="flex items-start justify-between gap-4 border-b border-divider-subtle p-6">
+        <div className="min-w-0">
+          <DialogTitle className="truncate title-xl-semi-bold text-text-primary">
+            {title}
+          </DialogTitle>
+          <p className="mt-1 system-sm-regular text-pretty text-text-tertiary">
+            {description}
+          </p>
+        </div>
+        <DialogCloseButton aria-label={closeLabel} />
+      </div>
+      {children}
+    </DialogContent>
+  )
+}
+
+function AdminDialogBody({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      {children}
+    </div>
+  )
+}
+
+function AdminFieldGrid({ children }: { children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
+      {children}
+    </div>
+  )
+}
+
+function AdminDialogActions({ children }: { children: ReactNode }) {
+  return (
+    <div className="sticky bottom-0 mt-auto flex justify-end gap-2 border-t border-divider-subtle bg-background-default px-6 py-4">
+      {children}
+    </div>
+  )
+}
+
 function ResourceEditorForm({
   apiKey,
   resource,
   item,
   detailFields,
   initialValues,
+  beforeFields,
   onCancel,
   onSuccess,
+  onUnauthorized,
 }: {
   apiKey: string
   resource: AdminResourceName
   item: AdminItem
   detailFields: FieldConfig[]
-  initialValues: Record<string, EditableValue>
+  initialValues: Record<string, EditableFieldValue>
+  beforeFields?: ReactNode
   onCancel: () => void
-  onSuccess: () => void
+  onSuccess: () => void | Promise<void>
+  onUnauthorized: () => void
 }) {
   const { t } = useTranslation('admin')
   const [values, setValues] = useState(initialValues)
+  const [localError, setLocalError] = useState<string | null>(null)
+  const visibleFields = resource === 'autoServices'
+    ? filterAutoServiceFieldsBySchedule(detailFields, String(values.schedule_type ?? ''))
+    : detailFields
   const mutation = useMutation({
-    mutationFn: () => updateAdminResource(apiKey, resource, item.id, buildPayload(resource, detailFields, values) as Partial<AdminResourceItemMap[typeof resource]>),
-    onSuccess: () => {
-      onSuccess()
+    mutationFn: async () => {
+      const updatedItem = await updateAdminResource(apiKey, resource, item.id, buildPayload(resource, detailFields, values) as Partial<AdminResourceItemMap[typeof resource]>)
+      if (resource === 'skills' && shouldCreateSkillVersion(initialValues, values))
+        await createAdminSkillVersion(apiKey, item.id, buildSkillVersionPayload(values))
+      return updatedItem
+    },
+    onSuccess: async () => {
+      await onSuccess()
+    },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        onUnauthorized()
     },
   })
+  const errorMessage = localError ?? (mutation.error ? getAdminMutationErrorMessage(mutation.error, t('states.saveError')) : null)
 
   return (
     <form
-      className="space-y-4"
+      className="flex min-h-0 flex-1 flex-col"
       onSubmit={(event) => {
         event.preventDefault()
+        const validationError = validateResourceEditorValues(detailFields, values, t)
+        if (validationError) {
+          setLocalError(validationError)
+          return
+        }
+        setLocalError(null)
         mutation.mutate()
       }}
     >
-      {detailFields.map(field => (
-        <label key={field.name} className="block system-sm-medium text-text-secondary">
-          <span>{t(field.labelKey)}</span>
-          <FieldInput
-            field={field}
-            value={values[field.name]}
-            onChange={value => setValues(current => ({ ...current, [field.name]: value }))}
-          />
-        </label>
-      ))}
-      {mutation.error && (
-        <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary">
-          {t('states.saveError')}
-        </div>
-      )}
-      <div className="flex justify-end gap-2 pt-2">
+      <AdminDialogBody>
+        {beforeFields}
+        <AdminFieldGrid>
+          {visibleFields.map(field => (
+            <label key={field.name} className={cn('block min-w-0 system-sm-medium text-text-secondary', getFieldLayoutClassName(field))}>
+              <span>{t(field.labelKey)}</span>
+              <FieldInput
+                apiKey={apiKey}
+                field={field}
+                value={values[field.name]}
+                onChange={(value) => {
+                  setLocalError(null)
+                  setValues(current => ({ ...current, [field.name]: value }))
+                }}
+              />
+            </label>
+          ))}
+          {errorMessage && (
+            <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary md:col-span-2">
+              {errorMessage}
+            </div>
+          )}
+        </AdminFieldGrid>
+      </AdminDialogBody>
+      <AdminDialogActions>
         <Button type="button" variant="secondary" onClick={onCancel}>
           {t('actions.cancel')}
         </Button>
         <Button type="submit" variant="primary" loading={mutation.isPending}>
           {t('actions.save')}
         </Button>
-      </div>
+      </AdminDialogActions>
     </form>
   )
 }
@@ -774,10 +1640,12 @@ function SkillAssetUpload({
   apiKey,
   skill,
   onUploaded,
+  onUnauthorized,
 }: {
   apiKey: string
   skill: AdminSkill
   onUploaded: () => void
+  onUnauthorized: () => void
 }) {
   const { t } = useTranslation('admin')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -789,10 +1657,14 @@ function SkillAssetUpload({
       toast.success(t('states.uploadSuccess'))
       onUploaded()
     },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        onUnauthorized()
+    },
   })
 
   return (
-    <section className="mb-6 rounded-lg border border-divider-subtle bg-background-section p-4">
+    <section className="m-6 mb-0 rounded-lg border border-divider-subtle bg-background-section p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="system-md-semibold text-text-secondary">{t('drawer.assetUpload')}</h3>
@@ -832,7 +1704,7 @@ function SkillAssetUpload({
             {skill.latest_version.package_filename ?? '-'}
           </dd>
           <dt>{t('fields.checksumSha256')}</dt>
-          <dd className="min-w-0 break-all font-mono text-text-secondary">
+          <dd className="min-w-0 font-mono break-all text-text-secondary">
             {skill.latest_version.checksum_sha256 ?? '-'}
           </dd>
         </dl>
@@ -857,12 +1729,14 @@ function ResourceEditor({
   item,
   onClose,
   onSaved,
+  onUnauthorized,
 }: {
   apiKey: string
   resource: AdminResourceName
   item: AdminItem | null
   onClose: () => void
   onSaved: () => void
+  onUnauthorized: () => void
 }) {
   const { t } = useTranslation('admin')
   const open = Boolean(item)
@@ -872,64 +1746,68 @@ function ResourceEditor({
     queryFn: () => fetchAdminResourceDetail(apiKey, resource, item!.id),
     enabled: Boolean(apiKey && item),
     retry: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
   const detailItem = (detailQuery.data ?? item) as AdminItem | null
   const detailFields = useMemo(() => detailItem ? buildFieldConfigs(resource, detailItem) : fields, [detailItem, fields, resource])
   const initialValues = useMemo(() => getInitialFieldValues(detailFields), [detailFields])
   const fieldStateKey = useMemo(() => getFieldStateKey(detailFields), [detailFields])
+  const skillAssetUpload = resource === 'skills' && detailItem
+    ? (
+        <SkillAssetUpload
+          apiKey={apiKey}
+          skill={detailItem as AdminSkill}
+          onUploaded={async () => {
+            await detailQuery.refetch()
+            onSaved()
+          }}
+          onUnauthorized={onUnauthorized}
+        />
+      )
+    : null
+
+  useEffect(() => {
+    if (isUnauthorizedAdminError(detailQuery.error))
+      onUnauthorized()
+  }, [detailQuery.error, onUnauthorized])
 
   return (
     <Dialog open={open} onOpenChange={nextOpen => !nextOpen && onClose()}>
-      <DialogContent className="w-[720px]! max-w-[calc(100vw-2rem)]! overflow-hidden! border-none p-0! text-left align-middle">
-        <div className="flex items-start justify-between gap-4 border-b border-divider-subtle p-6">
-          <div className="min-w-0">
-            <DialogTitle className="truncate title-xl-semi-bold text-text-primary">
-              {detailItem ? getItemTitle(resource, detailItem) : t('drawer.title')}
-            </DialogTitle>
-            <p className="mt-1 system-sm-regular text-pretty text-text-tertiary">
-              {t('drawer.description')}
-            </p>
-          </div>
-          <DialogCloseButton aria-label={t('actions.close')} />
-        </div>
-        <div className="max-h-[calc(80dvh-5rem)] overflow-y-auto p-6">
-          {detailQuery.isFetching && <SkeletonRows />}
-          {detailQuery.error && (
-            <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary">
-              {t('states.error')}
-            </div>
-          )}
-          {!detailQuery.isFetching && (
-            detailItem && item && (
-              <>
-                {resource === 'skills' && (
-                  <SkillAssetUpload
-                    apiKey={apiKey}
-                    skill={detailItem as AdminSkill}
-                    onUploaded={() => {
-                      detailQuery.refetch()
-                      onSaved()
-                    }}
-                  />
-                )}
-                <ResourceEditorForm
-                  key={`${resource}:${item.id}:${fieldStateKey}`}
-                  apiKey={apiKey}
-                  resource={resource}
-                  item={item}
-                  detailFields={detailFields}
-                  initialValues={initialValues}
-                  onCancel={onClose}
-                  onSuccess={() => {
-                    onSaved()
-                    onClose()
-                  }}
-                />
-              </>
-            )
-          )}
-        </div>
-      </DialogContent>
+      <AdminDialogLayout
+        title={detailItem ? getItemTitle(resource, detailItem) : t('drawer.title')}
+        description={t('drawer.description')}
+        closeLabel={t('actions.close')}
+      >
+        {(detailQuery.isFetching || detailQuery.error) && (
+          <AdminDialogBody>
+            {detailQuery.isFetching && <SkeletonRows />}
+            {detailQuery.error && (
+              <div className="m-6 rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary">
+                {t('states.error')}
+              </div>
+            )}
+          </AdminDialogBody>
+        )}
+        {!detailQuery.isFetching && !detailQuery.error && detailItem && item && (
+          <ResourceEditorForm
+            key={`${resource}:${item.id}:${fieldStateKey}`}
+            apiKey={apiKey}
+            resource={resource}
+            item={item}
+            detailFields={detailFields}
+            initialValues={initialValues}
+            beforeFields={skillAssetUpload}
+            onCancel={onClose}
+            onSuccess={async () => {
+              await detailQuery.refetch()
+              onSaved()
+              onClose()
+            }}
+            onUnauthorized={onUnauthorized}
+          />
+        )}
+      </AdminDialogLayout>
     </Dialog>
   )
 }
@@ -940,12 +1818,14 @@ function DeleteConfirmDialog({
   item,
   onClose,
   onDeleted,
+  onUnauthorized,
 }: {
   apiKey: string
   resource: AdminResourceName
   item: AdminItem | null
   onClose: () => void
   onDeleted: () => void
+  onUnauthorized: () => void
 }) {
   const { t } = useTranslation('admin')
   const mutation = useMutation({
@@ -953,6 +1833,10 @@ function DeleteConfirmDialog({
     onSuccess: () => {
       onDeleted()
       onClose()
+    },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        onUnauthorized()
     },
   })
 
@@ -983,16 +1867,80 @@ function DeleteConfirmDialog({
   )
 }
 
+function RunAutoServiceConfirmDialog({
+  apiKey,
+  service,
+  onClose,
+  onQueued,
+  onUnauthorized,
+}: {
+  apiKey: string
+  service: AdminAutoService | null
+  onClose: () => void
+  onQueued: () => void
+  onUnauthorized: () => void
+}) {
+  const { t } = useTranslation('admin')
+  const serviceName = service?.name ?? '-'
+  const runActionText = t('actions.run')
+  const mutation = useMutation({
+    mutationFn: () => runAdminAutoService(apiKey, service!.id),
+    onSuccess: () => {
+      toast.success(t('states.runQueued'))
+      onQueued()
+      onClose()
+    },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error)) {
+        onUnauthorized()
+        return
+      }
+      toast.error(t('states.runError'))
+    },
+  })
+
+  return (
+    <AlertDialog open={Boolean(service)} onOpenChange={open => !open && onClose()}>
+      <AlertDialogContent>
+        <div className="p-6">
+          <AlertDialogTitle className="title-lg-bold text-text-primary">
+            {t('runConfirm.title', { defaultValue: `${t('actions.confirm')} ${runActionText}` })}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="mt-2 system-sm-regular text-pretty text-text-tertiary">
+            {t('runConfirm.description', {
+              name: serviceName,
+              defaultValue: `${runActionText}: ${serviceName}`,
+            })}
+          </AlertDialogDescription>
+          {mutation.error && (
+            <div className="mt-4 rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary">
+              {t('states.runError')}
+            </div>
+          )}
+        </div>
+        <AlertDialogActions>
+          <AlertDialogCancelButton>{t('actions.cancel')}</AlertDialogCancelButton>
+          <AlertDialogConfirmButton loading={mutation.isPending} onClick={() => mutation.mutate()}>
+            {t('actions.confirm')}
+          </AlertDialogConfirmButton>
+        </AlertDialogActions>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 function CreateSkillDialog({
   apiKey,
   open,
   onClose,
   onCreated,
+  onUnauthorized,
 }: {
   apiKey: string
   open: boolean
   onClose: () => void
-  onCreated: (skill: AdminSkill) => void
+  onCreated: (_skill: AdminSkill) => void
+  onUnauthorized: () => void
 }) {
   const { t } = useTranslation('admin')
   const [values, setValues] = useState<CreateSkillFormValues>(createSkillInitialValues)
@@ -1007,8 +1955,8 @@ function CreateSkillDialog({
     { name: 'publication_status', labelKey: 'fields.publicationStatus', type: 'select', value: values.publication_status, options: skillPublicationStatusOptions },
     { name: 'audit_status', labelKey: 'fields.auditStatus', type: 'select', value: values.audit_status, options: skillAuditStatusOptions },
     { name: 'audit_notes', labelKey: 'fields.auditNotes', type: 'textarea', value: values.audit_notes },
-    { name: 'categories', labelKey: 'fields.categories', type: 'text', value: values.categories },
-    { name: 'tags', labelKey: 'fields.tags', type: 'text', value: values.tags },
+    { name: 'categories', labelKey: 'fields.categories', type: 'taxonomy-multi', value: values.categories, taxonomyResource: 'skillCategories' },
+    { name: 'tags', labelKey: 'fields.tags', type: 'taxonomy-multi', value: values.tags, taxonomyResource: 'skillTags' },
     { name: 'install_count', labelKey: 'fields.installCount', type: 'number', value: values.install_count },
     { name: 'github_stars', labelKey: 'fields.githubStars', type: 'number', value: values.github_stars },
     { name: 'position', labelKey: 'fields.position', type: 'number', value: values.position },
@@ -1023,61 +1971,362 @@ function CreateSkillDialog({
       onCreated(createdSkill)
       onClose()
     },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        onUnauthorized()
+    },
   })
   const canSubmit = values.name.trim() && values.slug.trim() && values.description.trim()
 
   return (
     <Dialog open={open} onOpenChange={nextOpen => !nextOpen && onClose()}>
-      <DialogContent className="w-[760px]! max-w-[calc(100vw-2rem)]! overflow-hidden! border-none p-0! text-left align-middle">
-        <div className="flex items-start justify-between gap-4 border-b border-divider-subtle p-6">
-          <div className="min-w-0">
-            <DialogTitle className="title-xl-semi-bold text-text-primary">
-              {t('drawer.createSkillTitle')}
-            </DialogTitle>
-            <p className="mt-1 system-sm-regular text-pretty text-text-tertiary">
-              {t('drawer.createSkillDescription')}
-            </p>
-          </div>
-          <DialogCloseButton aria-label={t('actions.close')} />
-        </div>
+      <AdminDialogLayout
+        title={t('drawer.createSkillTitle')}
+        description={t('drawer.createSkillDescription')}
+        closeLabel={t('actions.close')}
+      >
         <form
-          className="max-h-[calc(80dvh-5rem)] space-y-4 overflow-y-auto p-6"
+          className="flex min-h-0 flex-1 flex-col"
           onSubmit={(event) => {
             event.preventDefault()
             if (canSubmit)
               mutation.mutate()
           }}
         >
-          {fields.map(field => (
-            <label key={field.name} className="block system-sm-medium text-text-secondary">
-              <span>{t(field.labelKey)}</span>
-              <FieldInput
-                field={field}
-                value={values[field.name as keyof CreateSkillFormValues]}
-                onChange={value => setValues(current => ({ ...current, [field.name]: String(value ?? '') }))}
-              />
-            </label>
-          ))}
-          {mutation.error && (
-            <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary">
-              {t('states.createError')}
-            </div>
-          )}
-          <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-divider-subtle bg-background-default px-6 pt-4">
+          <AdminDialogBody>
+            <AdminFieldGrid>
+              {fields.map(field => (
+                <label key={field.name} className={cn('block min-w-0 system-sm-medium text-text-secondary', getFieldLayoutClassName(field))}>
+                  <span>{t(field.labelKey)}</span>
+                  <FieldInput
+                    apiKey={apiKey}
+                    field={field}
+                    value={values[field.name as keyof CreateSkillFormValues]}
+                    onChange={value =>
+                      setValues(current => ({
+                        ...current,
+                        [field.name]: Array.isArray(value) ? value : String(value ?? ''),
+                      }))}
+                  />
+                </label>
+              ))}
+              {mutation.error && (
+                <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary md:col-span-2">
+                  {t('states.createError')}
+                </div>
+              )}
+            </AdminFieldGrid>
+          </AdminDialogBody>
+          <AdminDialogActions>
             <Button type="button" variant="secondary" onClick={onClose}>
               {t('actions.cancel')}
             </Button>
             <Button type="submit" variant="primary" disabled={!canSubmit} loading={mutation.isPending}>
               {t('actions.createSkill')}
             </Button>
-          </div>
+          </AdminDialogActions>
         </form>
+      </AdminDialogLayout>
+    </Dialog>
+  )
+}
+
+function CreateTaxonomyDialog({
+  apiKey,
+  resource,
+  open,
+  onClose,
+  onCreated,
+  onUnauthorized,
+}: {
+  apiKey: string
+  resource: TaxonomyResourceName
+  open: boolean
+  onClose: () => void
+  onCreated: (_item: AdminSkillCategory | AdminSkillTag) => void
+  onUnauthorized: () => void
+}) {
+  const { t } = useTranslation('admin')
+  const [values, setValues] = useState<CreateTaxonomyFormValues>(createTaxonomyInitialValues)
+  const fields = useMemo<FieldConfig[]>(() => [
+    { name: 'name', labelKey: 'fields.name', type: 'text', value: values.name },
+    { name: 'slug', labelKey: 'fields.slug', type: 'text', value: values.slug },
+    ...(resource === 'skillCategories'
+      ? [{ name: 'position', labelKey: 'fields.position', type: 'number', value: values.position } as const]
+      : []),
+  ], [resource, values])
+  const mutation = useMutation({
+    mutationFn: () => createAdminResource(apiKey, resource, buildCreateTaxonomyPayload(resource, values)),
+    onSuccess: (createdItem) => {
+      setValues(createTaxonomyInitialValues)
+      toast.success(t('states.createTaxonomySuccess'))
+      onCreated(createdItem)
+      onClose()
+    },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        onUnauthorized()
+    },
+  })
+  const canSubmit = values.name.trim() && values.slug.trim()
+
+  return (
+    <Dialog open={open} onOpenChange={nextOpen => !nextOpen && onClose()}>
+      <AdminDialogLayout
+        title={t(resource === 'skillCategories' ? 'drawer.createSkillCategoryTitle' : 'drawer.createSkillTagTitle')}
+        description={t('drawer.createTaxonomyDescription')}
+        closeLabel={t('actions.close')}
+      >
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (canSubmit)
+              mutation.mutate()
+          }}
+        >
+          <AdminDialogBody>
+            <AdminFieldGrid>
+              {fields.map(field => (
+                <label key={field.name} className={cn('block min-w-0 system-sm-medium text-text-secondary', getFieldLayoutClassName(field))}>
+                  <span>{t(field.labelKey)}</span>
+                  <FieldInput
+                    apiKey={apiKey}
+                    field={field}
+                    value={values[field.name as keyof CreateTaxonomyFormValues]}
+                    onChange={value => setValues(current => ({ ...current, [field.name]: String(value ?? '') }))}
+                  />
+                </label>
+              ))}
+              {mutation.error && (
+                <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary md:col-span-2">
+                  {t('states.createTaxonomyError')}
+                </div>
+              )}
+            </AdminFieldGrid>
+          </AdminDialogBody>
+          <AdminDialogActions>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t('actions.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" disabled={!canSubmit} loading={mutation.isPending}>
+              {t('actions.createTaxonomy')}
+            </Button>
+          </AdminDialogActions>
+        </form>
+      </AdminDialogLayout>
+    </Dialog>
+  )
+}
+
+function CreateAutoServiceDialog({
+  apiKey,
+  open,
+  onClose,
+  onCreated,
+  onUnauthorized,
+}: {
+  apiKey: string
+  open: boolean
+  onClose: () => void
+  onCreated: (_service: AdminAutoService) => void
+  onUnauthorized: () => void
+}) {
+  const { t } = useTranslation('admin')
+  const [values, setValues] = useState<CreateAutoServiceFormValues>(createAutoServiceInitialValues)
+  const fields = useMemo<FieldConfig[]>(() => filterAutoServiceFieldsBySchedule([
+    { name: 'code', labelKey: 'fields.code', type: 'text', value: values.code },
+    { name: 'name', labelKey: 'fields.name', type: 'text', value: values.name },
+    { name: 'description', labelKey: 'fields.description', type: 'textarea', value: values.description },
+    { name: 'service_type', labelKey: 'fields.autoServiceType', type: 'select', value: values.service_type, options: autoServiceTypeOptions },
+    { name: 'status', labelKey: 'fields.autoServiceStatus', type: 'select', value: values.status, options: autoServiceStatusOptions },
+    { name: 'schedule_type', labelKey: 'fields.scheduleType', type: 'select', value: values.schedule_type, options: autoServiceScheduleTypeOptions },
+    { name: 'interval_minutes', labelKey: 'fields.intervalMinutes', type: 'number', value: values.interval_minutes },
+    { name: 'cron_expression', labelKey: 'fields.cronExpression', type: 'text', value: values.cron_expression },
+    { name: 'config', labelKey: 'fields.configJson', type: 'textarea', value: values.config, inputClassName: 'min-h-56' },
+  ], values.schedule_type), [values])
+  const mutation = useMutation({
+    mutationFn: () => createAdminResource(apiKey, 'autoServices', buildCreateAutoServicePayload(values)),
+    onSuccess: (createdService) => {
+      setValues(createAutoServiceInitialValues)
+      toast.success(t('states.createAutoServiceSuccess'))
+      onCreated(createdService)
+      onClose()
+    },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        onUnauthorized()
+    },
+  })
+  const canSubmit = values.code.trim() && values.name.trim()
+
+  return (
+    <Dialog open={open} onOpenChange={nextOpen => !nextOpen && onClose()}>
+      <AdminDialogLayout
+        title={t('drawer.createAutoServiceTitle')}
+        description={t('drawer.createAutoServiceDescription')}
+        closeLabel={t('actions.close')}
+      >
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (canSubmit)
+              mutation.mutate()
+          }}
+        >
+          <AdminDialogBody>
+            <AdminFieldGrid>
+              {fields.map(field => (
+                <label key={field.name} className={cn('block min-w-0 system-sm-medium text-text-secondary', getFieldLayoutClassName(field))}>
+                  <span>{t(field.labelKey)}</span>
+                  <FieldInput
+                    apiKey={apiKey}
+                    field={field}
+                    value={values[field.name as keyof CreateAutoServiceFormValues]}
+                    onChange={value => setValues(current => ({ ...current, [field.name]: String(value ?? '') }))}
+                  />
+                </label>
+              ))}
+              {mutation.error && (
+                <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary md:col-span-2">
+                  {t('states.createAutoServiceError')}
+                </div>
+              )}
+            </AdminFieldGrid>
+          </AdminDialogBody>
+          <AdminDialogActions>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              {t('actions.cancel')}
+            </Button>
+            <Button type="submit" variant="primary" disabled={!canSubmit} loading={mutation.isPending}>
+              {t('actions.createAutoService')}
+            </Button>
+          </AdminDialogActions>
+        </form>
+      </AdminDialogLayout>
+    </Dialog>
+  )
+}
+
+function AutoServiceLogsDialog({
+  apiKey,
+  service,
+  onClose,
+  onUnauthorized,
+}: {
+  apiKey: string
+  service: AdminAutoService | null
+  onClose: () => void
+  onUnauthorized: () => void
+}) {
+  const { t } = useTranslation('admin')
+  const logsQuery = useQuery<AdminPagination<AdminAutoServiceRunLog>>({
+    queryKey: ['admin', 'auto-service-logs', service?.id, apiKey],
+    queryFn: () => fetchAdminAutoServiceLogs(apiKey, service!.id, 1, 20),
+    enabled: Boolean(apiKey && service),
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (isUnauthorizedAdminError(logsQuery.error))
+      onUnauthorized()
+  }, [logsQuery.error, onUnauthorized])
+
+  return (
+    <Dialog open={Boolean(service)} onOpenChange={nextOpen => !nextOpen && onClose()}>
+      <DialogContent className="w-[860px]! max-w-[calc(100vw-2rem)]! overflow-hidden! border-none p-0! text-left align-middle">
+        <div className="flex items-start justify-between gap-4 border-b border-divider-subtle p-6">
+          <div className="min-w-0">
+            <DialogTitle className="truncate title-xl-semi-bold text-text-primary">
+              {service ? service.name : t('actions.logs')}
+            </DialogTitle>
+            <p className="mt-1 system-sm-regular text-pretty text-text-tertiary">
+              {t('drawer.autoServiceLogsDescription')}
+            </p>
+          </div>
+          <DialogCloseButton aria-label={t('actions.close')} />
+        </div>
+        <div className="max-h-[calc(80dvh-5rem)] overflow-y-auto p-6">
+          {logsQuery.isFetching && <SkeletonRows />}
+          {logsQuery.error && (
+            <div className="rounded-lg bg-background-section-burn p-3 system-sm-regular text-text-tertiary">
+              {t('states.error')}
+            </div>
+          )}
+          {!logsQuery.isFetching && !logsQuery.error && (logsQuery.data?.data.length ?? 0) === 0 && (
+            <EmptyState message={t('states.empty')} action={t('states.emptyAction')} />
+          )}
+          {!logsQuery.isFetching && !logsQuery.error && (logsQuery.data?.data.length ?? 0) > 0 && (
+            <div className="overflow-x-auto rounded-lg border border-divider-subtle">
+              <table className="w-full min-w-180 table-fixed">
+                <thead>
+                  <tr className="border-b border-divider-subtle bg-background-section-burn text-left system-xs-medium text-text-tertiary">
+                    <th className="w-[16%] px-4 py-3">{t('table.status')}</th>
+                    <th className="w-[18%] px-4 py-3">{t('table.startedAt')}</th>
+                    <th className="w-[18%] px-4 py-3">{t('table.finishedAt')}</th>
+                    <th className="w-[16%] px-4 py-3">{t('table.duration')}</th>
+                    <th className="w-[32%] px-4 py-3">{t('table.result')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-divider-subtle">
+                  {logsQuery.data?.data.map(log => (
+                    <tr key={log.id} className="bg-background-default">
+                      <td className="px-4 py-3">
+                        <span className="inline-flex max-w-full rounded-md bg-background-section-burn px-2 py-1 system-xs-medium text-text-secondary">
+                          <span className="truncate">{getAutoServiceDisplayLabel(t, 'runStatus', log.status)}</span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 system-sm-regular text-text-secondary">{formatDateTime(log.started_at)}</td>
+                      <td className="px-4 py-3 system-sm-regular text-text-secondary">{formatDateTime(log.finished_at)}</td>
+                      <td className="px-4 py-3 system-sm-regular text-text-secondary">{log.duration_ms ?? '-'}</td>
+                      <td className="px-4 py-3 system-xs-regular text-text-secondary">
+                        <pre className="max-h-24 overflow-auto rounded-md bg-background-section-burn p-2 break-words whitespace-pre-wrap">
+                          {log.error ?? JSON.stringify(log.result ?? {}, null, 2)}
+                        </pre>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )
 }
 
-function AdminLockedState({ onUnlock }: { onUnlock: (apiKey: string) => void }) {
+function AdminResourceButton({
+  resourceName,
+  activeResourceName,
+  inset,
+  onSelect,
+}: {
+  resourceName: AdminResourceName
+  activeResourceName: AdminResourceName
+  inset?: boolean
+  onSelect: (_resource: AdminResourceName) => void
+}) {
+  const { t } = useTranslation('admin')
+  const item = getAdminResource(resourceName)
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        'flex h-9 w-full items-center rounded-lg px-3 text-left system-sm-medium outline-hidden hover:bg-state-base-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid',
+        inset && 'pl-6',
+        item.name === activeResourceName ? 'bg-state-accent-hover text-text-accent' : 'text-text-secondary',
+      )}
+      onClick={() => onSelect(item.name)}
+    >
+      {t(item.meta.titleKey)}
+    </button>
+  )
+}
+
+function AdminLockedState({ onUnlock }: { onUnlock: (_apiKey: string) => void }) {
   const { t } = useTranslation('admin')
   const [apiKeyInput, setApiKeyInput] = useState('')
 
@@ -1125,6 +2374,10 @@ export default function AdminPage() {
   const [selectedItem, setSelectedItem] = useState<AdminItem | null>(null)
   const [deleteItem, setDeleteItem] = useState<AdminItem | null>(null)
   const [isCreateSkillOpen, setIsCreateSkillOpen] = useState(false)
+  const [taxonomyCreateResource, setTaxonomyCreateResource] = useState<TaxonomyResourceName | null>(null)
+  const [isCreateAutoServiceOpen, setIsCreateAutoServiceOpen] = useState(false)
+  const [autoServiceLogsItem, setAutoServiceLogsItem] = useState<AdminAutoService | null>(null)
+  const [runAutoServiceItem, setRunAutoServiceItem] = useState<AdminAutoService | null>(null)
   const activeResource = getAdminResource(resource)
   const activeSkillFilters = useMemo(() => {
     if (resource !== 'skills')
@@ -1137,11 +2390,50 @@ export default function AdminPage() {
       updated_at_end: skillFilters.updated_at_end,
     }
   }, [resource, skillFilters])
+  const activeSort = resource === 'skills' ? skillFilters.sort : undefined
 
   useDocumentTitle(title)
 
+  const handleUnauthorized = useCallback(() => {
+    clearApiKey()
+    setSelectedItem(null)
+    setDeleteItem(null)
+    setIsCreateSkillOpen(false)
+    setTaxonomyCreateResource(null)
+    setIsCreateAutoServiceOpen(false)
+    setAutoServiceLogsItem(null)
+    setRunAutoServiceItem(null)
+  }, [clearApiKey])
+
+  const handleUnlock = useCallback((nextApiKey: string) => {
+    setSelectedItem(null)
+    setDeleteItem(null)
+    setIsCreateSkillOpen(false)
+    setTaxonomyCreateResource(null)
+    setIsCreateAutoServiceOpen(false)
+    setAutoServiceLogsItem(null)
+    setRunAutoServiceItem(null)
+    saveApiKey(nextApiKey)
+  }, [saveApiKey])
+
+  const handleSelectResource = useCallback((nextResource: AdminResourceName) => {
+    setResource(nextResource)
+    setPage(1)
+    setSelectedItem(null)
+    setDeleteItem(null)
+    setIsCreateSkillOpen(false)
+    setTaxonomyCreateResource(null)
+    setIsCreateAutoServiceOpen(false)
+    setAutoServiceLogsItem(null)
+    setRunAutoServiceItem(null)
+    setKeywordDraft('')
+    setKeyword('')
+    setSkillFilterDraft(skillFilterInitialValues)
+    setSkillFilters(skillFilterInitialValues)
+  }, [])
+
   const listQuery = useQuery<AdminPagination<AdminItem>>({
-    queryKey: ['admin', 'list', resource, apiKey, page, keyword, activeSkillFilters],
+    queryKey: ['admin', 'list', resource, apiKey, page, keyword, activeSkillFilters, activeSort],
     queryFn: () => fetchAdminResourceList({
       apiKey,
       resource,
@@ -1149,13 +2441,19 @@ export default function AdminPage() {
       limit: adminResourceLimit,
       keyword,
       filters: activeSkillFilters,
+      sort: activeSort,
     }) as Promise<AdminPagination<AdminItem>>,
     enabled: Boolean(apiKey),
     retry: false,
   })
 
+  useEffect(() => {
+    if (isUnauthorizedAdminError(listQuery.error))
+      clearApiKey()
+  }, [clearApiKey, listQuery.error])
+
   if (!apiKey)
-    return <AdminLockedState onUnlock={saveApiKey} />
+    return <AdminLockedState onUnlock={handleUnlock} />
 
   const data = listQuery.data?.data ?? []
   const total = listQuery.data?.total ?? 0
@@ -1168,29 +2466,35 @@ export default function AdminPage() {
             <h1 className="title-xl-semi-bold text-balance text-text-primary">{title}</h1>
             <p className="mt-1 system-xs-regular text-pretty text-text-tertiary">{t('description')}</p>
           </div>
-          <nav className="mt-6 space-y-1" aria-label={t('nav.resources')}>
-            {adminResources.map(item => (
-              <button
-                key={item.name}
-                type="button"
-                className={cn(
-                  'flex h-9 w-full items-center rounded-lg px-3 text-left system-sm-medium outline-hidden hover:bg-state-base-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid',
-                  item.name === resource ? 'bg-state-accent-hover text-text-accent' : 'text-text-secondary',
+          <nav className="mt-6 space-y-4" aria-label={t('nav.resources')}>
+            {adminResourceGroups.map(group => (
+              <div key={'name' in group ? group.name : group.titleKey}>
+                {'name' in group && (
+                  <AdminResourceButton
+                    resourceName={group.name}
+                    activeResourceName={resource}
+                    onSelect={handleSelectResource}
+                  />
                 )}
-                onClick={() => {
-                  setResource(item.name)
-                  setPage(1)
-                  setSelectedItem(null)
-                  setDeleteItem(null)
-                  setIsCreateSkillOpen(false)
-                  setKeywordDraft('')
-                  setKeyword('')
-                  setSkillFilterDraft(skillFilterInitialValues)
-                  setSkillFilters(skillFilterInitialValues)
-                }}
-              >
-                {t(item.meta.titleKey)}
-              </button>
+                {'resources' in group && (
+                  <>
+                    <div className="px-3 py-1 system-xs-semibold text-text-tertiary uppercase">
+                      {t(group.titleKey)}
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {group.resources.map(resourceName => (
+                        <AdminResourceButton
+                          key={resourceName}
+                          resourceName={resourceName}
+                          activeResourceName={resource}
+                          inset
+                          onSelect={handleSelectResource}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             ))}
           </nav>
         </aside>
@@ -1203,14 +2507,24 @@ export default function AdminPage() {
             </div>
             <div className="flex items-center gap-3">
               {resource === 'skills' && (
-                <Button variant="primary" size="small" onClick={() => setIsCreateSkillOpen(true)}>
+                <Button variant="primary" size="medium" onClick={() => setIsCreateSkillOpen(true)}>
                   {t('actions.createSkill')}
                 </Button>
               )}
-              <span className="rounded-md bg-background-section-burn px-2 py-1 system-xs-medium text-text-secondary">
+              {(resource === 'skillCategories' || resource === 'skillTags') && (
+                <Button variant="primary" size="medium" onClick={() => setTaxonomyCreateResource(resource)}>
+                  {t('actions.createTaxonomy')}
+                </Button>
+              )}
+              {resource === 'autoServices' && (
+                <Button variant="primary" size="medium" onClick={() => setIsCreateAutoServiceOpen(true)}>
+                  {t('actions.createAutoService')}
+                </Button>
+              )}
+              <span className="inline-flex h-8 items-center rounded-lg bg-background-section-burn px-3.5 system-sm-medium text-text-secondary">
                 {t('auth.connected')}
               </span>
-              <Button variant="secondary" size="small" onClick={clearApiKey}>
+              <Button variant="secondary" size="medium" onClick={clearApiKey}>
                 {t('auth.disconnect')}
               </Button>
             </div>
@@ -1232,15 +2546,15 @@ export default function AdminPage() {
                 <Input
                   className="mt-1"
                   value={keywordDraft}
-                  placeholder={t('filters.searchPlaceholder')}
+                  placeholder={resource === 'skills' ? t('filters.skillNameSearchPlaceholder') : t('filters.searchPlaceholder')}
                   onChange={event => setKeywordDraft(event.target.value)}
                 />
               </label>
               {resource === 'skills' && (
-                <SkillFilterControls values={skillFilterDraft} onChange={setSkillFilterDraft} />
+                <SkillFilterControls apiKey={apiKey} values={skillFilterDraft} onChange={setSkillFilterDraft} />
               )}
               <Button type="submit" variant="primary">
-                {t('filters.apply')}
+                {t('filters.query')}
               </Button>
               <Button
                 type="button"
@@ -1278,6 +2592,8 @@ export default function AdminPage() {
                   data={data}
                   onSelect={setSelectedItem}
                   onDelete={setDeleteItem}
+                  onRunAutoService={setRunAutoServiceItem}
+                  onViewAutoServiceLogs={setAutoServiceLogsItem}
                 />
               )}
             </div>
@@ -1305,6 +2621,7 @@ export default function AdminPage() {
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
         onSaved={() => listQuery.refetch()}
+        onUnauthorized={handleUnauthorized}
       />
       <DeleteConfirmDialog
         apiKey={apiKey}
@@ -1312,6 +2629,7 @@ export default function AdminPage() {
         item={deleteItem}
         onClose={() => setDeleteItem(null)}
         onDeleted={() => listQuery.refetch()}
+        onUnauthorized={handleUnauthorized}
       />
       <CreateSkillDialog
         apiKey={apiKey}
@@ -1322,6 +2640,43 @@ export default function AdminPage() {
           setSelectedItem(createdSkill)
           listQuery.refetch()
         }}
+        onUnauthorized={handleUnauthorized}
+      />
+      <CreateAutoServiceDialog
+        apiKey={apiKey}
+        open={isCreateAutoServiceOpen}
+        onClose={() => setIsCreateAutoServiceOpen(false)}
+        onCreated={(createdService) => {
+          setPage(1)
+          setSelectedItem(createdService)
+          listQuery.refetch()
+        }}
+        onUnauthorized={handleUnauthorized}
+      />
+      <CreateTaxonomyDialog
+        apiKey={apiKey}
+        resource={taxonomyCreateResource ?? 'skillCategories'}
+        open={taxonomyCreateResource !== null}
+        onClose={() => setTaxonomyCreateResource(null)}
+        onCreated={(createdItem) => {
+          setPage(1)
+          setSelectedItem(createdItem)
+          listQuery.refetch()
+        }}
+        onUnauthorized={handleUnauthorized}
+      />
+      <AutoServiceLogsDialog
+        apiKey={apiKey}
+        service={autoServiceLogsItem}
+        onClose={() => setAutoServiceLogsItem(null)}
+        onUnauthorized={handleUnauthorized}
+      />
+      <RunAutoServiceConfirmDialog
+        apiKey={apiKey}
+        service={runAutoServiceItem}
+        onClose={() => setRunAutoServiceItem(null)}
+        onQueued={() => listQuery.refetch()}
+        onUnauthorized={handleUnauthorized}
       />
     </main>
   )

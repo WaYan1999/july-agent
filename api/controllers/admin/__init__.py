@@ -26,6 +26,7 @@ admin_ns = Namespace("admin", description="System administration API operations"
 RESOURCE_MODULES: tuple[str, ...] = (
     "controllers.admin.accounts",
     "controllers.admin.apps",
+    "controllers.admin.auto_services",
     "controllers.admin.recommended_apps",
     "controllers.admin.skills",
 )

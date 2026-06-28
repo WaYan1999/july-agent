@@ -2,12 +2,14 @@ import type { Skill, SkillListParams, SkillPagination } from '@/models/skill'
 import { API_PREFIX } from '@/config'
 
 function buildConsoleUrl(path: string, params?: Record<string, string | number | undefined>) {
-  const url = new URL(`${API_PREFIX}${path}`)
+  const url = `${API_PREFIX.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
+  const searchParams = new URLSearchParams()
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value !== undefined && String(value).trim() !== '')
-      url.searchParams.set(key, String(value))
+      searchParams.set(key, String(value))
   })
-  return url.toString()
+  const query = searchParams.toString()
+  return query ? `${url}?${query}` : url
 }
 
 async function consoleRequest<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {

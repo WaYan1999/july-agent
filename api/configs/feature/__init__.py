@@ -1241,6 +1241,18 @@ class CeleryScheduleTasksConfig(BaseSettings):
         description="Enable scheduled workflow run cleanup task",
         default=False,
     )
+    ENABLE_AUTO_SERVICE_POLLER_TASK: bool = Field(
+        description="Enable database-backed auto service poller task for system admin managed services",
+        default=True,
+    )
+    AUTO_SERVICE_POLLER_INTERVAL: PositiveInt = Field(
+        description="Interval in minutes for polling due system admin auto services",
+        default=1,
+    )
+    AUTO_SERVICE_POLLER_BATCH_SIZE: PositiveInt = Field(
+        description="Maximum number of due auto services to dispatch per poll tick",
+        default=50,
+    )
     ENABLE_SKILL_CRAWLER_SYNC_TASK: bool = Field(
         description="Enable scheduled synchronization of Skill library data from crawler server",
         default=False,
@@ -1263,7 +1275,7 @@ class CeleryScheduleTasksConfig(BaseSettings):
     )
     SKILL_CRAWLER_SYNC_SNAPSHOT_DIR: str = Field(
         description="Local directory for raw Skill crawler synchronization JSON snapshots",
-        default="storage/skill-crawler-sync",
+        default="",
     )
     ENABLE_CLEAN_OAUTH_ACCESS_TOKENS_TASK: bool = Field(
         description="Enable scheduled cleanup of revoked/expired OAuth access-token rows past retention.",

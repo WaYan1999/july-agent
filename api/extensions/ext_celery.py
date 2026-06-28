@@ -253,6 +253,12 @@ def init_app(app: DifyApp) -> Celery:
             "task": "schedule.update_api_token_last_used_task.batch_update_api_token_last_used",
             "schedule": timedelta(minutes=dify_config.API_TOKEN_LAST_USED_UPDATE_INTERVAL),
         }
+    imports.append("schedule.auto_service_tasks")
+    if dify_config.ENABLE_AUTO_SERVICE_POLLER_TASK:
+        beat_schedule["auto_service_poller"] = {
+            "task": "schedule.auto_service_tasks.poll_auto_services",
+            "schedule": timedelta(minutes=dify_config.AUTO_SERVICE_POLLER_INTERVAL),
+        }
     if dify_config.ENABLE_SKILL_CRAWLER_SYNC_TASK is True:
         imports.append("schedule.sync_skills_from_crawler_task")
         beat_schedule["sync_skills_from_crawler"] = {
