@@ -26,7 +26,7 @@ import HelpMenu from './components/help-menu'
 import MainNavLink from './components/nav-link'
 import { MainNavSearchButton } from './components/search-button'
 import { WorkspaceCard } from './components/workspace-card'
-import { isMainNavRouteVisible, isWorkflowAppRoute, MAIN_NAV_ROUTES } from './routes'
+import { isMainNavRouteVisible, MAIN_NAV_ROUTES } from './routes'
 import { useDetailSidebarMode } from './storage'
 
 const DATASET_COLLECTION_ROUTES = new Set(['create', 'create-from-pipeline', 'connect'])
@@ -91,7 +91,6 @@ const MainNav = ({
   const showEnvTag = langGeniusVersionInfo.current_env === 'TESTING' || langGeniusVersionInfo.current_env === 'DEVELOPMENT'
   const canUseAppDeploy = isCurrentWorkspaceEditor && systemFeatures.enable_app_deploy
   const showAppDetailNavigation = !isCurrentWorkspaceDatasetOperator && pathname.startsWith('/app/')
-  const showLegacyAppDetailNavigation = showAppDetailNavigation && isWorkflowAppRoute(pathname)
   const showDatasetDetailNavigation = isDatasetDetailPathname(pathname)
   const showAgentDetailNavigation = agentV2Enabled && !isCurrentWorkspaceDatasetOperator && isAgentDetailPathname(pathname)
   const showDeploymentDetailNavigation = canUseAppDeploy && !isCurrentWorkspaceDatasetOperator && isDeploymentDetailPathname(pathname)
@@ -215,7 +214,7 @@ const MainNav = ({
       })
     }
 
-    updateActiveIndicator()
+    const animationFrame = window.requestAnimationFrame(updateActiveIndicator)
 
     const resizeObserver = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(updateActiveIndicator)
     resizeObserver?.observe(nav)
@@ -223,6 +222,7 @@ const MainNav = ({
     window.addEventListener('resize', updateActiveIndicator)
 
     return () => {
+      window.cancelAnimationFrame(animationFrame)
       resizeObserver?.disconnect()
       window.removeEventListener('resize', updateActiveIndicator)
     }
@@ -297,71 +297,6 @@ const MainNav = ({
       return <AgentDetailSection expand={detailNavigationVisibleExpanded} orientation="horizontal" />
 
     return <DeploymentDetailSection expand={detailNavigationVisibleExpanded} orientation="horizontal" />
-  }
-
-  if (showLegacyAppDetailNavigation) {
-    const bottomNavigationExpanded = detailNavigationVisibleExpanded
-
-    return (
-      <aside
-        className={cn(
-          'relative flex h-full shrink-0',
-          detailNavigationTransitionDisabled ? 'transition-none' : 'transition-all',
-          isDetailNavigationHoverPreviewOpen ? 'overflow-visible' : 'overflow-hidden',
-          detailNavigationExpanded ? 'w-[248px] bg-background-body p-1' : 'w-16 bg-background-body p-1',
-          className,
-        )}
-      >
-        <div
-          className={cn(
-            'flex min-h-0 flex-1 flex-col',
-            isDetailNavigationHoverPreviewOpen
-              ? 'absolute top-1 bottom-1 left-1 z-40 w-60 overflow-hidden rounded-lg border border-divider-subtle bg-components-panel-bg shadow-lg'
-              : 'overflow-hidden rounded-lg bg-components-panel-bg',
-            detailNavigationVisibleExpanded ? 'w-60' : 'w-14',
-          )}
-          onMouseEnter={isCollapsedDetailNavigation ? openDetailNavigationHoverPreview : undefined}
-          onMouseLeave={isCollapsedDetailNavigation ? closeDetailNavigationHoverPreview : undefined}
-        >
-          <div className="flex min-h-0 flex-1 flex-col">
-            <AppDetailTop
-              expand={detailNavigationVisibleExpanded}
-              onToggle={handleToggleDetailNavigation}
-            />
-            <AppDetailSection expand={detailNavigationVisibleExpanded} />
-            {showEnvTag && detailNavigationVisibleExpanded && (
-              <div className="relative z-30 mt-auto shrink-0 px-3 pb-2">
-                <EnvNav />
-              </div>
-            )}
-          </div>
-          <div className={cn(
-            !bottomNavigationExpanded
-              ? 'flex w-full shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 pt-1 pb-3'
-              : 'flex w-60 items-center justify-between bg-components-panel-bg py-3 pr-1 pl-3',
-          )}
-          >
-            {!bottomNavigationExpanded
-              ? (
-                  <>
-                    <SecondarySidebarHelpMenu triggerClassName="mb-2" />
-                    <AccountSection compact />
-                  </>
-                )
-              : (
-                  <>
-                    <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-                      <AccountSection />
-                    </div>
-                    <div className="flex shrink-0 items-center justify-center rounded-full p-1">
-                      <SecondarySidebarHelpMenu />
-                    </div>
-                  </>
-                )}
-          </div>
-        </div>
-      </aside>
-    )
   }
 
   return (

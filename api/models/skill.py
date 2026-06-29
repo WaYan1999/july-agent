@@ -55,6 +55,7 @@ class Skill(TypeBase):
         sa.PrimaryKeyConstraint("id", name="skill_pkey"),
         sa.Index("idx_skills_slug_unique", "slug", unique=True),
         sa.Index("idx_skills_publication_status_position", "publication_status", "position"),
+        sa.Index("idx_skills_publication_featured_position", "publication_status", "is_featured", "position"),
         sa.Index("idx_skills_source_type", "source_type"),
         sa.Index("idx_skills_audit_status", "audit_status"),
     )
@@ -95,6 +96,7 @@ class Skill(TypeBase):
     audit_notes: Mapped[str | None] = mapped_column(LongText, nullable=True, default=None)
     install_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0, server_default=sa.text("0"))
     github_stars: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0, server_default=sa.text("0"))
+    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=False, server_default=sa.text("false"))
     position: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0, server_default=sa.text("0"))
     published_at: Mapped[datetime | None] = mapped_column(sa.DateTime, nullable=True, default=None)
     created_by: Mapped[str | None] = mapped_column(StringUUID, nullable=True, default=None)

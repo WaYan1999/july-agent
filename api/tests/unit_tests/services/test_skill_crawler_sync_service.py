@@ -85,6 +85,30 @@ def test_category_words_match_frontend_design_by_synonyms() -> None:
     assert values["categories"] == ["frontend-design"]
 
 
+def test_category_words_match_tools_by_synonyms() -> None:
+    session = _session_with_categories(
+        [
+            _category("tools", "工具"),
+            _category("document-processing", "文档处理"),
+            _category("other", "其他"),
+        ]
+    )
+    service = SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)
+
+    values = service._to_skill_values(
+        session,
+        _make_item(
+            slug="mcp-toolkit",
+            name="MCP Toolkit",
+            description="Manage external tools and OpenAPI integrations.",
+            categories=["tool", "mcp", "api"],
+            skill_markdown="# MCP Toolkit\nUse MCP tools and OpenAPI integrations.",
+        ),
+    )
+
+    assert values["categories"] == ["tools"]
+
+
 def test_category_words_fall_back_to_other_without_creating_new_category() -> None:
     session = _session_with_categories(
         [
@@ -252,36 +276,104 @@ def test_validate_keeps_latest_duplicate_slug_by_updated_at() -> None:
     assert items[0].updated_at == datetime(2026, 6, 25, 10, 0, tzinfo=UTC)
 
 
+def test_validate_ignores_extra_crawler_response_fields() -> None:
+    raw_item = _make_item().model_dump(mode="json")
+    raw_item.update(
+        {
+            "repo": "example/pdf-toolkit",
+            "repo_url": "https://github.com/example/pdf-toolkit",
+            "description_source": "readme",
+            "description_readme_url": "https://github.com/example/pdf-toolkit#readme",
+            "description_ai_translated": False,
+            "skill_markdown_length": 128,
+            "skill_markdown_truncated": False,
+            "markdown_verified": True,
+            "verification_status": "verified",
+            "collected_at": "2026-06-25T11:00:00Z",
+        }
+    )
+    raw_pages = [
+        {
+            "data": [raw_item],
+            "page": 1,
+            "limit": 100,
+            "has_more": False,
+            "next_page": None,
+            "sync_window": {},
+            "dedupe_mode": "github_skill",
+            "markdown_mode": "all_candidates",
+            "verified_only": False,
+            "total_raw": 1,
+            "total_verified": 1,
+            "star_filter": {"field": "github_stars", "value": 1000},
+            "date_filter_enabled": True,
+            "date_field": "updated_at",
+        }
+    ]
+    service = SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)
+
+    items, skipped_count = service._validate_and_deduplicate(raw_pages)
+
+    assert skipped_count == 0
+    assert len(items) == 1
+    assert items[0].slug == "pdf-toolkit"
+
+
+def test_validate_source_only_item_without_markdown_as_remote_reference() -> None:
+    raw_item = _make_item().model_dump(mode="json")
+    raw_item.pop("content_type")
+    raw_item["skill_markdown"] = None
+    raw_item["skill_markdown_length"] = 0
+    raw_item["markdown_verified"] = False
+    raw_item["verification_status"] = "source_only"
+    raw_pages = [
+        {
+            "data": [raw_item],
+            "page": 1,
+            "limit": 100,
+            "has_more": False,
+            "next_page": None,
+            "sync_window": {},
+        }
+    ]
+    service = SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)
+
+    items, skipped_count = service._validate_and_deduplicate(raw_pages)
+
+    assert skipped_count == 0
+    assert len(items) == 1
+    assert items[0].content_type == SkillContentType.REMOTE_REFERENCE
+    assert items[0].skill_markdown is None
+
+
 def test_non_deleted_skill_requires_skill_markdown() -> None:
     values = _make_item().model_dump(mode="json")
     values["status"] = "archived"
+    values["content_type"] = "markdown_file"
     values["skill_markdown"] = None
 
     with pytest.raises(ValueError, match="skill must include skill_markdown"):
         SkillCrawlerSyncItem.model_validate(values)
 
 
-def test_existing_skill_update_preserves_publication_status(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_existing_skill_stats_update_preserves_publication_status(monkeypatch: pytest.MonkeyPatch) -> None:
     existing = SimpleNamespace(
         id="skill-1",
-        name="Old Name",
-        description="old",
+        name="PDF Toolkit",
+        description="Extract PDF and Markdown documents.",
         author_name="July",
         source_type="github",
         source_url="https://github.com/example/pdf-toolkit",
         install_command="codex skills install pdf-toolkit",
-        install_count=128,
-        github_stars=42,
+        install_count=1,
+        github_stars=2,
         audit_status=sync_module.SkillAuditStatus.PASSED,
         publication_status=SkillPublicationStatus.PUBLISHED,
     )
     session = _session_with_categories([_category("other", "其他")])
     session.scalar.return_value = existing
     update_skill = MagicMock(return_value=existing)
-    monkeypatch.setattr(sync_module.SkillCrawlerSyncService, "_taxonomy_needs_update", MagicMock(return_value=False))
     monkeypatch.setattr(sync_module.AdminSkillService, "update_skill", update_skill)
-    monkeypatch.setattr(sync_module.AdminSkillService, "get_latest_version", MagicMock(return_value=None))
-    monkeypatch.setattr(sync_module.AdminSkillService, "create_version", MagicMock())
 
     SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)._upsert_item(
         session,
@@ -292,6 +384,124 @@ def test_existing_skill_update_preserves_publication_status(monkeypatch: pytest.
     update_values = update_skill.call_args.args[2]
     assert "publication_status" not in update_values
     assert "published_at" not in update_values
+
+
+def test_existing_skill_updates_only_install_count_and_github_stars(monkeypatch: pytest.MonkeyPatch) -> None:
+    existing = SimpleNamespace(
+        id="skill-1",
+        name="Local Name",
+        description="local description",
+        author_name="Local Author",
+        source_type="github",
+        source_url="https://github.com/example/local",
+        install_command="codex skills install local",
+        install_count=1,
+        github_stars=2,
+        audit_status=sync_module.SkillAuditStatus.PASSED,
+        publication_status=SkillPublicationStatus.PUBLISHED,
+    )
+    session = _session_with_categories([_category("other", "鍏朵粬")])
+    session.scalar.return_value = existing
+    update_skill = MagicMock(return_value=existing)
+    create_version = MagicMock()
+    monkeypatch.setattr(sync_module.AdminSkillService, "update_skill", update_skill)
+    monkeypatch.setattr(
+        sync_module.AdminSkillService,
+        "get_latest_version",
+        MagicMock(
+            return_value=SimpleNamespace(
+                skill_markdown="# Local markdown",
+                content_type=SkillContentType.MARKDOWN_FILE,
+            )
+        ),
+    )
+    monkeypatch.setattr(sync_module.AdminSkillService, "create_version", create_version)
+    result = sync_module.SkillCrawlerSyncResult()
+
+    SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)._upsert_item(
+        session,
+        item=_make_item(
+            name="Crawler Name",
+            description="crawler description",
+            author_name="Crawler Author",
+            source_url="https://github.com/example/crawler",
+            install_command="codex skills install crawler",
+            install_count=128,
+            github_stars=42,
+            categories=["frontend"],
+            tags=["crawler"],
+            skill_markdown="# Crawler markdown",
+        ),
+        result=result,
+    )
+
+    update_skill.assert_called_once_with(
+        session,
+        "skill-1",
+        {
+            "install_count": 128,
+            "github_stars": 42,
+        },
+    )
+    create_version.assert_not_called()
+    assert result.updated_count == 1
+    assert result.version_created_count == 0
+
+
+def test_existing_skill_ignores_metadata_taxonomy_and_content_changes_when_stats_same(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    existing = SimpleNamespace(
+        id="skill-1",
+        name="Local Name",
+        description="local description",
+        author_name="Local Author",
+        source_type="github",
+        source_url="https://github.com/example/local",
+        install_command="codex skills install local",
+        install_count=128,
+        github_stars=42,
+        audit_status=sync_module.SkillAuditStatus.PASSED,
+        publication_status=SkillPublicationStatus.PUBLISHED,
+    )
+    session = _session_with_categories([_category("other", "鍏朵粬")])
+    session.scalar.return_value = existing
+    update_skill = MagicMock(return_value=existing)
+    taxonomy_needs_update = MagicMock(return_value=True)
+    get_latest_version = MagicMock(
+        return_value=SimpleNamespace(
+            skill_markdown="# Local markdown",
+            content_type=SkillContentType.MARKDOWN_FILE,
+        )
+    )
+    create_version = MagicMock()
+    monkeypatch.setattr(sync_module.SkillCrawlerSyncService, "_taxonomy_needs_update", taxonomy_needs_update)
+    monkeypatch.setattr(sync_module.AdminSkillService, "update_skill", update_skill)
+    monkeypatch.setattr(sync_module.AdminSkillService, "get_latest_version", get_latest_version)
+    monkeypatch.setattr(sync_module.AdminSkillService, "create_version", create_version)
+    result = sync_module.SkillCrawlerSyncResult()
+
+    SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)._upsert_item(
+        session,
+        item=_make_item(
+            name="Crawler Name",
+            description="crawler description",
+            author_name="Crawler Author",
+            source_url="https://github.com/example/crawler",
+            install_command="codex skills install crawler",
+            categories=["frontend"],
+            tags=["crawler"],
+            skill_markdown="# Crawler markdown",
+        ),
+        result=result,
+    )
+
+    update_skill.assert_not_called()
+    taxonomy_needs_update.assert_not_called()
+    get_latest_version.assert_not_called()
+    create_version.assert_not_called()
+    assert result.updated_count == 0
+    assert result.version_created_count == 0
 
 
 def test_deleted_status_archives_existing_skill(monkeypatch: pytest.MonkeyPatch) -> None:

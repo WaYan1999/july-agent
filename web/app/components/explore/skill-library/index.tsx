@@ -1,6 +1,6 @@
 'use client'
 
-import type { Skill, SkillTaxonomy } from '@/models/skill'
+import type { Skill, SkillRecommendationGroups, SkillTaxonomy } from '@/models/skill'
 import { Button } from '@langgenius/dify-ui/button'
 import { cn } from '@langgenius/dify-ui/cn'
 import {
@@ -14,14 +14,16 @@ import { toast } from '@langgenius/dify-ui/toast'
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Carousel } from '@/app/components/base/carousel'
 import Loading from '@/app/components/base/loading'
 import { Markdown } from '@/app/components/base/markdown'
 import { useMarketplaceContainerScroll } from '@/app/components/plugins/marketplace/hooks'
-import { fetchSkillDetail, fetchSkillList, getSkillDownloadUrl, recordSkillCopy } from '@/service/skills'
+import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, getSkillDownloadUrl, recordSkillCopy } from '@/service/skills'
 import { getSkillSourceTypeLabel } from './source-type'
 
 const DEFAULT_LIMIT = 30
-const SKILL_GRID_CLASS_NAME = 'grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[1800px]:grid-cols-5'
+const SKILL_GRID_CLASS_NAME = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+const RECOMMENDATION_GRID_CLASS_NAME = SKILL_GRID_CLASS_NAME
 const GENERIC_TAXONOMY_VALUES = new Set([
   'api',
   'apis',
@@ -68,14 +70,14 @@ function SkillIcon({ skill }: { skill: Skill }) {
       <img
         src={skill.icon_url}
         alt=""
-        className="size-10 rounded-xl object-cover"
+        className="size-10 rounded-md object-cover"
       />
     )
   }
 
   return (
     <div
-      className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-divider-subtle bg-background-section text-text-accent shadow-xs"
+      className="flex size-10 shrink-0 items-center justify-center rounded-md border border-divider-subtle bg-background-section text-text-accent shadow-xs"
       aria-hidden="true"
     >
       <span className="i-custom-public-agent-building-blocks size-5" />
@@ -111,7 +113,9 @@ function SkillCard({
   const contentType = normalizeValue(skill.latest_version?.content_type)
   const detailLabel = t('detailPanel.operation.detail', { ns: 'plugin' })
   const authorName = skill.author_name?.trim()
+  const showInstallCount = skill.install_count > 0
   const githubStars = skill.github_stars ?? 0
+  const showGithubStars = githubStars > 0
 
   return (
     <button
@@ -130,15 +134,21 @@ function SkillCard({
           </div>
           <div className="flex h-4 min-w-0 items-center gap-2 system-xs-regular text-text-tertiary">
             {authorName && (
+              <span className="truncate">{authorName}</span>
+            )}
+            {showInstallCount && (
               <>
-                <span className="truncate">{authorName}</span>
-                <span className="shrink-0 text-text-quaternary" aria-hidden="true">/</span>
+                {authorName && (
+                  <span className="shrink-0 text-text-quaternary" aria-hidden="true">/</span>
+                )}
+                <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: skill.install_count })}</span>
               </>
             )}
-            <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: skill.install_count })}</span>
-            {githubStars > 0 && (
+            {showGithubStars && (
               <>
-                <span className="shrink-0 text-text-quaternary" aria-hidden="true">/</span>
+                {(authorName || showInstallCount) && (
+                  <span className="shrink-0 text-text-quaternary" aria-hidden="true">/</span>
+                )}
                 <span className="flex shrink-0 items-center gap-0.5 tabular-nums" title={t('skills.stars', { ns: 'explore', count: githubStars })}>
                   <span className="i-ri-star-line size-3" aria-hidden="true" />
                   {githubStars}
@@ -148,11 +158,13 @@ function SkillCard({
           </div>
         </div>
       </div>
-      <p className="mx-4 mt-1 line-clamp-2 min-h-9 system-xs-regular leading-[18px] text-text-secondary">
+      <p className="mx-4 mt-1 h-8 line-clamp-2 system-xs-regular text-text-secondary">
         {skill.description}
       </p>
-      <div className="mt-auto flex min-w-0 items-center justify-between gap-2 px-4 pt-2 pr-5 pb-4">
-        <TaxonomyPills items={skill.tags.length ? skill.tags : skill.categories} />
+      <div className="flex min-h-7 min-w-0 items-center gap-2 px-4 py-1 pr-5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 overflow-hidden">
+          <TaxonomyPills items={skill.tags.length ? skill.tags : skill.categories} />
+        </div>
         <div className="ml-auto flex max-w-[48%] min-w-0 shrink-0 items-center gap-1 rounded-md bg-background-section px-2 py-0.5 system-xs-medium text-text-tertiary">
           <span className="truncate">{getSkillSourceTypeLabel(normalizeValue(skill.source_type), t)}</span>
           <span aria-hidden="true">/</span>
@@ -258,6 +270,7 @@ function SkillDetailDialog({
   const contentType = normalizeValue(version?.content_type)
   const markdown = version?.skill_markdown
   const authorName = detail?.author_name?.trim()
+  const showInstallCount = (detail?.install_count ?? 0) > 0
 
   const handleCopyInstall = async () => {
     if (!detail)
@@ -329,8 +342,12 @@ function SkillDetailDialog({
                           </>
                         )}
                         <span className="max-w-80 truncate">{detail.slug}</span>
-                        <span aria-hidden="true" className="text-text-secondary-on-surface/60">/</span>
-                        <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: detail.install_count })}</span>
+                        {showInstallCount && (
+                          <>
+                            <span aria-hidden="true" className="text-text-secondary-on-surface/60">/</span>
+                            <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: detail.install_count })}</span>
+                          </>
+                        )}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <span className="rounded-md bg-white/15 px-2 py-0.5 system-xs-medium text-text-secondary-on-surface backdrop-blur-[6px]">
@@ -522,6 +539,175 @@ function FilterButton({
   )
 }
 
+function RecommendationSection({
+  title,
+  skills,
+  onOpen,
+}: {
+  title: string
+  skills: Skill[]
+  onOpen: (skill: Skill) => void
+}) {
+  if (!skills.length)
+    return null
+
+  return (
+    <section className="py-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="title-xl-semi-bold text-text-primary">{title}</h2>
+        <span className="system-xs-medium text-text-tertiary tabular-nums">{skills.length}</span>
+      </div>
+      <div className={RECOMMENDATION_GRID_CLASS_NAME}>
+        {skills.map(skill => (
+          <SkillCard
+            key={skill.id}
+            skill={skill}
+            onOpen={onOpen}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function FeaturedRecommendationSection({
+  title,
+  skills,
+  onOpen,
+}: {
+  title: string
+  skills: Skill[]
+  onOpen: (skill: Skill) => void
+}) {
+  const { t } = useTranslation()
+
+  if (!skills.length)
+    return null
+
+  const plugins = skills.length > 1
+    ? [Carousel.Plugin.Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })]
+    : undefined
+
+  return (
+    <section className="py-3">
+      <Carousel
+        opts={{ align: 'start', loop: skills.length > 1 }}
+        plugins={plugins}
+        className="rounded-xl"
+      >
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="title-xl-semi-bold text-text-primary">{title}</h2>
+          {skills.length > 1 && (
+            <div className="flex items-center gap-2">
+              <Carousel.Previous
+                className="flex size-8 items-center justify-center rounded-full border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={t('skills.recommendations.previousFeatured', { ns: 'explore' })}
+              >
+                <span aria-hidden className="i-ri-arrow-left-s-line size-4" />
+              </Carousel.Previous>
+              <Carousel.Next
+                className="flex size-8 items-center justify-center rounded-full border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={t('skills.recommendations.nextFeatured', { ns: 'explore' })}
+              >
+                <span aria-hidden className="i-ri-arrow-right-s-line size-4" />
+              </Carousel.Next>
+            </div>
+          )}
+        </div>
+        <Carousel.Content className="-ml-3">
+          {skills.map(skill => (
+            <Carousel.Item key={skill.id} className="basis-full pl-3 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+              <SkillCard
+                skill={skill}
+                onOpen={onOpen}
+              />
+            </Carousel.Item>
+          ))}
+        </Carousel.Content>
+        {skills.length > 1 && (
+          <div className="mt-3 flex justify-center gap-1">
+            <Carousel.Dot className="h-1.5 w-1.5 rounded-full bg-components-button-secondary-border transition-all data-[state=active]:w-5 data-[state=active]:bg-components-button-primary-bg" />
+          </div>
+        )}
+      </Carousel>
+    </section>
+  )
+}
+
+function SkillRecommendationGroupsView({
+  groups,
+  isLoading,
+  isError,
+  onRetry,
+  onOpen,
+}: {
+  groups?: SkillRecommendationGroups
+  isLoading: boolean
+  isError: boolean
+  onRetry: () => void
+  onOpen: (skill: Skill) => void
+}) {
+  const { t } = useTranslation()
+
+  if (isLoading) {
+    return (
+      <div className="absolute top-1/2 left-1/2 -translate-1/2">
+        <Loading />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-80 flex-col items-center justify-center gap-3 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
+        <span aria-hidden="true" className="i-ri-error-warning-line size-6 text-text-quaternary" />
+        <span>{t('skills.loadError', { ns: 'explore' })}</span>
+        <Button type="button" variant="secondary" size="small" onClick={onRetry}>
+          {t('operation.retry', { ns: 'common' })}
+        </Button>
+      </div>
+    )
+  }
+
+  if (!groups)
+    return null
+
+  const hasAnyGroup = groups.featured.length || groups.top20.length || groups.latest.length || groups.hottest.length
+  if (!hasAnyGroup) {
+    return (
+      <div className="flex min-h-80 flex-col items-center justify-center gap-2 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
+        <span aria-hidden="true" className="i-ri-search-line size-6 text-text-quaternary" />
+        <span>{t('skills.empty', { ns: 'explore' })}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full space-y-2">
+      <FeaturedRecommendationSection
+        title={t('skills.recommendations.featured', { ns: 'explore' })}
+        skills={groups.featured}
+        onOpen={onOpen}
+      />
+      <RecommendationSection
+        title={t('skills.recommendations.top20', { ns: 'explore' })}
+        skills={groups.top20}
+        onOpen={onOpen}
+      />
+      <RecommendationSection
+        title={t('skills.recommendations.latest', { ns: 'explore' })}
+        skills={groups.latest}
+        onOpen={onOpen}
+      />
+      <RecommendationSection
+        title={t('skills.recommendations.hottest', { ns: 'explore' })}
+        skills={groups.hottest}
+        onOpen={onOpen}
+      />
+    </div>
+  )
+}
+
 export default function SkillLibrary() {
   const { t } = useTranslation()
   const [keywordDraft, setKeywordDraft] = useState('')
@@ -529,6 +715,7 @@ export default function SkillLibrary() {
   const [category, setCategory] = useState('')
   const [detailSkill, setDetailSkill] = useState<Skill | null>(null)
   const cachedCategoriesRef = useRef<SkillTaxonomy[]>([])
+  const shouldLoadRecommendationGroups = !keyword && !category
   const listQuery = useInfiniteQuery({
     queryKey: ['explore', 'skills', 'list', keyword, category],
     queryFn: ({ pageParam = 1 }) => fetchSkillList({
@@ -541,6 +728,13 @@ export default function SkillLibrary() {
     initialPageParam: 1,
     retry: false,
   })
+  const recommendationQuery = useQuery({
+    queryKey: ['explore', 'skills', 'recommendations'],
+    queryFn: fetchSkillRecommendations,
+    enabled: shouldLoadRecommendationGroups,
+    retry: false,
+  })
+  const showRecommendationGroups = shouldLoadRecommendationGroups && !recommendationQuery.isError
   const skills = listQuery.data?.pages.flatMap(page => page.data) ?? []
   const firstPage = listQuery.data?.pages[0]
   const categoriesFromPages = listQuery.data?.pages.find(page => page.filters?.categories?.length)?.filters?.categories
@@ -554,16 +748,16 @@ export default function SkillLibrary() {
   }, [categoriesFromPages])
 
   const handlePageChange = useCallback(() => {
-    if (hasNextPage && !isFetching)
+    if (!showRecommendationGroups && hasNextPage && !isFetching)
       void fetchNextPage()
-  }, [fetchNextPage, hasNextPage, isFetching])
+  }, [fetchNextPage, hasNextPage, isFetching, showRecommendationGroups])
 
   useMarketplaceContainerScroll(handlePageChange, 'skills-library-container')
 
   return (
-    <div id="skills-library-container" className="h-full min-h-0 overflow-y-auto border-l-[0.5px] border-divider-regular bg-background-body">
-      <div className="flex w-full flex-col pt-8 pb-6">
-        <header className="relative z-0 mx-auto w-[calc(100%-24px)] max-w-[1440px] overflow-hidden rounded-lg px-5 pt-8 pb-6">
+    <div id="skills-library-container" className="flex h-full min-h-0 flex-col overflow-y-auto border-l-[0.5px] border-divider-regular bg-background-default-subtle pr-1">
+      <div className="flex min-h-full w-full grow flex-col pt-8 pb-6">
+        <header className="relative z-0 mx-3 w-auto shrink-0 overflow-hidden rounded-lg px-5 pt-8 pb-6">
           <div className="absolute inset-0 bg-saas-dify-blue-static" />
           <div
             className="absolute inset-0 bg-no-repeat opacity-80 mix-blend-lighten"
@@ -590,7 +784,7 @@ export default function SkillLibrary() {
           </div>
         </header>
 
-        <div className="sticky top-0 z-10 mt-4 bg-background-body px-3 pb-3">
+        <div className="sticky top-0 z-10 mt-4 bg-background-default-subtle px-8 pb-3">
           <SkillSearchField
             value={keywordDraft}
             onChange={setKeywordDraft}
@@ -617,13 +811,22 @@ export default function SkillLibrary() {
           </div>
         </div>
 
-        <div className="relative min-h-80 flex-1 px-3 pt-1">
-          {isInitialLoading && (
+        <div className="relative min-h-0 flex-1 px-8 pt-1">
+          {showRecommendationGroups && (
+            <SkillRecommendationGroupsView
+              groups={recommendationQuery.data}
+              isLoading={recommendationQuery.isLoading}
+              isError={recommendationQuery.isError}
+              onRetry={() => recommendationQuery.refetch()}
+              onOpen={setDetailSkill}
+            />
+          )}
+          {!showRecommendationGroups && isInitialLoading && (
             <div className="absolute top-1/2 left-1/2 -translate-1/2">
               <Loading />
             </div>
           )}
-          {listQuery.error && (
+          {!showRecommendationGroups && listQuery.error && (
             <div className="flex min-h-80 flex-col items-center justify-center gap-3 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
               <span aria-hidden="true" className="i-ri-error-warning-line size-6 text-text-quaternary" />
               <span>{t('skills.loadError', { ns: 'explore' })}</span>
@@ -632,13 +835,13 @@ export default function SkillLibrary() {
               </Button>
             </div>
           )}
-          {!listQuery.isLoading && !listQuery.error && skills.length === 0 && (
+          {!showRecommendationGroups && !listQuery.isLoading && !listQuery.error && skills.length === 0 && (
             <div className="flex min-h-80 flex-col items-center justify-center gap-2 rounded-xl border border-divider-subtle bg-background-default text-center system-sm-regular text-text-tertiary">
               <span aria-hidden="true" className="i-ri-search-line size-6 text-text-quaternary" />
               <span>{t('skills.empty', { ns: 'explore' })}</span>
             </div>
           )}
-          {!listQuery.isLoading && !listQuery.error && skills.length > 0 && (
+          {!showRecommendationGroups && !listQuery.isLoading && !listQuery.error && skills.length > 0 && (
             <>
               <div className="sr-only" role="status" aria-live="polite">
                 {t('skills.resultCount', { ns: 'explore', count: firstPage?.total ?? skills.length })}

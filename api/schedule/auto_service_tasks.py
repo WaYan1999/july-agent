@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import logging
 
-from celery import group
 from sqlalchemy.orm import sessionmaker
 
 import app
 from configs import dify_config
 from extensions.ext_database import db
-from models.auto_service import AutoServiceRunLog, AutoServiceRunStatus
+from models.auto_service import AutoServiceRunStatus
 from services.auto_service import AutoServiceManager, execute_auto_service
 
 logger = logging.getLogger(__name__)
@@ -20,31 +19,27 @@ logger = logging.getLogger(__name__)
 def poll_auto_services() -> None:
     session_factory = sessionmaker(bind=db.engine, expire_on_commit=False)
     with session_factory() as session:
+        AutoServiceManager.repair_missing_next_run_at_cursors(
+            session,
+            limit=dify_config.AUTO_SERVICE_POLLER_BATCH_SIZE,
+        )
         due_services = AutoServiceManager.fetch_due_services(
             session,
             limit=dify_config.AUTO_SERVICE_POLLER_BATCH_SIZE,
         )
-        run_log_ids: list[str] = []
+        dispatched_count = 0
         for service in due_services:
             if AutoServiceManager.has_active_run(session, service.id):
                 continue
-            run_log = AutoServiceRunLog(
-                auto_service_id=service.id,
-                trigger_type="scheduled",
-                status=AutoServiceRunStatus.QUEUED,
-            )
-            session.add(run_log)
-            service.next_run_at = None
-            session.flush()
-            run_log_ids.append(run_log.id)
-        session.commit()
+            try:
+                AutoServiceManager.dispatch_service(session, service.id, trigger_type="scheduled")
+            except Exception:
+                logger.exception("Failed to dispatch due auto service %s", service.id)
+                continue
+            dispatched_count += 1
 
-    if not run_log_ids:
-        return
-
-    job = group(run_auto_service.s(run_log_id) for run_log_id in run_log_ids)
-    job.apply_async()
-    logger.info("Dispatched %d auto service run(s)", len(run_log_ids))
+    if dispatched_count > 0:
+        logger.info("Dispatched %d auto service run(s)", dispatched_count)
 
 
 @app.celery.task(name="schedule.auto_service_tasks.run_auto_service", queue="auto_service")

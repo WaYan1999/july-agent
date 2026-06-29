@@ -29,6 +29,8 @@ from models import (
 )
 
 SessionLike = Session | scoped_session
+FEATURED_RECOMMENDATION_LIMIT = 12
+RECOMMENDATION_GROUP_LIMIT = 20
 
 
 class SkillService:
@@ -189,6 +191,47 @@ class SkillService:
             .order_by(SkillTag.name.asc())
         ).all()
         return {"categories": list(categories), "tags": list(tags)}
+
+    @classmethod
+    def list_recommended_skill_groups(cls, session: SessionLike) -> dict[str, list[Skill]]:
+        """返回 Skills 首页推荐分组，只包含已发布技能。"""
+
+        base_stmt = select(Skill).where(Skill.publication_status == SkillPublicationStatus.PUBLISHED)
+        featured = list(
+            session.scalars(
+                base_stmt.where(Skill.is_featured.is_(True))
+                .order_by(Skill.position.asc(), Skill.published_at.desc(), Skill.created_at.desc())
+                .limit(FEATURED_RECOMMENDATION_LIMIT)
+            ).all()
+        )
+        top20 = list(
+            session.scalars(
+                base_stmt.order_by(
+                    Skill.install_count.desc(),
+                    Skill.github_stars.desc(),
+                    Skill.published_at.desc(),
+                    Skill.position.asc(),
+                ).limit(RECOMMENDATION_GROUP_LIMIT)
+            ).all()
+        )
+        latest = list(
+            session.scalars(
+                base_stmt.order_by(Skill.published_at.desc(), Skill.created_at.desc()).limit(RECOMMENDATION_GROUP_LIMIT)
+            ).all()
+        )
+        hottest = list(
+            session.scalars(
+                base_stmt.order_by(Skill.install_count.desc(), Skill.created_at.desc()).limit(RECOMMENDATION_GROUP_LIMIT)
+            ).all()
+        )
+        all_skills = featured + top20 + latest + hottest
+        cls.hydrate_taxonomy_items(session, all_skills)
+        return {
+            "featured": featured,
+            "top20": top20,
+            "latest": latest,
+            "hottest": hottest,
+        }
 
     @staticmethod
     def record_install_copy(session: SessionLike, skill_id: str) -> Skill:

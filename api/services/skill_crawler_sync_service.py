@@ -228,6 +228,22 @@ LOCAL_CATEGORY_MATCH_WORDS_BY_SLUG: dict[str, tuple[str, ...]] = {
         "scraping",
     ),
     "automation": ("自动化", "automation", "workflow", "schedule", "cron", "agent"),
+    "tools": (
+        "工具",
+        "工具箱",
+        "工具调用",
+        "tool",
+        "tools",
+        "toolbox",
+        "tool calling",
+        "function calling",
+        "mcp",
+        "api",
+        "openapi",
+        "swagger",
+        "plugin",
+        "external tool",
+    ),
     "content-creation": (
         "内容",
         "写作",
@@ -297,7 +313,23 @@ class SkillCrawlerSyncItem(BaseModel):
     status: SyncStatus
     updated_at: datetime
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _infer_content_type_from_payload(cls, value: object) -> object:
+        if not isinstance(value, Mapping):
+            return value
+        normalized = dict(value)
+        if str(normalized.get("content_type") or "").strip():
+            return normalized
+        skill_markdown = normalized.get("skill_markdown")
+        normalized["content_type"] = (
+            SkillContentType.MARKDOWN_FILE.value
+            if isinstance(skill_markdown, str) and skill_markdown.strip()
+            else SkillContentType.REMOTE_REFERENCE.value
+        )
+        return normalized
 
     @field_validator("slug")
     @classmethod
@@ -403,7 +435,7 @@ class SkillCrawlerSyncPage(BaseModel):
     next_page: int | None = Field(default=None, ge=1)
     sync_window: dict[str, Any] = Field(default_factory=dict)
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
 
 class SkillCrawlerSyncResult(BaseModel):
@@ -729,38 +761,16 @@ class SkillCrawlerSyncService:
                 result.archived_count += 1
             return
 
-        values = self._to_skill_values(session, item)
         if existing is None:
+            values = self._to_skill_values(session, item)
             AdminSkillService.create_skill(session, values)
             result.imported_count += 1
             return
 
-        update_values = dict(values)
-        update_values.pop("content_type", None)
-        update_values.pop("skill_markdown", None)
-        update_values.pop("publication_status", None)
-        update_values.pop("published_at", None)
-        if self._skill_needs_update(existing, update_values) or self._taxonomy_needs_update(
-            session,
-            existing.id,
-            update_values,
-        ):
+        update_values = self._existing_skill_stats_update_values(existing, item)
+        if update_values:
             AdminSkillService.update_skill(session, existing.id, update_values)
             result.updated_count += 1
-
-        latest_version = AdminSkillService.get_latest_version(session, existing.id)
-        if self._needs_new_version(latest_version, item):
-            AdminSkillService.create_version(
-                session,
-                existing.id,
-                {
-                    "content_type": item.content_type,
-                    "skill_markdown": item.skill_markdown,
-                    "is_latest": True,
-                    "published_at": None,
-                },
-            )
-            result.version_created_count += 1
 
     def _to_skill_values(self, session: SessionLike, item: SkillCrawlerSyncItem) -> _SkillValues:
         categories = infer_skill_category_from_library(session, item)
@@ -782,6 +792,15 @@ class SkillCrawlerSyncService:
             "skill_markdown": item.skill_markdown,
             "published_at": None,
         }
+
+    @staticmethod
+    def _existing_skill_stats_update_values(skill: Skill, item: SkillCrawlerSyncItem) -> dict[str, int]:
+        update_values: dict[str, int] = {}
+        if skill.install_count != item.install_count:
+            update_values["install_count"] = item.install_count
+        if skill.github_stars != item.github_stars:
+            update_values["github_stars"] = item.github_stars
+        return update_values
 
     @staticmethod
     def _skill_needs_update(skill: Skill, values: Mapping[str, Any]) -> bool:

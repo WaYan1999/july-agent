@@ -36,6 +36,7 @@ export type Skill = {
   tags: SkillTaxonomy[]
   install_count: number
   github_stars: number
+  is_featured: boolean
   position: number
   published_at?: string | null
   created_at?: string | null
@@ -53,6 +54,13 @@ export type SkillPagination = {
   limit: number
   page: number
   total: number
+}
+
+export type SkillRecommendationGroups = {
+  featured: Skill[]
+  top20: Skill[]
+  latest: Skill[]
+  hottest: Skill[]
 }
 
 export type SkillListParams = {

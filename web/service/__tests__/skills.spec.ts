@@ -1,6 +1,6 @@
 import type { SkillPagination } from '@/models/skill'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchSkillDetail, fetchSkillList, getSkillDownloadUrl, recordSkillCopy } from '../skills'
+import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, getSkillDownloadUrl, recordSkillCopy } from '../skills'
 
 vi.mock('@/config', () => ({
   API_PREFIX: '/console/api',
@@ -63,6 +63,23 @@ describe('skills service', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       '/console/api/explore/skills/react%2Ftests',
+      { credentials: 'include' },
+    )
+  })
+
+  it('should request skill recommendation groups', async () => {
+    const recommendationGroups = {
+      featured: [],
+      top20: [],
+      latest: [],
+      hottest: [],
+    }
+    vi.mocked(fetch).mockResolvedValueOnce(createJsonResponse(recommendationGroups))
+
+    await expect(fetchSkillRecommendations()).resolves.toEqual(recommendationGroups)
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/console/api/explore/skills/recommendations',
       { credentials: 'include' },
     )
   })

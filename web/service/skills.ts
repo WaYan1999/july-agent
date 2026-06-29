@@ -1,4 +1,4 @@
-import type { Skill, SkillListParams, SkillPagination } from '@/models/skill'
+import type { Skill, SkillListParams, SkillPagination, SkillRecommendationGroups } from '@/models/skill'
 import { API_PREFIX } from '@/config'
 
 function buildConsoleUrl(path: string, params?: Record<string, string | number | undefined>) {
@@ -27,6 +27,10 @@ export function fetchSkillList(params: SkillListParams = {}) {
 
 export function fetchSkillDetail(slug: string) {
   return consoleRequest<Skill>(`/explore/skills/${encodeURIComponent(slug)}`)
+}
+
+export function fetchSkillRecommendations() {
+  return consoleRequest<SkillRecommendationGroups>('/explore/skills/recommendations')
 }
 
 export function recordSkillCopy(skillId: string) {

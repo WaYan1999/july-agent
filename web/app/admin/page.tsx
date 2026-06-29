@@ -13,6 +13,7 @@ import type {
   AdminRecommendedApp,
   AdminResourceItemMap,
   AdminSkill,
+  AdminSkillBatchPublishPayload,
   AdminSkillCategory,
   AdminSkillCreatePayload,
   AdminSkillTag,
@@ -28,6 +29,8 @@ import {
   AlertDialogTitle,
 } from '@langgenius/dify-ui/alert-dialog'
 import { Button } from '@langgenius/dify-ui/button'
+import { Checkbox } from '@langgenius/dify-ui/checkbox'
+import { CheckboxGroup } from '@langgenius/dify-ui/checkbox-group'
 import { cn } from '@langgenius/dify-ui/cn'
 import {
   Combobox,
@@ -55,9 +58,11 @@ import { toast } from '@langgenius/dify-ui/toast'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { adminResourceGroups, adminResourceLimit, getAdminResource } from '@/features/admin/resources'
+import JulyLogo from '@/app/components/base/logo/dify-logo'
+import { adminResourceGroups, adminResourceLimit, adminResources, getAdminResource } from '@/features/admin/resources'
 import {
   AdminRequestError,
+  batchPublishAdminSkills,
   createAdminResource,
   createAdminSkillVersion,
   deleteAdminResource,
@@ -69,6 +74,7 @@ import {
   uploadAdminSkillAsset,
 } from '@/features/admin/service'
 import useDocumentTitle from '@/hooks/use-document-title'
+import Link from '@/next/link'
 
 const ADMIN_API_KEY_STORAGE_KEY = 'dify-admin-api-key'
 const SELECT_ALL_VALUE = '__all__'
@@ -82,7 +88,7 @@ type EditableValue = string | number | boolean | null | undefined
 type EditableFieldValue = EditableValue | string[]
 type EditablePayloadValue = EditableValue | string[] | Record<string, unknown>
 type AdminFieldLabelKey = I18nKeysWithPrefix<'admin', 'fields.'>
-type SkillSort = '' | 'downloads_desc' | 'downloads_asc'
+type SkillSort = '' | 'downloads_desc' | 'downloads_asc' | 'github_stars_desc' | 'github_stars_asc'
 type TaxonomyOption = {
   value: string
   label: string
@@ -120,6 +126,7 @@ type CreateSkillFormValues = {
   tags: string[]
   install_count: string
   github_stars: string
+  is_featured: boolean
   position: string
   content_type: string
   skill_markdown: string
@@ -129,6 +136,7 @@ type SkillFilters = {
   category: string
   source_type: string
   publication_status: string
+  min_github_stars: string
   updated_at_start: string
   updated_at_end: string
   sort: SkillSort
@@ -159,6 +167,16 @@ type SkillLabelKind = 'sourceType' | 'publicationStatus' | 'contentType'
 type AutoServiceLabelKind = 'serviceType' | 'serviceStatus' | 'scheduleType' | 'runStatus'
 type AdminTranslator = TFunction<'admin'>
 type AdminFieldTranslator = (_key: AdminFieldLabelKey) => string
+
+const adminResourceIconClassNames = {
+  accounts: 'i-ri-user-settings-line',
+  recommendedApps: 'i-ri-layout-grid-line',
+  apps: 'i-ri-apps-2-line',
+  skills: 'i-ri-tools-line',
+  skillCategories: 'i-ri-folder-3-line',
+  skillTags: 'i-ri-price-tag-3-line',
+  autoServices: 'i-ri-timer-line',
+} as const satisfies Record<AdminResourceName, string>
 
 const skillSourceTypeOptions = [
   { value: 'github', labelKey: 'fields.sourceTypeGithub' },
@@ -238,6 +256,7 @@ const adminUpdateFieldNamesByResource = {
     'tags',
     'install_count',
     'github_stars',
+    'is_featured',
     'position',
   ],
   skillCategories: ['name', 'slug', 'position'],
@@ -279,6 +298,7 @@ const createSkillInitialValues: CreateSkillFormValues = {
   tags: [],
   install_count: '0',
   github_stars: '0',
+  is_featured: false,
   position: '0',
   content_type: 'remote_reference',
   skill_markdown: '',
@@ -288,6 +308,7 @@ const skillFilterInitialValues: SkillFilters = {
   category: '',
   source_type: '',
   publication_status: '',
+  min_github_stars: '',
   updated_at_start: '',
   updated_at_end: '',
   sort: '',
@@ -462,9 +483,23 @@ function buildCreateSkillPayload(values: CreateSkillFormValues): AdminSkillCreat
     tags: values.tags,
     install_count: values.install_count.trim() ? Number(values.install_count) : 0,
     github_stars: values.github_stars.trim() ? Number(values.github_stars) : 0,
+    is_featured: values.is_featured,
     position: values.position.trim() ? Number(values.position) : 0,
     content_type: values.content_type,
     skill_markdown: emptyStringToNull(values.skill_markdown),
+  }
+}
+
+function buildSkillFilterBatchPublishPayload(keyword: string, filters: SkillFilters): AdminSkillBatchPublishPayload {
+  return {
+    skill_ids: [],
+    keyword: keyword.trim() || undefined,
+    category: filters.category || undefined,
+    source_type: filters.source_type || undefined,
+    publication_status: filters.publication_status || undefined,
+    min_github_stars: filters.min_github_stars.trim() ? Number(filters.min_github_stars) : undefined,
+    updated_at_start: filters.updated_at_start || undefined,
+    updated_at_end: filters.updated_at_end || undefined,
   }
 }
 
@@ -577,6 +612,7 @@ function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldC
       { name: 'tags', labelKey: 'fields.tags', type: 'taxonomy-multi', value: taxonomyToSlugs(skill.tags), taxonomyResource: 'skillTags' },
       { name: 'install_count', labelKey: 'fields.installCount', type: 'number', value: skill.install_count },
       { name: 'github_stars', labelKey: 'fields.githubStars', type: 'number', value: skill.github_stars },
+      { name: 'is_featured', labelKey: 'fields.isFeatured', type: 'switch', value: skill.is_featured },
       { name: 'position', labelKey: 'fields.position', type: 'number', value: skill.position },
       { name: 'content_type', labelKey: 'fields.contentType', type: 'select', value: skill.latest_version?.content_type ?? 'remote_reference', options: skillContentTypeOptions },
       { name: 'skill_markdown', labelKey: 'fields.skillMarkdown', type: 'textarea', value: skill.latest_version?.skill_markdown },
@@ -976,7 +1012,9 @@ function SkillFilterControls({
         {t('filters.updatedAtStart')}
         <Input
           className="mt-1"
-          type="date"
+          type="text"
+          inputMode="numeric"
+          placeholder={t('filters.datePlaceholder')}
           value={values.updated_at_start}
           onChange={event => onChange({ ...values, updated_at_start: event.target.value })}
         />
@@ -985,9 +1023,21 @@ function SkillFilterControls({
         {t('filters.updatedAtEnd')}
         <Input
           className="mt-1"
-          type="date"
+          type="text"
+          inputMode="numeric"
+          placeholder={t('filters.datePlaceholder')}
           value={values.updated_at_end}
           onChange={event => onChange({ ...values, updated_at_end: event.target.value })}
+        />
+      </label>
+      <label className="min-w-36 system-sm-medium text-text-secondary">
+        {t('filters.minGithubStars')}
+        <Input
+          className="mt-1"
+          type="number"
+          min={0}
+          value={values.min_github_stars}
+          onChange={event => onChange({ ...values, min_github_stars: event.target.value })}
         />
       </label>
       <SelectField
@@ -998,6 +1048,8 @@ function SkillFilterControls({
         options={[
           { value: 'downloads_desc', labelKey: 'fields.sortDownloadsDesc' },
           { value: 'downloads_asc', labelKey: 'fields.sortDownloadsAsc' },
+          { value: 'github_stars_desc', labelKey: 'fields.sortGithubStarsDesc' },
+          { value: 'github_stars_asc', labelKey: 'fields.sortGithubStarsAsc' },
         ]}
         onChange={sort => onChange({ ...values, sort: sort as SkillSort })}
       />
@@ -1008,6 +1060,8 @@ function SkillFilterControls({
 function ResourceTable({
   resource,
   data,
+  selectedSkillIds,
+  onSelectedSkillIdsChange,
   onSelect,
   onDelete,
   onRunAutoService,
@@ -1015,6 +1069,8 @@ function ResourceTable({
 }: {
   resource: AdminResourceName
   data: AdminItem[]
+  selectedSkillIds?: string[]
+  onSelectedSkillIdsChange?: (_ids: string[]) => void
   onSelect: (_item: AdminItem) => void
   onDelete: (_item: AdminItem) => void
   onRunAutoService?: (_item: AdminAutoService) => void
@@ -1023,63 +1079,89 @@ function ResourceTable({
   const { t } = useTranslation('admin')
 
   if (resource === 'skills') {
+    const skillIds = data.map(item => item.id)
     return (
       <div className="overflow-x-auto">
-        <table className="w-full min-w-240 table-fixed">
-          <thead>
-            <tr className="border-b border-divider-subtle bg-background-section-burn text-left system-xs-medium text-text-tertiary">
-              <th className="w-14 px-4 py-3">{t('table.index')}</th>
-              <th className="w-[20%] px-4 py-3">{t('table.primary')}</th>
-              <th className="w-[12%] px-4 py-3">{t('table.type')}</th>
-              <th className="w-[14%] px-4 py-3">{t('table.category')}</th>
-              <th className="w-[12%] px-4 py-3">{t('table.source')}</th>
-              <th className="w-[10%] px-4 py-3">{t('table.downloads')}</th>
-              <th className="w-[12%] px-4 py-3">{t('table.status')}</th>
-              <th className="w-[14%] px-4 py-3">{t('table.updatedAt')}</th>
-              <th className="w-[14%] px-4 py-3 text-right">{t('table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-divider-subtle">
-            {data.map((item, index) => {
-              const skill = item as AdminSkill
-              return (
-                <tr key={skill.id} className="bg-background-default">
-                  <td className="px-4 py-3 system-sm-regular text-text-tertiary tabular-nums">{index + 1}</td>
-                  <td className="px-4 py-3">
-                    <div className="truncate system-sm-medium text-text-primary">{skill.name}</div>
-                    <div className="mt-1 truncate system-xs-regular text-text-tertiary">{skill.slug}</div>
-                  </td>
-                  <td className="px-4 py-3 system-sm-regular text-text-secondary">
-                    {getSkillDisplayLabel(t, 'contentType', skill.latest_version?.content_type)}
-                  </td>
-                  <td className="px-4 py-3 system-sm-regular text-text-secondary">
-                    <span className="line-clamp-2">{taxonomyToDisplayText(skill.categories)}</span>
-                  </td>
-                  <td className="px-4 py-3 system-sm-regular text-text-secondary">
-                    {getSkillDisplayLabel(t, 'sourceType', skill.source_type)}
-                  </td>
-                  <td className="px-4 py-3 system-sm-regular text-text-secondary tabular-nums">{skill.install_count}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex max-w-full rounded-md bg-background-section-burn px-2 py-1 system-xs-medium text-text-secondary">
-                      <span className="truncate">{getSkillDisplayLabel(t, 'publicationStatus', skill.publication_status)}</span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 system-sm-regular text-text-secondary">{formatDateTime(skill.updated_at)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
-                      <Button size="small" variant="secondary" onClick={() => onSelect(item)}>
-                        {t('actions.details')}
-                      </Button>
-                      <Button size="small" variant="secondary" tone="destructive" onClick={() => onDelete(item)}>
-                        {t(getAdminResource(resource).meta.deleteKey)}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <CheckboxGroup
+          value={selectedSkillIds ?? []}
+          onValueChange={onSelectedSkillIdsChange ?? (() => {})}
+          allValues={skillIds}
+        >
+          <table className="w-full min-w-280 table-fixed">
+            <thead>
+              <tr className="border-b border-divider-subtle bg-background-section text-left system-xs-medium text-text-tertiary">
+                <th className="w-12 px-4 py-3">
+                  <Checkbox parent aria-label={t('batch.selectCurrentPage')} />
+                </th>
+                <th className="w-14 px-4 py-3">{t('table.index')}</th>
+                <th className="w-[20%] px-4 py-3">{t('table.primary')}</th>
+                <th className="w-[12%] px-4 py-3">{t('table.type')}</th>
+                <th className="w-[14%] px-4 py-3">{t('table.category')}</th>
+                <th className="w-[12%] px-4 py-3">{t('table.source')}</th>
+                <th className="w-[10%] px-4 py-3">{t('table.downloads')}</th>
+                <th className="w-[10%] px-4 py-3">{t('table.githubStars')}</th>
+                <th className="w-[10%] px-4 py-3">{t('table.featured')}</th>
+                <th className="w-[12%] px-4 py-3">{t('table.status')}</th>
+                <th className="w-[14%] px-4 py-3">{t('table.updatedAt')}</th>
+                <th className="w-[14%] px-4 py-3 text-right">{t('table.actions')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-divider-subtle">
+              {data.map((item, index) => {
+                const skill = item as AdminSkill
+                const labelId = `admin-skill-${skill.id}`
+                return (
+                  <tr key={skill.id} className="bg-background-default transition-colors hover:bg-background-section">
+                    <td className="px-4 py-3" onClick={event => event.stopPropagation()}>
+                      <Checkbox value={skill.id} aria-labelledby={labelId} />
+                    </td>
+                    <td className="px-4 py-3 system-sm-regular text-text-tertiary tabular-nums">{index + 1}</td>
+                    <td className="px-4 py-3">
+                      <div id={labelId} className="truncate system-sm-medium text-text-primary">{skill.name}</div>
+                      <div className="mt-1 truncate system-xs-regular text-text-tertiary">{skill.slug}</div>
+                    </td>
+                    <td className="px-4 py-3 system-sm-regular text-text-secondary">
+                      {getSkillDisplayLabel(t, 'contentType', skill.latest_version?.content_type)}
+                    </td>
+                    <td className="px-4 py-3 system-sm-regular text-text-secondary">
+                      <span className="line-clamp-2">{taxonomyToDisplayText(skill.categories)}</span>
+                    </td>
+                    <td className="px-4 py-3 system-sm-regular text-text-secondary">
+                      {getSkillDisplayLabel(t, 'sourceType', skill.source_type)}
+                    </td>
+                    <td className="px-4 py-3 system-sm-regular text-text-secondary tabular-nums">{skill.install_count}</td>
+                    <td className="px-4 py-3 system-sm-regular text-text-secondary tabular-nums">{skill.github_stars}</td>
+                    <td className="px-4 py-3">
+                      {skill.is_featured && (
+                        <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-state-accent-hover px-2 py-1 system-xs-medium text-text-accent">
+                          <span aria-hidden="true" className="i-ri-sparkling-2-line size-3" />
+                          <span className="truncate">{t('table.featured')}</span>
+                        </span>
+                      )}
+                      {!skill.is_featured && <span className="system-sm-regular text-text-quaternary">-</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex max-w-full rounded-md bg-background-section-burn px-2 py-1 system-xs-medium text-text-secondary">
+                        <span className="truncate">{getSkillDisplayLabel(t, 'publicationStatus', skill.publication_status)}</span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 system-sm-regular text-text-secondary">{formatDateTime(skill.updated_at)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <Button size="small" variant="secondary" onClick={() => onSelect(item)}>
+                          {t('actions.details')}
+                        </Button>
+                        <Button size="small" variant="secondary" tone="destructive" onClick={() => onDelete(item)}>
+                          {t(getAdminResource(resource).meta.deleteKey)}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </CheckboxGroup>
       </div>
     )
   }
@@ -1089,7 +1171,7 @@ function ResourceTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-180 table-fixed">
           <thead>
-            <tr className="border-b border-divider-subtle bg-background-section-burn text-left system-xs-medium text-text-tertiary">
+            <tr className="border-b border-divider-subtle bg-background-section text-left system-xs-medium text-text-tertiary">
               <th className="w-14 px-4 py-3">{t('table.index')}</th>
               <th className="w-[30%] px-4 py-3">{t('table.id')}</th>
               <th className="w-[24%] px-4 py-3">{t('table.primary')}</th>
@@ -1101,7 +1183,7 @@ function ResourceTable({
             {data.map((item, index) => {
               const taxonomy = item as AdminSkillCategory | AdminSkillTag
               return (
-                <tr key={taxonomy.id} className="bg-background-default">
+                <tr key={taxonomy.id} className="bg-background-default transition-colors hover:bg-background-section">
                   <td className="px-4 py-3 system-sm-regular text-text-tertiary tabular-nums">{index + 1}</td>
                   <td className="px-4 py-3">
                     <span className="block truncate system-sm-regular text-text-secondary">{taxonomy.id}</span>
@@ -1133,7 +1215,7 @@ function ResourceTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-180 table-fixed">
         <thead>
-          <tr className="border-b border-divider-subtle bg-background-section-burn text-left system-xs-medium text-text-tertiary">
+          <tr className="border-b border-divider-subtle bg-background-section text-left system-xs-medium text-text-tertiary">
             <th className="w-[36%] px-4 py-3">{t('table.primary')}</th>
             <th className="w-[22%] px-4 py-3">{t('table.status')}</th>
             <th className="w-[18%] px-4 py-3">{t(getItemMetricLabel(resource))}</th>
@@ -1142,7 +1224,7 @@ function ResourceTable({
         </thead>
         <tbody className="divide-y divide-divider-subtle">
           {data.map(item => (
-            <tr key={item.id} className="bg-background-default">
+            <tr key={item.id} className="bg-background-default transition-colors hover:bg-background-section">
               <td className="px-4 py-3">
                 <div className="truncate system-sm-medium text-text-primary">{getItemTitle(resource, item)}</div>
                 <div className="mt-1 truncate system-xs-regular text-text-tertiary">{getItemSubtitle(resource, item)}</div>
@@ -1492,7 +1574,7 @@ function AdminDialogLayout({
   description,
   closeLabel,
   children,
-  widthClassName = 'w-[720px]!',
+  widthClassName = 'w-[760px]!',
 }: {
   title: ReactNode
   description: ReactNode
@@ -1501,8 +1583,8 @@ function AdminDialogLayout({
   widthClassName?: string
 }) {
   return (
-    <DialogContent className={cn('flex max-h-[80dvh] max-w-[calc(100vw-2rem)]! flex-col overflow-hidden! border-none p-0! text-left align-middle', widthClassName)}>
-      <div className="flex items-start justify-between gap-4 border-b border-divider-subtle p-6">
+    <DialogContent className={cn('flex h-[min(86dvh,900px)] max-w-[calc(100vw-2rem)]! flex-col overflow-hidden! border-none bg-background-default p-0! text-left align-middle shadow-xl', widthClassName)}>
+      <div className="shrink-0 flex items-start justify-between gap-4 border-b border-divider-subtle px-6 py-5">
         <div className="min-w-0">
           <DialogTitle className="truncate title-xl-semi-bold text-text-primary">
             {title}
@@ -1520,7 +1602,7 @@ function AdminDialogLayout({
 
 function AdminDialogBody({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
       {children}
     </div>
   )
@@ -1536,7 +1618,7 @@ function AdminFieldGrid({ children }: { children: ReactNode }) {
 
 function AdminDialogActions({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky bottom-0 mt-auto flex justify-end gap-2 border-t border-divider-subtle bg-background-default px-6 py-4">
+    <div className="shrink-0 flex justify-end gap-2 border-t border-divider-subtle bg-background-default px-6 py-4 shadow-xs">
       {children}
     </div>
   )
@@ -1867,6 +1949,43 @@ function DeleteConfirmDialog({
   )
 }
 
+function BatchPublishFilteredConfirmDialog({
+  open,
+  total,
+  loading,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  total: number
+  loading: boolean
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const { t } = useTranslation('admin')
+
+  return (
+    <AlertDialog open={open} onOpenChange={nextOpen => !nextOpen && onClose()}>
+      <AlertDialogContent>
+        <div className="p-6">
+          <AlertDialogTitle className="title-lg-bold text-text-primary">
+            {t('batch.publishFilteredTitle')}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="mt-2 system-sm-regular text-pretty text-text-tertiary">
+            {t('batch.publishFilteredDescription', { total })}
+          </AlertDialogDescription>
+        </div>
+        <AlertDialogActions>
+          <AlertDialogCancelButton>{t('actions.cancel')}</AlertDialogCancelButton>
+          <AlertDialogConfirmButton loading={loading} onClick={onConfirm}>
+            {t('batch.publishFilteredConfirm')}
+          </AlertDialogConfirmButton>
+        </AlertDialogActions>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 function RunAutoServiceConfirmDialog({
   apiKey,
   service,
@@ -1959,6 +2078,7 @@ function CreateSkillDialog({
     { name: 'tags', labelKey: 'fields.tags', type: 'taxonomy-multi', value: values.tags, taxonomyResource: 'skillTags' },
     { name: 'install_count', labelKey: 'fields.installCount', type: 'number', value: values.install_count },
     { name: 'github_stars', labelKey: 'fields.githubStars', type: 'number', value: values.github_stars },
+    { name: 'is_featured', labelKey: 'fields.isFeatured', type: 'switch', value: values.is_featured },
     { name: 'position', labelKey: 'fields.position', type: 'number', value: values.position },
     { name: 'content_type', labelKey: 'fields.contentType', type: 'select', value: values.content_type, options: skillContentTypeOptions },
     { name: 'skill_markdown', labelKey: 'fields.skillMarkdown', type: 'textarea', value: values.skill_markdown },
@@ -2005,7 +2125,11 @@ function CreateSkillDialog({
                     onChange={value =>
                       setValues(current => ({
                         ...current,
-                        [field.name]: Array.isArray(value) ? value : String(value ?? ''),
+                        [field.name]: typeof value === 'boolean'
+                          ? value
+                          : Array.isArray(value)
+                            ? value
+                            : String(value ?? ''),
                       }))}
                   />
                 </label>
@@ -2297,6 +2421,73 @@ function AutoServiceLogsDialog({
   )
 }
 
+function AdminTopBar({
+  onDisconnect,
+}: {
+  onDisconnect: () => void
+}) {
+  const { t } = useTranslation('admin')
+
+  return (
+    <header className="border-b border-divider-subtle bg-background-default/95">
+      <div className="flex h-13 min-w-0 items-center gap-4 px-4 md:px-5">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 rounded-lg outline-hidden focus-visible:ring-2 focus-visible:ring-state-accent-solid"
+          aria-label={t('topNav.productName')}
+        >
+          <JulyLogo size="small" alt="" className="h-5 w-auto" />
+          <span className="whitespace-nowrap system-sm-semibold text-text-primary">{t('topNav.productName')}</span>
+        </Link>
+
+        <div className="min-w-0 flex-1" />
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden h-8 items-center rounded-lg bg-background-section-burn px-3 system-sm-medium text-text-secondary xl:inline-flex">
+            {t('auth.connected')}
+          </span>
+          <Button variant="secondary" size="small" onClick={onDisconnect}>
+            {t('auth.disconnect')}
+          </Button>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function AdminResourceMobileNav({
+  activeResourceName,
+  onSelect,
+}: {
+  activeResourceName: AdminResourceName
+  onSelect: (_resource: AdminResourceName) => void
+}) {
+  const { t } = useTranslation('admin')
+
+  return (
+    <nav className="lg:hidden" aria-label={t('nav.resources')}>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {adminResources.map(item => (
+          <button
+            key={item.name}
+            type="button"
+            className={cn(
+              'flex h-9 shrink-0 items-center gap-2 rounded-lg border border-divider-subtle px-3 system-sm-medium outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-state-accent-solid',
+              item.name === activeResourceName
+                ? 'bg-background-default text-text-primary shadow-xs'
+                : 'bg-background-section text-text-secondary hover:bg-background-default hover:text-text-primary',
+            )}
+            onClick={() => onSelect(item.name)}
+          >
+            <span aria-hidden className={cn(adminResourceIconClassNames[item.name], 'size-4 shrink-0')} />
+            <span>{t(item.meta.titleKey)}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
 function AdminResourceButton({
   resourceName,
   activeResourceName,
@@ -2310,18 +2501,29 @@ function AdminResourceButton({
 }) {
   const { t } = useTranslation('admin')
   const item = getAdminResource(resourceName)
+  const isActive = item.name === activeResourceName
 
   return (
     <button
       type="button"
       className={cn(
-        'flex h-9 w-full items-center rounded-lg px-3 text-left system-sm-medium outline-hidden hover:bg-state-base-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid',
-        inset && 'pl-6',
-        item.name === activeResourceName ? 'bg-state-accent-hover text-text-accent' : 'text-text-secondary',
+        'group flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left system-sm-medium outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-state-accent-solid',
+        inset && 'pl-7',
+        isActive
+          ? 'bg-background-default text-text-primary shadow-xs'
+          : 'text-text-secondary hover:bg-background-default hover:text-text-primary',
       )}
       onClick={() => onSelect(item.name)}
     >
-      {t(item.meta.titleKey)}
+      <span
+        aria-hidden
+        className={cn(
+          adminResourceIconClassNames[item.name],
+          'size-4 shrink-0',
+          isActive ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary',
+        )}
+      />
+      <span className="truncate">{t(item.meta.titleKey)}</span>
     </button>
   )
 }
@@ -2378,6 +2580,8 @@ export default function AdminPage() {
   const [isCreateAutoServiceOpen, setIsCreateAutoServiceOpen] = useState(false)
   const [autoServiceLogsItem, setAutoServiceLogsItem] = useState<AdminAutoService | null>(null)
   const [runAutoServiceItem, setRunAutoServiceItem] = useState<AdminAutoService | null>(null)
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
+  const [isFilterPublishConfirmOpen, setIsFilterPublishConfirmOpen] = useState(false)
   const activeResource = getAdminResource(resource)
   const activeSkillFilters = useMemo(() => {
     if (resource !== 'skills')
@@ -2386,6 +2590,7 @@ export default function AdminPage() {
       category: skillFilters.category,
       source_type: skillFilters.source_type,
       publication_status: skillFilters.publication_status,
+      min_github_stars: skillFilters.min_github_stars.trim() || undefined,
       updated_at_start: skillFilters.updated_at_start,
       updated_at_end: skillFilters.updated_at_end,
     }
@@ -2403,6 +2608,8 @@ export default function AdminPage() {
     setIsCreateAutoServiceOpen(false)
     setAutoServiceLogsItem(null)
     setRunAutoServiceItem(null)
+    setSelectedSkillIds([])
+    setIsFilterPublishConfirmOpen(false)
   }, [clearApiKey])
 
   const handleUnlock = useCallback((nextApiKey: string) => {
@@ -2413,6 +2620,8 @@ export default function AdminPage() {
     setIsCreateAutoServiceOpen(false)
     setAutoServiceLogsItem(null)
     setRunAutoServiceItem(null)
+    setSelectedSkillIds([])
+    setIsFilterPublishConfirmOpen(false)
     saveApiKey(nextApiKey)
   }, [saveApiKey])
 
@@ -2426,6 +2635,8 @@ export default function AdminPage() {
     setIsCreateAutoServiceOpen(false)
     setAutoServiceLogsItem(null)
     setRunAutoServiceItem(null)
+    setSelectedSkillIds([])
+    setIsFilterPublishConfirmOpen(false)
     setKeywordDraft('')
     setKeyword('')
     setSkillFilterDraft(skillFilterInitialValues)
@@ -2446,133 +2657,177 @@ export default function AdminPage() {
     enabled: Boolean(apiKey),
     retry: false,
   })
+  const currentPageSkillIds = useMemo(() => {
+    if (resource !== 'skills')
+      return []
+    return ((listQuery.data?.data as AdminSkill[] | undefined) ?? []).map(skill => skill.id)
+  }, [listQuery.data?.data, resource])
+  const selectedCurrentPageSkillIds = useMemo(
+    () => selectedSkillIds.filter(skillId => currentPageSkillIds.includes(skillId)),
+    [currentPageSkillIds, selectedSkillIds],
+  )
+  const batchPublishMutation = useMutation({
+    mutationFn: (payload: AdminSkillBatchPublishPayload) => batchPublishAdminSkills(apiKey, payload),
+    onSuccess: async (result) => {
+      toast.success(t('states.batchPublishSuccess', { count: result.updated_count }))
+      setSelectedSkillIds([])
+      setIsFilterPublishConfirmOpen(false)
+      await listQuery.refetch()
+    },
+    onError: (error) => {
+      if (isUnauthorizedAdminError(error))
+        handleUnauthorized()
+      else
+        toast.error(getAdminMutationErrorMessage(error, t('states.batchPublishError')))
+    },
+  })
 
   useEffect(() => {
     if (isUnauthorizedAdminError(listQuery.error))
       clearApiKey()
   }, [clearApiKey, listQuery.error])
 
+  useEffect(() => {
+    if (resource !== 'skills') {
+      setSelectedSkillIds([])
+      return
+    }
+    setSelectedSkillIds(current => current.filter(skillId => currentPageSkillIds.includes(skillId)))
+  }, [currentPageSkillIds, resource])
+
   if (!apiKey)
     return <AdminLockedState onUnlock={handleUnlock} />
 
   const data = listQuery.data?.data ?? []
   const total = listQuery.data?.total ?? 0
+  const handleApplyFilters = () => {
+    setKeyword(keywordDraft)
+    if (resource === 'skills')
+      setSkillFilters(skillFilterDraft)
+    setPage(1)
+  }
+  const handleResetFilters = () => {
+    setKeywordDraft('')
+    setKeyword('')
+    setSkillFilterDraft(skillFilterInitialValues)
+    setSkillFilters(skillFilterInitialValues)
+    setSelectedSkillIds([])
+    setPage(1)
+  }
+  const handleBatchPublishSelected = () => {
+    if (selectedCurrentPageSkillIds.length === 0)
+      return
+    batchPublishMutation.mutate({ skill_ids: selectedCurrentPageSkillIds })
+  }
+  const handleBatchPublishFilters = () => {
+    batchPublishMutation.mutate(buildSkillFilterBatchPublishPayload(keyword, skillFilters))
+  }
 
   return (
     <main className="min-h-dvh bg-background-body text-text-primary">
-      <div className="flex min-h-dvh">
-        <aside className="w-64 shrink-0 border-r border-divider-subtle bg-background-default px-4 py-5">
-          <div className="px-2">
-            <h1 className="title-xl-semi-bold text-balance text-text-primary">{title}</h1>
-            <p className="mt-1 system-xs-regular text-pretty text-text-tertiary">{t('description')}</p>
-          </div>
-          <nav className="mt-6 space-y-4" aria-label={t('nav.resources')}>
+      <AdminTopBar onDisconnect={clearApiKey} />
+      <div className="flex min-h-[calc(100dvh-3.25rem)]">
+        <aside className="hidden w-52 shrink-0 border-r border-divider-subtle bg-background-section px-3 py-5 lg:block">
+          <nav className="space-y-4" aria-label={t('nav.resources')}>
             {adminResourceGroups.map(group => (
-              <div key={'name' in group ? group.name : group.titleKey}>
-                {'name' in group && (
-                  <AdminResourceButton
-                    resourceName={group.name}
-                    activeResourceName={resource}
-                    onSelect={handleSelectResource}
-                  />
-                )}
-                {'resources' in group && (
-                  <>
-                    <div className="px-3 py-1 system-xs-semibold text-text-tertiary uppercase">
-                      {t(group.titleKey)}
-                    </div>
-                    <div className="mt-1 space-y-1">
-                      {group.resources.map(resourceName => (
-                        <AdminResourceButton
-                          key={resourceName}
-                          resourceName={resourceName}
-                          activeResourceName={resource}
-                          inset
-                          onSelect={handleSelectResource}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div key={group.titleKey}>
+                <div className="px-2.5 py-1 system-xs-semibold text-text-tertiary uppercase">
+                  {t(group.titleKey)}
+                </div>
+                <div className="mt-1 space-y-1">
+                  {group.resources.map(resourceName => (
+                    <AdminResourceButton
+                      key={resourceName}
+                      resourceName={resourceName}
+                      activeResourceName={resource}
+                      inset
+                      onSelect={handleSelectResource}
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1">
-          <header className="flex min-h-16 items-center justify-between gap-4 border-b border-divider-subtle bg-background-default px-6 py-3">
-            <div className="min-w-0">
-              <h2 className="truncate title-xl-semi-bold text-text-primary">{t(activeResource.meta.titleKey)}</h2>
-              <p className="mt-1 truncate system-sm-regular text-text-tertiary">{t(activeResource.meta.descriptionKey)}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {resource === 'skills' && (
-                <Button variant="primary" size="medium" onClick={() => setIsCreateSkillOpen(true)}>
-                  {t('actions.createSkill')}
-                </Button>
-              )}
-              {(resource === 'skillCategories' || resource === 'skillTags') && (
-                <Button variant="primary" size="medium" onClick={() => setTaxonomyCreateResource(resource)}>
-                  {t('actions.createTaxonomy')}
-                </Button>
-              )}
-              {resource === 'autoServices' && (
-                <Button variant="primary" size="medium" onClick={() => setIsCreateAutoServiceOpen(true)}>
-                  {t('actions.createAutoService')}
-                </Button>
-              )}
-              <span className="inline-flex h-8 items-center rounded-lg bg-background-section-burn px-3.5 system-sm-medium text-text-secondary">
-                {t('auth.connected')}
-              </span>
-              <Button variant="secondary" size="medium" onClick={clearApiKey}>
-                {t('auth.disconnect')}
-              </Button>
-            </div>
-          </header>
+        <section className="min-w-0 flex-1 px-4 py-4 md:px-6">
+          <div className="mx-auto flex max-w-[1680px] flex-col gap-4">
+            <AdminResourceMobileNav activeResourceName={resource} onSelect={handleSelectResource} />
 
-          <div className="p-6">
-            <form
-              className="mb-4 flex flex-wrap items-end gap-3"
-              onSubmit={(event) => {
-                event.preventDefault()
-                setKeyword(keywordDraft)
-                if (resource === 'skills')
-                  setSkillFilters(skillFilterDraft)
-                setPage(1)
-              }}
-            >
-              <label className="min-w-64 flex-1 system-sm-medium text-text-secondary">
-                {t('filters.search')}
-                <Input
-                  className="mt-1"
-                  value={keywordDraft}
-                  placeholder={resource === 'skills' ? t('filters.skillNameSearchPlaceholder') : t('filters.searchPlaceholder')}
-                  onChange={event => setKeywordDraft(event.target.value)}
-                />
-              </label>
-              {resource === 'skills' && (
-                <SkillFilterControls apiKey={apiKey} values={skillFilterDraft} onChange={setSkillFilterDraft} />
-              )}
-              <Button type="submit" variant="primary">
-                {t('filters.query')}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setKeywordDraft('')
-                  setKeyword('')
-                  setSkillFilterDraft(skillFilterInitialValues)
-                  setSkillFilters(skillFilterInitialValues)
-                  setPage(1)
+            <section className="overflow-hidden rounded-[20px] border border-divider-subtle bg-background-default shadow-xs">
+              <header className="flex min-h-16 flex-wrap items-center justify-between gap-4 border-b border-divider-subtle px-4 py-4 md:px-5">
+                <div className="min-w-0">
+                  <h2 className="truncate title-xl-semi-bold text-text-primary">{t(activeResource.meta.titleKey)}</h2>
+                  <p className="mt-1 max-w-3xl truncate system-sm-regular text-text-tertiary">{t(activeResource.meta.descriptionKey)}</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                  {resource === 'skills' && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="medium"
+                        disabled={selectedCurrentPageSkillIds.length === 0}
+                        loading={batchPublishMutation.isPending && selectedCurrentPageSkillIds.length > 0}
+                        onClick={handleBatchPublishSelected}
+                      >
+                        {t('batch.publishSelected', { count: selectedCurrentPageSkillIds.length })}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="medium"
+                        loading={batchPublishMutation.isPending && isFilterPublishConfirmOpen}
+                        onClick={() => setIsFilterPublishConfirmOpen(true)}
+                      >
+                        {t('batch.publishFiltered')}
+                      </Button>
+                      <Button variant="primary" size="medium" onClick={() => setIsCreateSkillOpen(true)}>
+                        {t('actions.createSkill')}
+                      </Button>
+                    </>
+                  )}
+                  {(resource === 'skillCategories' || resource === 'skillTags') && (
+                    <Button variant="primary" size="medium" onClick={() => setTaxonomyCreateResource(resource)}>
+                      {t('actions.createTaxonomy')}
+                    </Button>
+                  )}
+                  {resource === 'autoServices' && (
+                    <Button variant="primary" size="medium" onClick={() => setIsCreateAutoServiceOpen(true)}>
+                      {t('actions.createAutoService')}
+                    </Button>
+                  )}
+                </div>
+              </header>
+
+              <form
+                className="flex flex-wrap items-end gap-3 border-b border-divider-subtle bg-background-section px-4 py-3 md:px-5"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  handleApplyFilters()
                 }}
               >
-                {t('filters.reset')}
-              </Button>
-            </form>
+                <label className="min-w-56 flex-[1_1_24rem] system-sm-medium text-text-secondary">
+                  {t('filters.search')}
+                  <Input
+                    className="mt-1"
+                    value={keywordDraft}
+                    placeholder={resource === 'skills' ? t('filters.skillNameSearchPlaceholder') : t('filters.searchPlaceholder')}
+                    onChange={event => setKeywordDraft(event.target.value)}
+                  />
+                </label>
+                {resource === 'skills' && (
+                  <SkillFilterControls apiKey={apiKey} values={skillFilterDraft} onChange={setSkillFilterDraft} />
+                )}
+                <div className="ml-auto flex gap-2">
+                  <Button type="submit" variant="primary">
+                    {t('filters.query')}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleResetFilters}>
+                    {t('filters.reset')}
+                  </Button>
+                </div>
+              </form>
 
-            <div className="overflow-hidden rounded-lg border border-divider-subtle bg-background-default">
-              <div className="flex items-center justify-between border-b border-divider-subtle px-4 py-3">
+              <div className="flex items-center justify-between border-b border-divider-subtle px-4 py-3 md:px-5">
                 <div className="system-sm-medium text-text-secondary">
                   {t('table.total', { total })}
                 </div>
@@ -2590,27 +2845,29 @@ export default function AdminPage() {
                 <ResourceTable
                   resource={resource}
                   data={data}
+                  selectedSkillIds={selectedCurrentPageSkillIds}
+                  onSelectedSkillIdsChange={setSelectedSkillIds}
                   onSelect={setSelectedItem}
                   onDelete={setDeleteItem}
                   onRunAutoService={setRunAutoServiceItem}
                   onViewAutoServiceLogs={setAutoServiceLogsItem}
                 />
               )}
-            </div>
 
-            <div className="mt-4 flex items-center justify-between">
-              <div className="system-xs-regular text-text-tertiary">
-                {t('pagination.page', { page })}
+              <div className="flex items-center justify-between border-t border-divider-subtle px-4 py-3 md:px-5">
+                <div className="system-xs-regular text-text-tertiary">
+                  {t('pagination.page', { page })}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="small" variant="secondary" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}>
+                    {t('pagination.prev')}
+                  </Button>
+                  <Button size="small" variant="secondary" disabled={!listQuery.data?.has_more} onClick={() => setPage(current => current + 1)}>
+                    {t('pagination.next')}
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button size="small" variant="secondary" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}>
-                  {t('pagination.prev')}
-                </Button>
-                <Button size="small" variant="secondary" disabled={!listQuery.data?.has_more} onClick={() => setPage(current => current + 1)}>
-                  {t('pagination.next')}
-                </Button>
-              </div>
-            </div>
+            </section>
           </div>
         </section>
       </div>
@@ -2630,6 +2887,13 @@ export default function AdminPage() {
         onClose={() => setDeleteItem(null)}
         onDeleted={() => listQuery.refetch()}
         onUnauthorized={handleUnauthorized}
+      />
+      <BatchPublishFilteredConfirmDialog
+        open={isFilterPublishConfirmOpen}
+        total={total}
+        loading={batchPublishMutation.isPending}
+        onClose={() => setIsFilterPublishConfirmOpen(false)}
+        onConfirm={handleBatchPublishFilters}
       />
       <CreateSkillDialog
         apiKey={apiKey}

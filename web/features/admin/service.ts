@@ -106,6 +106,7 @@ export type AdminSkill = {
   tags: AdminSkillTaxonomy[]
   install_count: number
   github_stars: number
+  is_featured: boolean
   position: number
   published_at?: string | null
   created_at?: string | null
@@ -187,6 +188,7 @@ export type AdminSkillCreatePayload = {
   tags?: string[]
   install_count?: number | null
   github_stars?: number | null
+  is_featured?: boolean | null
   position?: number | null
   content_type?: string | null
   skill_markdown?: string | null
@@ -196,6 +198,22 @@ export type AdminSkillVersionCreatePayload = {
   content_type?: string | null
   skill_markdown?: string | null
   is_latest?: boolean
+}
+
+export type AdminSkillBatchPublishPayload = {
+  skill_ids?: string[]
+  keyword?: string
+  category?: string
+  publication_status?: string
+  source_type?: string
+  audit_status?: string
+  min_github_stars?: number
+  updated_at_start?: string
+  updated_at_end?: string
+}
+
+export type AdminSkillBatchPublishResponse = {
+  updated_count: number
 }
 
 export type AdminResourceItemMap = {
@@ -376,6 +394,14 @@ export function updateAdminResource<TResource extends AdminResourceName>(
 
 export function createAdminSkillVersion(apiKey: string, skillId: string, body: AdminSkillVersionCreatePayload) {
   return adminRequest<NonNullable<AdminSkill['latest_version']>>(`/skills/${encodeURIComponent(skillId)}/versions`, {
+    apiKey,
+    method: 'POST',
+    body,
+  })
+}
+
+export function batchPublishAdminSkills(apiKey: string, body: AdminSkillBatchPublishPayload) {
+  return adminRequest<AdminSkillBatchPublishResponse>('/skills/batch-publish', {
     apiKey,
     method: 'POST',
     body,

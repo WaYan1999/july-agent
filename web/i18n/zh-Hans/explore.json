@@ -88,5 +88,11 @@
   "skills.loadMore": "加载更多",
   "skills.loading": "加载中…",
   "skills.endOfList": "已经到底啦",
-  "skills.viewSource": "查看来源"
+  "skills.viewSource": "查看来源",
+  "skills.recommendations.featured": "精选推荐",
+  "skills.recommendations.top20": "Top20技能",
+  "skills.recommendations.latest": "最新推荐",
+  "skills.recommendations.hottest": "最热推荐",
+  "skills.recommendations.previousFeatured": "上一组精选技能",
+  "skills.recommendations.nextFeatured": "下一组精选技能"
 }

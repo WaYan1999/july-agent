@@ -88,5 +88,11 @@
   "skills.loadMore": "Load more",
   "skills.loading": "Loading...",
   "skills.endOfList": "You've reached the end.",
-  "skills.viewSource": "View source"
+  "skills.viewSource": "View source",
+  "skills.recommendations.featured": "Featured",
+  "skills.recommendations.top20": "Top 20 skills",
+  "skills.recommendations.latest": "Latest recommendations",
+  "skills.recommendations.hottest": "Hot recommendations",
+  "skills.recommendations.previousFeatured": "Previous featured skills",
+  "skills.recommendations.nextFeatured": "Next featured skills"
 }

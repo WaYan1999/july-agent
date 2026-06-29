@@ -1,11 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { cn } from '@langgenius/dify-ui/cn'
 import { useTranslation } from 'react-i18next'
-import { usePathname } from '@/next/navigation'
 import MainNav from './index'
-import { isWorkflowAppRoute } from './routes'
 import { MAIN_CONTENT_ID, SkipNav } from './skip-nav'
 
 type MainNavLayoutProps = {
@@ -16,15 +13,9 @@ const MainNavLayout = ({
   children,
 }: MainNavLayoutProps) => {
   const { t } = useTranslation('common')
-  const pathname = usePathname()
-  const useLegacySideNavigationLayout = isWorkflowAppRoute(pathname)
 
   return (
-    <div className={cn(
-      'flex h-0 min-h-0 grow overflow-hidden bg-background-body',
-      !useLegacySideNavigationLayout && 'flex-col',
-    )}
-    >
+    <div className="flex h-0 min-h-0 grow flex-col overflow-hidden bg-background-body">
       <SkipNav>{t('navigation.skipToMain')}</SkipNav>
       <MainNav />
       <main

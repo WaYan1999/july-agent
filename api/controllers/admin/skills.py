@@ -32,6 +32,7 @@ class SkillListQuery(BaseModel):
     publication_status: str | None = Field(default=None, max_length=32)
     source_type: str | None = Field(default=None, max_length=32)
     audit_status: str | None = Field(default=None, max_length=32)
+    min_github_stars: int | None = Field(default=None, ge=0)
     updated_at_start: datetime | None = None
     updated_at_end: datetime | None = None
     sort: str | None = Field(default=None, max_length=32)
@@ -69,6 +70,7 @@ class SkillCreatePayload(BaseModel):
     tags: list[str] = Field(default_factory=list)
     install_count: int = Field(default=0, ge=0)
     github_stars: int = Field(default=0, ge=0)
+    is_featured: bool = False
     position: int = Field(default=0, ge=0)
     content_type: SkillContentType = SkillContentType.REMOTE_REFERENCE
     skill_markdown: str | None = None
@@ -94,11 +96,40 @@ class SkillUpdatePayload(BaseModel):
     tags: list[str] | None = None
     install_count: int | None = Field(default=None, ge=0)
     github_stars: int | None = Field(default=None, ge=0)
+    is_featured: bool | None = None
     position: int | None = Field(default=None, ge=0)
     content_type: SkillContentType | None = None
     skill_markdown: str | None = None
 
     model_config = ConfigDict(extra="forbid")
+
+
+class SkillBatchPublishPayload(BaseModel):
+    skill_ids: list[str] = Field(default_factory=list, max_length=1000)
+    keyword: str | None = Field(default=None, max_length=80)
+    category: str | None = Field(default=None, max_length=255)
+    publication_status: str | None = Field(default=None, max_length=32)
+    source_type: str | None = Field(default=None, max_length=32)
+    audit_status: str | None = Field(default=None, max_length=32)
+    min_github_stars: int | None = Field(default=None, ge=0)
+    updated_at_start: datetime | None = None
+    updated_at_end: datetime | None = None
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("updated_at_start", mode="before")
+    @classmethod
+    def _normalize_updated_at_start(cls, value: object) -> object:
+        if isinstance(value, str) and len(value) == 10:
+            return datetime.combine(datetime.strptime(value, "%Y-%m-%d").date(), time.min)
+        return value
+
+    @field_validator("updated_at_end", mode="before")
+    @classmethod
+    def _normalize_updated_at_end(cls, value: object) -> object:
+        if isinstance(value, str) and len(value) == 10:
+            return datetime.combine(datetime.strptime(value, "%Y-%m-%d").date(), time.max)
+        return value
 
 
 class SkillTaxonomyListQuery(BaseModel):
@@ -220,6 +251,7 @@ class SkillResponse(ResponseModel):
     tags: list[SkillTaxonomyResponse] = Field(default_factory=list)
     install_count: int
     github_stars: int
+    is_featured: bool
     position: int
     published_at: datetime | None = None
     created_at: datetime | None = None
@@ -238,6 +270,10 @@ class SkillPaginationResponse(ResponseModel):
     limit: int
     page: int
     total: int
+
+
+class SkillBatchPublishResponse(ResponseModel):
+    updated_count: int
 
 
 class SkillCategoryPaginationResponse(ResponseModel):
@@ -261,6 +297,7 @@ register_schema_models(
     SkillListQuery,
     SkillCreatePayload,
     SkillUpdatePayload,
+    SkillBatchPublishPayload,
     SkillVersionCreatePayload,
     SkillTaxonomyListQuery,
     SkillCategoryCreatePayload,
@@ -277,6 +314,7 @@ register_response_schema_models(
     SkillAssetResponse,
     SkillResponse,
     SkillPaginationResponse,
+    SkillBatchPublishResponse,
     SkillCategoryPaginationResponse,
     SkillTagPaginationResponse,
 )
@@ -351,6 +389,7 @@ def _serialize_skill(skill: Any, version: Any | None) -> dict[str, object]:
         "tags": _serialize_taxonomy_items(getattr(skill, "tags", [])),
         "install_count": skill.install_count,
         "github_stars": skill.github_stars,
+        "is_featured": skill.is_featured,
         "position": skill.position,
         "published_at": skill.published_at,
         "created_at": skill.created_at,
@@ -390,6 +429,7 @@ class AdminSkillListApi(Resource):
             publication_status=query.publication_status,
             source_type=query.source_type,
             audit_status=query.audit_status,
+            min_github_stars=query.min_github_stars,
             updated_at_start=query.updated_at_start,
             updated_at_end=query.updated_at_end,
             sort=query.sort,
@@ -418,6 +458,28 @@ class AdminSkillListApi(Resource):
         SkillService.hydrate_taxonomy_items(db.session, [skill])
         version = SkillService.get_latest_version(db.session, skill.id)
         return dump_response(SkillResponse, _serialize_skill(skill, version))
+
+
+@admin_ns.route("/skills/batch-publish")
+class AdminSkillBatchPublishApi(Resource):
+    @admin_ns.expect(admin_ns.models[SkillBatchPublishPayload.__name__])
+    @admin_ns.response(200, "Success", admin_ns.models[SkillBatchPublishResponse.__name__])
+    @admin_required
+    def post(self):
+        payload = SkillBatchPublishPayload.model_validate(admin_ns.payload or {})
+        updated_count = AdminSkillService.batch_publish_skills(
+            db.session,
+            skill_ids=payload.skill_ids,
+            keyword=payload.keyword,
+            category=payload.category,
+            publication_status=payload.publication_status,
+            source_type=payload.source_type,
+            audit_status=payload.audit_status,
+            min_github_stars=payload.min_github_stars,
+            updated_at_start=payload.updated_at_start,
+            updated_at_end=payload.updated_at_end,
+        )
+        return dump_response(SkillBatchPublishResponse, {"updated_count": updated_count})
 
 
 @admin_ns.route("/skills/<skill_id>")

@@ -85,9 +85,6 @@ export const adminResources = [
 
 export const adminResourceGroups = [
   {
-    name: 'recommendedApps',
-  },
-  {
     titleKey: 'nav.userManagement',
     resources: ['accounts', 'apps'],
   },
@@ -96,7 +93,8 @@ export const adminResourceGroups = [
     resources: ['skills', 'skillCategories', 'skillTags'],
   },
   {
-    name: 'autoServices',
+    titleKey: 'nav.system',
+    resources: ['recommendedApps', 'autoServices'],
   },
 ] as const satisfies readonly (
   | {

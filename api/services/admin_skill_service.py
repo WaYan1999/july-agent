@@ -11,7 +11,8 @@ import mimetypes
 import os
 import re
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 from io import BytesIO
 from pathlib import PurePath
 from typing import Any
@@ -101,10 +102,36 @@ class AdminSkillService:
         source_type: str | None = None,
         audit_status: str | None = None,
         category: str | None = None,
+        min_github_stars: int | None = None,
         updated_at_start: datetime | None = None,
         updated_at_end: datetime | None = None,
         sort: str | None = None,
     ):
+        stmt = cls._build_skill_list_stmt(
+            keyword=keyword,
+            publication_status=publication_status,
+            source_type=source_type,
+            audit_status=audit_status,
+            category=category,
+            min_github_stars=min_github_stars,
+            updated_at_start=updated_at_start,
+            updated_at_end=updated_at_end,
+        )
+        stmt = cls._apply_skill_sort(stmt, sort)
+        return cls._paginate(session, stmt, page=page, limit=limit)
+
+    @staticmethod
+    def _build_skill_list_stmt(
+        *,
+        keyword: str | None = None,
+        publication_status: str | None = None,
+        source_type: str | None = None,
+        audit_status: str | None = None,
+        category: str | None = None,
+        min_github_stars: int | None = None,
+        updated_at_start: datetime | None = None,
+        updated_at_end: datetime | None = None,
+    ) -> Select[tuple[Skill]]:
         stmt = select(Skill)
         if keyword:
             escaped_keyword = escape_like_pattern(keyword[:80])
@@ -116,17 +143,24 @@ class AdminSkillService:
         if audit_status:
             stmt = stmt.where(Skill.audit_status == audit_status)
         if category:
+            escaped_category = escape_like_pattern(category[:80])
             stmt = (
                 stmt.join(SkillCategoryBinding, SkillCategoryBinding.skill_id == Skill.id)
                 .join(SkillCategory, SkillCategory.id == SkillCategoryBinding.category_id)
-                .where(SkillCategory.slug == category)
+                .where(
+                    or_(
+                        SkillCategory.slug.ilike(f"%{escaped_category}%", escape="\\"),
+                        SkillCategory.name.ilike(f"%{escaped_category}%", escape="\\"),
+                    )
+                )
             )
+        if min_github_stars is not None:
+            stmt = stmt.where(Skill.github_stars >= min_github_stars)
         if updated_at_start:
             stmt = stmt.where(Skill.updated_at >= updated_at_start)
         if updated_at_end:
             stmt = stmt.where(Skill.updated_at <= updated_at_end)
-        stmt = cls._apply_skill_sort(stmt, sort)
-        return cls._paginate(session, stmt, page=page, limit=limit)
+        return stmt
 
     @staticmethod
     def _apply_skill_sort(stmt: Select[tuple[Skill]], sort: str | None):
@@ -134,6 +168,10 @@ class AdminSkillService:
             return stmt.order_by(Skill.install_count.desc(), Skill.updated_at.desc(), Skill.id.desc())
         if sort == "downloads_asc":
             return stmt.order_by(Skill.install_count.asc(), Skill.updated_at.desc(), Skill.id.desc())
+        if sort == "github_stars_desc":
+            return stmt.order_by(Skill.github_stars.desc(), Skill.updated_at.desc(), Skill.id.desc())
+        if sort == "github_stars_asc":
+            return stmt.order_by(Skill.github_stars.asc(), Skill.updated_at.desc(), Skill.id.desc())
         return stmt.order_by(Skill.position.asc(), Skill.updated_at.desc())
 
     @classmethod
@@ -203,6 +241,7 @@ class AdminSkillService:
             audit_notes=values.get("audit_notes"),
             install_count=int(values.get("install_count", 0)),
             github_stars=int(values.get("github_stars", 0)),
+            is_featured=bool(values.get("is_featured", False)),
             position=int(values.get("position", 0)),
             published_at=published_at,
             created_by=values.get("created_by"),
@@ -268,6 +307,7 @@ class AdminSkillService:
             "audit_notes",
             "install_count",
             "github_stars",
+            "is_featured",
             "position",
             "updated_by",
         ):
@@ -294,6 +334,48 @@ class AdminSkillService:
                 version.skill_markdown = values["skill_markdown"]
         session.commit()
         return skill
+
+    @classmethod
+    def batch_publish_skills(
+        cls,
+        session: SessionLike,
+        *,
+        skill_ids: Sequence[str] | None = None,
+        keyword: str | None = None,
+        publication_status: str | None = None,
+        source_type: str | None = None,
+        audit_status: str | None = None,
+        category: str | None = None,
+        min_github_stars: int | None = None,
+        updated_at_start: datetime | None = None,
+        updated_at_end: datetime | None = None,
+    ) -> int:
+        normalized_skill_ids = [skill_id for skill_id in dict.fromkeys(skill_ids or []) if skill_id]
+        if normalized_skill_ids:
+            stmt = select(Skill).where(Skill.id.in_(normalized_skill_ids))
+        else:
+            stmt = cls._build_skill_list_stmt(
+                keyword=keyword,
+                publication_status=publication_status,
+                source_type=source_type,
+                audit_status=audit_status,
+                category=category,
+                min_github_stars=min_github_stars,
+                updated_at_start=updated_at_start,
+                updated_at_end=updated_at_end,
+            )
+
+        skills = session.scalars(stmt).all()
+        if not skills:
+            return 0
+
+        published_at = naive_utc_now()
+        for skill in skills:
+            skill.publication_status = SkillPublicationStatus.PUBLISHED
+            if skill.published_at is None:
+                skill.published_at = published_at
+        session.commit()
+        return len(skills)
 
     @classmethod
     def update_category(cls, session: SessionLike, category_id: str, values: Mapping[str, Any]) -> SkillCategory:

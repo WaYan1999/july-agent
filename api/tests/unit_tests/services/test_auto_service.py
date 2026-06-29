@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
 from datetime import date, datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -11,6 +14,25 @@ from controllers.admin.auto_services import AutoServiceResponse, _serialize_auto
 from libs.helper import dump_response
 from models.auto_service import AutoServiceRunStatus, AutoServiceScheduleType, AutoServiceStatus, AutoServiceType
 from services import auto_service as auto_service_module
+
+
+def _load_auto_service_tasks_module(monkeypatch: pytest.MonkeyPatch):
+    class FakeCelery:
+        @staticmethod
+        def task(*args: object, **kwargs: object):
+            def decorator(func):
+                return func
+
+            return decorator
+
+    monkeypatch.setitem(sys.modules, "app", SimpleNamespace(celery=FakeCelery()))
+    module_path = Path(__file__).resolve().parents[3] / "schedule" / "auto_service_tasks.py"
+    spec = importlib.util.spec_from_file_location("_test_auto_service_tasks", module_path)
+    assert spec is not None
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_execute_auto_service_passes_skill_crawler_config(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -43,6 +65,112 @@ def test_dispatch_service_reuses_existing_active_run(monkeypatch: pytest.MonkeyP
     send_task.assert_not_called()
 
 
+def test_dispatch_service_expires_stale_queued_run_before_enqueuing_new_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = datetime(2026, 6, 28, 12, 0, 0)
+    stale_run = SimpleNamespace(
+        id="stale-run-id",
+        status=AutoServiceRunStatus.QUEUED,
+        started_at=None,
+        finished_at=None,
+        error=None,
+        created_at=datetime(2026, 6, 27, 12, 0, 0),
+    )
+    new_run = SimpleNamespace(id="new-run-id", status=AutoServiceRunStatus.QUEUED, celery_task_id=None)
+    session = SimpleNamespace(commit=MagicMock())
+
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "get_active_run", MagicMock(return_value=stale_run))
+
+    def create_run_log(*args: object, commit: bool = True, **kwargs: object) -> SimpleNamespace:
+        assert stale_run.status == AutoServiceRunStatus.FAILED
+        if commit:
+            session.commit()
+        return new_run
+
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "create_run_log", create_run_log)
+    monkeypatch.setattr(auto_service_module.current_app, "send_task", MagicMock(return_value=SimpleNamespace(id="task-id")))
+    monkeypatch.setattr(auto_service_module, "naive_utc_now", MagicMock(return_value=now))
+
+    result = auto_service_module.AutoServiceManager.dispatch_service(
+        session,
+        "service-id",
+        trigger_type="manual",
+    )
+
+    assert result is new_run
+    assert stale_run.status == AutoServiceRunStatus.FAILED
+    assert stale_run.finished_at == now
+    assert stale_run.error
+    assert new_run.celery_task_id == "task-id"
+
+
+def test_dispatch_service_commits_run_log_before_enqueuing(monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[str] = []
+    run_log = SimpleNamespace(id="run-log-id", celery_task_id=None)
+    session = SimpleNamespace(commit=MagicMock(side_effect=lambda: events.append("commit")))
+
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "get_active_run", MagicMock(return_value=None))
+
+    def create_run_log(*args: object, commit: bool = True, **kwargs: object) -> SimpleNamespace:
+        if commit:
+            session.commit()
+        return run_log
+
+    def send_task(*args: object, **kwargs: object) -> SimpleNamespace:
+        events.append("send_task")
+        return SimpleNamespace(id="celery-task-id")
+
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "create_run_log", create_run_log)
+    monkeypatch.setattr(auto_service_module.current_app, "send_task", send_task)
+
+    result = auto_service_module.AutoServiceManager.dispatch_service(
+        session,
+        "service-id",
+        trigger_type="manual",
+    )
+
+    assert result is run_log
+    assert run_log.celery_task_id == "celery-task-id"
+    assert events[:2] == ["commit", "send_task"]
+
+
+def test_dispatch_service_marks_run_failed_when_enqueue_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    now = datetime(2026, 6, 28, 10, 0, 0)
+    run_log = SimpleNamespace(
+        id="run-log-id",
+        status=AutoServiceRunStatus.QUEUED,
+        celery_task_id=None,
+        finished_at=None,
+        error=None,
+    )
+    session = SimpleNamespace(add=MagicMock(), flush=MagicMock(), commit=MagicMock())
+
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "get_active_run", MagicMock(return_value=None))
+
+    def create_run_log(*args: object, commit: bool = True, **kwargs: object) -> SimpleNamespace:
+        if commit:
+            session.commit()
+        return run_log
+
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "create_run_log", create_run_log)
+    monkeypatch.setattr(
+        auto_service_module.current_app, "send_task", MagicMock(side_effect=RuntimeError("broker down"))
+    )
+    monkeypatch.setattr(auto_service_module, "naive_utc_now", MagicMock(return_value=now))
+
+    with pytest.raises(RuntimeError, match="broker down"):
+        auto_service_module.AutoServiceManager.dispatch_service(
+            session,
+            "service-id",
+            trigger_type="manual",
+        )
+
+    assert run_log.status == AutoServiceRunStatus.FAILED
+    assert run_log.finished_at == now
+    assert run_log.error == "broker down"
+
+
 def test_mark_run_started_ignores_non_queued_run() -> None:
     run_log = SimpleNamespace(
         id="run-log-id",
@@ -58,6 +186,94 @@ def test_mark_run_started_ignores_non_queued_run() -> None:
     assert run_log.status == AutoServiceRunStatus.SKIPPED
     assert run_log.started_at is None
     session.commit.assert_not_called()
+
+
+def test_poll_auto_services_dispatches_due_services_through_manager(monkeypatch: pytest.MonkeyPatch) -> None:
+    auto_service_tasks = _load_auto_service_tasks_module(monkeypatch)
+    service = SimpleNamespace(id="service-id", next_run_at=datetime(2026, 6, 28, 9, 24, 3))
+    session = SimpleNamespace(add=MagicMock(), flush=MagicMock(), commit=MagicMock())
+    session_context = MagicMock()
+    session_context.__enter__.return_value = session
+    session_context.__exit__.return_value = None
+    session_factory = MagicMock(return_value=session_context)
+    dispatch_service = MagicMock(return_value=SimpleNamespace(id="run-log-id"))
+
+    monkeypatch.setattr(auto_service_tasks, "db", SimpleNamespace(engine=object()))
+    monkeypatch.setattr(auto_service_tasks, "sessionmaker", MagicMock(return_value=session_factory))
+    monkeypatch.setattr(
+        auto_service_tasks.AutoServiceManager,
+        "fetch_due_services",
+        MagicMock(return_value=[service]),
+    )
+    monkeypatch.setattr(
+        auto_service_tasks.AutoServiceManager,
+        "repair_missing_next_run_at_cursors",
+        MagicMock(return_value=0),
+    )
+    monkeypatch.setattr(auto_service_tasks.AutoServiceManager, "has_active_run", MagicMock(return_value=False))
+    monkeypatch.setattr(auto_service_tasks.AutoServiceManager, "dispatch_service", dispatch_service)
+
+    auto_service_tasks.poll_auto_services()
+
+    dispatch_service.assert_called_once_with(session, "service-id", trigger_type="scheduled")
+    assert service.next_run_at == datetime(2026, 6, 28, 9, 24, 3)
+    session.add.assert_not_called()
+    session.flush.assert_not_called()
+
+
+def test_run_auto_service_marks_run_failed_when_execution_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    auto_service_tasks = _load_auto_service_tasks_module(monkeypatch)
+    run_log = SimpleNamespace(id="run-log-id")
+    service = SimpleNamespace(id="service-id")
+    session = SimpleNamespace()
+    session_context = MagicMock()
+    session_context.__enter__.return_value = session
+    session_context.__exit__.return_value = None
+    session_factory = MagicMock(return_value=session_context)
+    mark_run_finished = MagicMock()
+
+    monkeypatch.setattr(auto_service_tasks, "db", SimpleNamespace(engine=object()))
+    monkeypatch.setattr(auto_service_tasks, "sessionmaker", MagicMock(return_value=session_factory))
+    monkeypatch.setattr(
+        auto_service_tasks.AutoServiceManager,
+        "mark_run_started",
+        MagicMock(return_value=(run_log, service)),
+    )
+    monkeypatch.setattr(auto_service_tasks, "execute_auto_service", MagicMock(side_effect=RuntimeError("sync failed")))
+    monkeypatch.setattr(auto_service_tasks.AutoServiceManager, "mark_run_finished", mark_run_finished)
+
+    auto_service_tasks.run_auto_service("run-log-id")
+
+    mark_run_finished.assert_called_once()
+    run_result = mark_run_finished.call_args.kwargs["run_result"]
+    assert run_result["status"] == AutoServiceRunStatus.FAILED
+    assert run_result["error"] == "sync failed"
+
+
+def test_repair_missing_next_run_at_uses_last_run_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    service = SimpleNamespace(
+        id="service-id",
+        status=AutoServiceStatus.ENABLED,
+        schedule_type=AutoServiceScheduleType.INTERVAL,
+        interval_minutes=60,
+        cron_expression=None,
+        timezone="Asia/Shanghai",
+        next_run_at=None,
+        last_run_at=datetime(2026, 6, 28, 8, 24, 3),
+        created_at=datetime(2026, 6, 28, 7, 24, 3),
+    )
+    session = SimpleNamespace(scalars=MagicMock(return_value=[service]), commit=MagicMock())
+    monkeypatch.setattr(auto_service_module.AutoServiceManager, "has_active_run", MagicMock(return_value=False))
+
+    repaired_count = auto_service_module.AutoServiceManager.repair_missing_next_run_at_cursors(
+        session,
+        limit=50,
+        now=datetime(2026, 6, 28, 9, 30, 0),
+    )
+
+    assert repaired_count == 1
+    assert service.next_run_at == datetime(2026, 6, 28, 9, 24, 3)
+    session.commit.assert_called_once()
 
 
 def test_execute_skill_crawler_sync_reads_config_dates_token_and_limit(monkeypatch: pytest.MonkeyPatch) -> None:

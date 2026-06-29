@@ -40,6 +40,8 @@ SessionLike = Session | scoped_session
 DEFAULT_SKILL_CRAWLER_SYNC_LIMIT = 50
 MAX_SKILL_CRAWLER_SYNC_LIMIT = 500
 DEFAULT_AUTO_SERVICE_TIMEZONE = "Asia/Shanghai"
+AUTO_SERVICE_QUEUED_RUN_STALE_AFTER = timedelta(hours=1)
+STALE_QUEUED_RUN_ERROR = "运行日志在队列中停留超过 1 小时，已在重新投递前标记为失败。"
 
 
 class AutoServiceValues(TypedDict, total=False):
@@ -178,24 +180,69 @@ class AutoServiceManager:
 
     @staticmethod
     def dispatch_service(session: SessionLike, service_id: str, *, trigger_type: str) -> AutoServiceRunLog:
+        """创建运行日志并在事务提交后投递 Celery 任务。
+
+        worker 会使用独立数据库会话读取 run_log，因此必须先提交运行日志再发布消息；否则
+        worker 抢先消费时会读不到未提交记录，导致日志永久停留在 queued。
+        """
         active_run = AutoServiceManager.get_active_run(session, service_id)
         if active_run is not None:
-            return active_run
+            if not AutoServiceManager.expire_stale_queued_run(session, active_run):
+                return active_run
 
         run_log = AutoServiceManager.create_run_log(
             session,
             service_id=service_id,
             trigger_type=trigger_type,
-            commit=False,
+            commit=True,
         )
-        task = current_app.send_task(
-            "schedule.auto_service_tasks.run_auto_service",
-            args=[run_log.id],
-            queue="auto_service",
-        )
+        try:
+            task = current_app.send_task(
+                "schedule.auto_service_tasks.run_auto_service",
+                args=[run_log.id],
+                queue="auto_service",
+            )
+        except Exception as exc:
+            logger.exception("Failed to enqueue auto service %s run log %s", service_id, run_log.id)
+            run_log.status = AutoServiceRunStatus.FAILED
+            run_log.finished_at = naive_utc_now()
+            run_log.error = str(exc)
+            session.commit()
+            raise
         run_log.celery_task_id = task.id
         session.commit()
         return run_log
+
+    @staticmethod
+    def expire_stale_queued_run(
+        session: SessionLike,
+        run_log: AutoServiceRunLog,
+        *,
+        now: datetime | None = None,
+    ) -> bool:
+        """释放长期未被 worker 消费的 queued 运行日志，避免后续手动触发一直复用旧记录。"""
+        finished_at = now or naive_utc_now()
+        if not AutoServiceManager.is_stale_queued_run(run_log, now=finished_at):
+            return False
+        run_log.status = AutoServiceRunStatus.FAILED
+        run_log.finished_at = finished_at
+        run_log.error = STALE_QUEUED_RUN_ERROR
+        session.commit()
+        logger.warning("Expired stale queued auto service run log %s", run_log.id)
+        return True
+
+    @staticmethod
+    def is_stale_queued_run(run_log: AutoServiceRunLog, *, now: datetime) -> bool:
+        if run_log.status != AutoServiceRunStatus.QUEUED:
+            return False
+        if getattr(run_log, "started_at", None) is not None:
+            return False
+        created_at = getattr(run_log, "created_at", None)
+        if created_at is None:
+            return False
+        normalized_now = normalize_auto_service_datetime(now)
+        normalized_created_at = normalize_auto_service_datetime(created_at)
+        return normalized_now - normalized_created_at >= AUTO_SERVICE_QUEUED_RUN_STALE_AFTER
 
     @staticmethod
     def mark_run_started(session: SessionLike, run_log_id: str) -> tuple[AutoServiceRunLog, AutoService] | None:
@@ -236,6 +283,49 @@ class AutoServiceManager:
         service.next_run_at = compute_next_run_at(service, base_time=now)
         session.commit()
         return run_log
+
+    @staticmethod
+    def repair_missing_next_run_at(service: AutoService, *, now: datetime) -> bool:
+        """恢复启用定时服务缺失的 next_run_at 游标。"""
+        if service.next_run_at is not None:
+            return False
+        if service.status != AutoServiceStatus.ENABLED:
+            return False
+        if service.schedule_type == AutoServiceScheduleType.MANUAL:
+            return False
+        base_time = service.last_run_at or service.created_at or now
+        service.next_run_at = compute_next_run_at(service, base_time=base_time)
+        return service.next_run_at is not None
+
+    @classmethod
+    def repair_missing_next_run_at_cursors(
+        cls,
+        session: SessionLike,
+        *,
+        limit: int,
+        now: datetime | None = None,
+    ) -> int:
+        repaired_count = 0
+        repair_now = now or naive_utc_now()
+        services = session.scalars(
+            select(AutoService)
+            .where(
+                AutoService.status == AutoServiceStatus.ENABLED,
+                AutoService.schedule_type != AutoServiceScheduleType.MANUAL,
+                AutoService.next_run_at.is_(None),
+            )
+            .order_by(AutoService.updated_at.asc())
+            .with_for_update(skip_locked=True)
+            .limit(limit)
+        )
+        for service in services:
+            if cls.has_active_run(session, service.id):
+                continue
+            if cls.repair_missing_next_run_at(service, now=repair_now):
+                repaired_count += 1
+        if repaired_count > 0:
+            session.commit()
+        return repaired_count
 
     @staticmethod
     def fetch_due_services(session: Session, *, limit: int) -> list[AutoService]:
@@ -311,6 +401,12 @@ def normalize_optional_string(value: object) -> str | None:
         return None
     normalized = str(value).strip()
     return normalized or None
+
+
+def normalize_auto_service_datetime(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(UTC).replace(tzinfo=None)
 
 
 def validate_schedule_config(values: Mapping[str, Any]) -> None:

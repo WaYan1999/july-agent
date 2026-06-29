@@ -77,6 +77,7 @@ class SkillResponse(ResponseModel):
     tags: list[SkillTaxonomyResponse] = Field(default_factory=list)
     install_count: int
     github_stars: int
+    is_featured: bool
     position: int
     published_at: datetime | None = None
     created_at: datetime | None = None
@@ -111,6 +112,13 @@ class SkillDownloadResponse(ResponseModel):
     sha256: str
 
 
+class SkillRecommendationGroupsResponse(ResponseModel):
+    featured: list[SkillResponse]
+    top20: list[SkillResponse]
+    latest: list[SkillResponse]
+    hottest: list[SkillResponse]
+
+
 register_schema_models(console_ns, SkillListQuery)
 register_response_schema_models(
     console_ns,
@@ -120,6 +128,7 @@ register_response_schema_models(
     SkillPaginationResponse,
     SkillCopyEventResponse,
     SkillDownloadResponse,
+    SkillRecommendationGroupsResponse,
 )
 
 
@@ -171,6 +180,7 @@ def _serialize_skill(skill: Any, version: Any | None) -> dict[str, object]:
         "tags": _serialize_taxonomy_items(getattr(skill, "tags", [])),
         "install_count": skill.install_count,
         "github_stars": skill.github_stars,
+        "is_featured": skill.is_featured,
         "position": skill.position,
         "published_at": skill.published_at,
         "created_at": skill.created_at,
@@ -214,6 +224,23 @@ class ConsoleSkillListApi(Resource):
                 "limit": query.limit,
                 "page": query.page,
                 "total": pagination.total,
+            },
+        )
+
+
+@console_ns.route("/explore/skills/recommendations")
+class ConsoleSkillRecommendationsApi(Resource):
+    @console_ns.response(200, "Success", console_ns.models[SkillRecommendationGroupsResponse.__name__])
+    def get(self):
+        groups = SkillService.list_recommended_skill_groups(db.session)
+        return dump_response(
+            SkillRecommendationGroupsResponse,
+            {
+                group_name: [
+                    _serialize_skill(skill, SkillService.get_latest_version(db.session, skill.id))
+                    for skill in skills
+                ]
+                for group_name, skills in groups.items()
             },
         )
 

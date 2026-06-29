@@ -24,13 +24,6 @@ function isPathUnderRoute(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`)
 }
 
-export function isWorkflowAppRoute(pathname: string) {
-  const cleanPathname = pathname.split(/[?#]/)[0] ?? ''
-  const [section, appId, subPage, ...rest] = cleanPathname.split('/').filter(Boolean)
-
-  return section === 'app' && !!appId && subPage === 'workflow' && rest.length === 0
-}
-
 export const MAIN_NAV_ROUTES = [
   {
     key: 'home',
