@@ -96,7 +96,12 @@ class Skill(TypeBase):
     audit_notes: Mapped[str | None] = mapped_column(LongText, nullable=True, default=None)
     install_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0, server_default=sa.text("0"))
     github_stars: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0, server_default=sa.text("0"))
-    is_featured: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=False, server_default=sa.text("false"))
+    is_featured: Mapped[bool] = mapped_column(
+        sa.Boolean,
+        nullable=False,
+        default=False,
+        server_default=sa.text("false"),
+    )
     position: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0, server_default=sa.text("0"))
     published_at: Mapped[datetime | None] = mapped_column(sa.DateTime, nullable=True, default=None)
     created_by: Mapped[str | None] = mapped_column(StringUUID, nullable=True, default=None)
@@ -229,6 +234,7 @@ class SkillTag(TypeBase):
     )
     slug: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    cn_name: Mapped[str | None] = mapped_column(sa.String(255), nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime, nullable=False, server_default=sa.func.current_timestamp(), init=False
     )

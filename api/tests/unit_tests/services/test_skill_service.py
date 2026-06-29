@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from models import Skill
+from models import Skill, SkillTag
 from services.skill_service import SkillService
 
 
@@ -16,6 +16,11 @@ def _scalar_result(items: list[SimpleNamespace]) -> SimpleNamespace:
 def test_skill_model_has_featured_flag_default_false() -> None:
     assert "is_featured" in Skill.__table__.columns
     assert Skill.__table__.columns["is_featured"].default.arg is False
+
+
+def test_skill_tag_model_has_chinese_name_column() -> None:
+    assert "cn_name" in SkillTag.__table__.columns
+    assert SkillTag.__table__.columns["cn_name"].nullable is True
 
 
 def test_list_recommended_skill_groups_queries_published_groups(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -65,6 +65,7 @@
   "fields.maintainer": "维护者",
   "fields.maxActiveRequests": "最大并发请求数",
   "fields.name": "名称",
+  "fields.cnName": "中文名",
   "fields.status": "状态",
   "fields.theme": "主题",
   "fields.timezone": "时区",

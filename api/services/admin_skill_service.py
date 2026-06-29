@@ -210,6 +210,7 @@ class AdminSkillService:
                 or_(
                     SkillTag.name.ilike(f"%{escaped_keyword}%"),
                     SkillTag.slug.ilike(f"%{escaped_keyword}%"),
+                    SkillTag.cn_name.ilike(f"%{escaped_keyword}%"),
                 )
             )
         return cls._paginate_tags(session, stmt, page=page, limit=limit)
@@ -252,7 +253,12 @@ class AdminSkillService:
         if "categories" in values:
             cls.sync_category_bindings(session, skill.id, values.get("categories") or [])
         if "tags" in values:
-            cls.sync_tag_bindings(session, skill.id, values.get("tags") or [])
+            cls.sync_tag_bindings(
+                session,
+                skill.id,
+                values.get("tags") or [],
+                tag_cn_names=values.get("tag_cn_names"),
+            )
         version = SkillVersion(
             skill_id=skill.id,
             content_type=values.get("content_type", SkillContentType.REMOTE_REFERENCE),
@@ -283,6 +289,7 @@ class AdminSkillService:
         tag = SkillTag(
             slug=cls.validate_slug(str(values["slug"])),
             name=str(values["name"]),
+            cn_name=values.get("cn_name"),
         )
         session.add(tag)
         session.commit()
@@ -316,7 +323,12 @@ class AdminSkillService:
         if "categories" in values:
             cls.sync_category_bindings(session, skill.id, values.get("categories") or [])
         if "tags" in values:
-            cls.sync_tag_bindings(session, skill.id, values.get("tags") or [])
+            cls.sync_tag_bindings(
+                session,
+                skill.id,
+                values.get("tags") or [],
+                tag_cn_names=values.get("tag_cn_names"),
+            )
         if "publication_status" in values:
             next_status = values["publication_status"]
             skill.publication_status = next_status
@@ -396,6 +408,8 @@ class AdminSkillService:
             tag.slug = cls.validate_slug(str(values["slug"]))
         if "name" in values:
             tag.name = str(values["name"])
+        if "cn_name" in values:
+            tag.cn_name = values["cn_name"]
         session.commit()
         return tag
 
@@ -454,10 +468,18 @@ class AdminSkillService:
             session.add(SkillCategoryBinding(skill_id=skill_id, category_id=category.id))
 
     @classmethod
-    def sync_tag_bindings(cls, session: SessionLike, skill_id: str, slugs: list[str]) -> None:
+    def sync_tag_bindings(
+        cls,
+        session: SessionLike,
+        skill_id: str,
+        slugs: list[str],
+        *,
+        tag_cn_names: Mapping[str, str] | None = None,
+    ) -> None:
         session.execute(delete(SkillTagBinding).where(SkillTagBinding.skill_id == skill_id))
+        resolved_cn_names = tag_cn_names or {}
         for slug in cls._normalized_unique_slugs(slugs):
-            tag = cls._get_or_create_tag(session, slug)
+            tag = cls._get_or_create_tag(session, slug, cn_name=resolved_cn_names.get(slug))
             session.add(SkillTagBinding(skill_id=skill_id, tag_id=tag.id))
 
     @classmethod
@@ -481,12 +503,14 @@ class AdminSkillService:
         return category
 
     @staticmethod
-    def _get_or_create_tag(session: SessionLike, slug: str) -> SkillTag:
+    def _get_or_create_tag(session: SessionLike, slug: str, *, cn_name: str | None = None) -> SkillTag:
         tag = session.scalar(select(SkillTag).where(SkillTag.slug == slug))
         if tag is None:
-            tag = SkillTag(slug=slug, name=slug)
+            tag = SkillTag(slug=slug, name=slug, cn_name=cn_name)
             session.add(tag)
             session.flush()
+        elif not tag.cn_name and cn_name:
+            tag.cn_name = cn_name
         return tag
 
     @classmethod

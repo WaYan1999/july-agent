@@ -6,9 +6,17 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from models import SkillPublicationStatus
-from controllers.admin.skills import SkillResponse, SkillUpdatePayload, _serialize_skill
+from controllers.admin.skills import (
+    SkillResponse,
+    SkillTagCreatePayload,
+    SkillTagResponse,
+    SkillTagUpdatePayload,
+    SkillUpdatePayload,
+    _serialize_skill,
+    _serialize_tag,
+)
 from libs.helper import dump_response
+from models import SkillPublicationStatus
 from services.admin_skill_service import AdminSkillService
 
 
@@ -44,6 +52,46 @@ def test_update_skill_persists_featured_flag_false() -> None:
 
     assert updated_skill.is_featured is False
     session.commit.assert_called_once()
+
+
+def test_create_tag_payload_accepts_chinese_name() -> None:
+    payload = SkillTagCreatePayload.model_validate({"slug": "automation", "name": "automation", "cn_name": "自动化"})
+
+    assert payload.model_dump() == {"slug": "automation", "name": "automation", "cn_name": "自动化"}
+
+
+def test_create_tag_persists_chinese_name() -> None:
+    session = MagicMock()
+
+    tag = AdminSkillService.create_tag(session, {"slug": "automation", "name": "automation", "cn_name": "自动化"})
+
+    assert tag.cn_name == "自动化"
+    session.commit.assert_called_once()
+
+
+def test_update_tag_can_clear_chinese_name() -> None:
+    tag = SimpleNamespace(id="tag-id", slug="automation", name="automation", cn_name="自动化")
+    session = MagicMock()
+    session.get.return_value = tag
+
+    payload = SkillTagUpdatePayload.model_validate({"cn_name": None})
+    updated_tag = AdminSkillService.update_tag(session, "tag-id", payload.model_dump(exclude_unset=True))
+
+    assert updated_tag.cn_name is None
+    session.commit.assert_called_once()
+
+
+def test_list_tags_filters_by_chinese_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = MagicMock()
+    paginate = MagicMock()
+    monkeypatch.setattr(AdminSkillService, "_paginate_tags", paginate)
+
+    AdminSkillService.list_tags(session, page=1, limit=20, keyword="自动")
+
+    statement = str(paginate.call_args.args[1]).lower()
+    assert "skill_tags.name" in statement
+    assert "skill_tags.slug" in statement
+    assert "skill_tags.cn_name" in statement
 
 
 def test_batch_publish_skills_publishes_ids_and_preserves_existing_publish_time(
@@ -165,3 +213,18 @@ def test_admin_skill_response_serializes_featured_flag() -> None:
     payload = dump_response(SkillResponse, _serialize_skill(skill, version=None))
 
     assert payload["is_featured"] is True
+
+
+def test_admin_tag_response_serializes_chinese_name() -> None:
+    tag = SimpleNamespace(
+        id="tag-id",
+        slug="automation",
+        name="automation",
+        cn_name="自动化",
+        created_at=None,
+        updated_at=None,
+    )
+
+    payload = dump_response(SkillTagResponse, _serialize_tag(tag))
+
+    assert payload["cn_name"] == "自动化"

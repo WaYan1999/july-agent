@@ -157,6 +157,7 @@ class SkillCategoryUpdatePayload(BaseModel):
 class SkillTagCreatePayload(BaseModel):
     slug: str = Field(min_length=1, max_length=255)
     name: str = Field(min_length=1, max_length=255)
+    cn_name: str | None = Field(default=None, max_length=255)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -164,6 +165,7 @@ class SkillTagCreatePayload(BaseModel):
 class SkillTagUpdatePayload(BaseModel):
     slug: str | None = Field(default=None, min_length=1, max_length=255)
     name: str | None = Field(default=None, min_length=1, max_length=255)
+    cn_name: str | None = Field(default=None, max_length=255)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -201,6 +203,7 @@ class SkillTaxonomyResponse(ResponseModel):
     id: str | None = None
     slug: str
     name: str
+    cn_name: str | None = None
 
 
 class SkillCategoryResponse(SkillTaxonomyResponse):
@@ -343,6 +346,7 @@ def _serialize_taxonomy_items(items: Any) -> list[dict[str, object]]:
             "id": getattr(item, "id", None),
             "slug": item.slug,
             "name": item.name,
+            "cn_name": getattr(item, "cn_name", None),
         }
         for item in items or []
     ]
@@ -353,6 +357,7 @@ def _serialize_category(category: Any) -> dict[str, object]:
         "id": category.id,
         "slug": category.slug,
         "name": category.name,
+        "cn_name": None,
         "position": category.position,
         "created_at": category.created_at,
         "updated_at": category.updated_at,
@@ -364,6 +369,7 @@ def _serialize_tag(tag: Any) -> dict[str, object]:
         "id": tag.id,
         "slug": tag.slug,
         "name": tag.name,
+        "cn_name": tag.cn_name,
         "created_at": tag.created_at,
         "updated_at": tag.updated_at,
     }

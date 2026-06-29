@@ -2,6 +2,7 @@ export type SkillTaxonomy = {
   id?: string | null
   slug: string
   name: string
+  cn_name?: string | null
 }
 
 export type SkillVersion = {

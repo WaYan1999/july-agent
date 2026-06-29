@@ -1,9 +1,10 @@
 import type { Skill, SkillPagination, SkillRecommendationGroups } from '@/models/skill'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, recordSkillCopy } from '@/service/skills'
 import SkillLibrary from '../index'
-import { fetchSkillList, fetchSkillRecommendations } from '@/service/skills'
+import { stripSkillMetadataBlock } from '../utils'
 
 vi.mock('@/service/skills', () => ({
   fetchSkillDetail: vi.fn(),
@@ -64,6 +65,7 @@ const createPagination = (skills: Skill[] = []): SkillPagination => ({
         id: 'category-1',
         slug: 'agent',
         name: 'Agent',
+        cn_name: '智能体',
       },
     ],
     tags: [],
@@ -104,6 +106,7 @@ describe('SkillLibrary recommendations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchSkillList).mockResolvedValue(createPagination())
+    vi.mocked(fetchSkillDetail).mockResolvedValue(createSkill())
     vi.mocked(fetchSkillRecommendations).mockResolvedValue(createRecommendationGroups())
   })
 
@@ -151,6 +154,135 @@ describe('SkillLibrary recommendations', () => {
       expect(within(zeroMetricsCard).queryByText('0')).not.toBeInTheDocument()
       expect(within(positiveMetricsCard).getByText('explore:skills.metrics')).toBeInTheDocument()
       expect(within(positiveMetricsCard).getByText('7')).toBeInTheDocument()
+    })
+
+    it('should open detail in a lightweight reading layout with metadata', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText,
+        },
+      })
+      const detailSkill = createSkill({
+        id: 'detail-skill',
+        slug: 'detail-skill',
+        name: 'Detail Skill',
+        description: 'A focused skill detail for layout testing.',
+        source_url: 'https://github.com',
+        install_command: 'july install detail-skill',
+        install_count: 42,
+        github_stars: 7,
+        categories: [
+          {
+            id: 'category-automation',
+            slug: 'automation',
+            name: 'Automation',
+          },
+        ],
+        tags: [
+          {
+            id: 'tag-agent',
+            slug: 'agent-tools',
+            name: 'Agent tools',
+          },
+        ],
+        latest_version: {
+          id: 'detail-version',
+          content_type: 'markdown_file',
+          skill_markdown: [
+            '---',
+            'name: detail-skill',
+            'description: A hidden metadata block.',
+            'license: MIT',
+            'metadata:',
+            '  author: july',
+            '  version: "1.0.0"',
+            '---',
+            '# Detail Skill',
+            '',
+            'Use this skill for layout testing.',
+          ].join('\n'),
+          package_filename: 'detail-skill.md',
+          package_size: null,
+          checksum_sha256: 'abc123',
+          is_latest: true,
+          published_at: null,
+          created_at: null,
+          updated_at: null,
+        },
+      })
+      vi.mocked(fetchSkillRecommendations).mockResolvedValue(createRecommendationGroups({
+        featured: [detailSkill],
+        top20: [],
+        latest: [],
+        hottest: [],
+      }))
+      vi.mocked(fetchSkillDetail).mockResolvedValue(detailSkill)
+
+      renderSkillLibrary()
+
+      fireEvent.click(await screen.findByRole('button', { name: 'plugin:detailPanel.operation.detail: Detail Skill' }))
+
+      expect(stripSkillMetadataBlock(detailSkill.latest_version?.skill_markdown)).toBe('# Detail Skill\n\nUse this skill for layout testing.')
+      expect(await screen.findByRole('article', { name: 'Detail Skill' })).toBeInTheDocument()
+      expect(screen.getByText('SKILL.md')).toBeInTheDocument()
+      expect(screen.queryByText('name: detail-skill')).not.toBeInTheDocument()
+      expect(screen.queryByText('license: MIT')).not.toBeInTheDocument()
+      expect(screen.queryByText('explore:skills.preview')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'explore:skills.copyMarkdown' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'explore:skills.downloadMarkdown' })).not.toBeInTheDocument()
+      expect(screen.queryByText('https://github.com')).not.toBeInTheDocument()
+
+      expect(screen.queryByText('Automation')).not.toBeInTheDocument()
+
+      const metadata = screen.getByRole('complementary', { name: 'explore:skills.metadata' })
+      expect(within(metadata).getByText('explore:skills.stats')).toBeInTheDocument()
+      expect(within(metadata).getByText('explore:skills.installCount')).toBeInTheDocument()
+      expect(within(metadata).getByText('42')).toBeInTheDocument()
+      const githubStarsLabel = within(metadata).getByText('explore:skills.githubStars')
+      expect(githubStarsLabel).toBeInTheDocument()
+      expect(githubStarsLabel.closest('div')?.querySelector('.i-ri-star-fill')).toBeInTheDocument()
+      expect(within(metadata).getByText('7')).toBeInTheDocument()
+      expect(within(metadata).getByText('explore:skills.resourceType')).toBeInTheDocument()
+
+      expect(screen.getByText('july install detail-skill')).toBeInTheDocument()
+      const copyInstallButton = screen.getByRole('button', { name: 'explore:skills.copyInstall' })
+      expect(screen.getAllByRole('button', { name: 'explore:skills.copyInstall' })).toHaveLength(1)
+
+      fireEvent.click(copyInstallButton)
+
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith('july install detail-skill')
+      })
+      expect(recordSkillCopy).toHaveBeenCalledWith('detail-skill')
+    })
+
+    it('should prefer Chinese taxonomy names when available', async () => {
+      vi.mocked(fetchSkillRecommendations).mockResolvedValue(createRecommendationGroups({
+        featured: [
+          createSkill({
+            id: 'localized-taxonomy',
+            name: 'Localized Taxonomy Skill',
+            tags: [
+              {
+                id: 'tag-1',
+                slug: 'automation',
+                name: 'automation',
+                cn_name: '自动化',
+              },
+            ],
+          }),
+        ],
+        top20: [],
+        latest: [],
+        hottest: [],
+      }))
+
+      renderSkillLibrary()
+
+      expect(await screen.findByText('智能体')).toBeInTheDocument()
+      expect(screen.getByText('自动化')).toBeInTheDocument()
     })
   })
 

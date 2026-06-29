@@ -14,12 +14,12 @@ from collections import Counter
 from collections.abc import Callable, Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, Protocol, TypedDict
 from urllib.parse import urljoin
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, scoped_session
 
 from configs import dify_config
@@ -37,6 +37,8 @@ from models import (
     SkillVersion,
 )
 from services.admin_skill_service import SLUG_PATTERN, AdminSkillService
+from services.skill_category_classifier import infer_skill_category_from_library
+from services.skill_tag_translation_service import SkillTagTranslationService
 
 logger = logging.getLogger(__name__)
 
@@ -46,244 +48,7 @@ SyncStatus = Literal["published", "unlisted", "archived", "deleted"]
 DEFAULT_PAGE_LIMIT = 50
 MAX_SYNC_PAGES = 1000
 DEFAULT_SNAPSHOT_DIR_NAME = "dify-skill-crawler-sync"
-DEFAULT_CATEGORY_SLUG = "other"
-DEFAULT_CRAWLER_CONTENT_TYPE = SkillContentType.MARKDOWN_FILE
-
-LOCAL_CATEGORY_MATCH_WORDS_BY_SLUG: dict[str, tuple[str, ...]] = {
-    "programming-development": (
-        "编程",
-        "开发",
-        "代码",
-        "programming",
-        "development",
-        "code",
-        "coding",
-        "git",
-        "github",
-        "python",
-        "typescript",
-        "javascript",
-    ),
-    "development": (
-        "编程",
-        "开发",
-        "代码",
-        "programming",
-        "development",
-        "code",
-        "coding",
-        "git",
-        "github",
-        "python",
-        "typescript",
-        "javascript",
-    ),
-    "testing-debugging": (
-        "测试",
-        "调试",
-        "质量",
-        "test",
-        "testing",
-        "debug",
-        "debugging",
-        "pytest",
-        "playwright",
-        "vitest",
-        "coverage",
-    ),
-    "testing": (
-        "测试",
-        "调试",
-        "质量",
-        "test",
-        "testing",
-        "debug",
-        "debugging",
-        "pytest",
-        "playwright",
-        "vitest",
-        "coverage",
-    ),
-    "code-review": (
-        "代码审查",
-        "代码评审",
-        "审查",
-        "评审",
-        "code review",
-        "review",
-        "lint",
-        "static analysis",
-    ),
-    "frontend-design": (
-        "前端",
-        "设计",
-        "页面",
-        "frontend",
-        "front-end",
-        "react",
-        "vue",
-        "next.js",
-        "ui",
-        "ux",
-        "css",
-        "tailwind",
-        "figma",
-        "prototype",
-    ),
-    "frontend": (
-        "前端",
-        "页面",
-        "frontend",
-        "front-end",
-        "react",
-        "vue",
-        "next.js",
-        "ui",
-        "ux",
-        "css",
-        "tailwind",
-    ),
-    "design": ("设计", "ui", "ux", "figma", "prototype"),
-    "document-processing": (
-        "文档",
-        "表格",
-        "pdf",
-        "document",
-        "markdown",
-        "readme",
-        "docx",
-        "excel",
-        "spreadsheet",
-        "csv",
-        "table",
-    ),
-    "document": (
-        "文档",
-        "表格",
-        "pdf",
-        "document",
-        "markdown",
-        "readme",
-        "docx",
-        "excel",
-        "spreadsheet",
-        "csv",
-        "table",
-    ),
-    "image-generation": (
-        "图像",
-        "图片",
-        "生成",
-        "多媒体",
-        "image",
-        "images",
-        "generation",
-        "generate",
-        "media",
-        "vision",
-        "ocr",
-        "audio",
-        "video",
-    ),
-    "media": ("图像", "图片", "多媒体", "image", "media", "vision", "ocr", "audio", "video"),
-    "data-analysis": (
-        "数据",
-        "分析",
-        "数据库",
-        "data",
-        "analysis",
-        "analytics",
-        "database",
-        "sql",
-        "sqlite",
-        "postgres",
-        "mysql",
-        "json",
-        "dataset",
-    ),
-    "data": (
-        "数据",
-        "分析",
-        "数据库",
-        "data",
-        "analysis",
-        "analytics",
-        "database",
-        "sql",
-        "sqlite",
-        "postgres",
-        "mysql",
-        "json",
-        "dataset",
-    ),
-    "browser-automation": (
-        "浏览器",
-        "自动化",
-        "browser",
-        "automation",
-        "web automation",
-        "selenium",
-        "playwright",
-        "chrome",
-        "scraping",
-    ),
-    "automation": ("自动化", "automation", "workflow", "schedule", "cron", "agent"),
-    "tools": (
-        "工具",
-        "工具箱",
-        "工具调用",
-        "tool",
-        "tools",
-        "toolbox",
-        "tool calling",
-        "function calling",
-        "mcp",
-        "api",
-        "openapi",
-        "swagger",
-        "plugin",
-        "external tool",
-    ),
-    "content-creation": (
-        "内容",
-        "写作",
-        "创作",
-        "文案",
-        "content",
-        "creation",
-        "writing",
-        "copywriting",
-        "article",
-        "blog",
-    ),
-    "project-management": (
-        "项目",
-        "管理",
-        "任务",
-        "project",
-        "management",
-        "task",
-        "todo",
-        "calendar",
-        "meeting",
-        "email",
-    ),
-    "productivity": ("效率", "任务", "项目", "productivity", "task", "todo", "calendar", "meeting", "email"),
-    "enterprise-systems": (
-        "企业",
-        "系统",
-        "oa",
-        "erp",
-        "crm",
-        "enterprise",
-        "system",
-        "business",
-        "workflow",
-        "approval",
-    ),
-    "official": ("官方", "official", "dify", "openai"),
-    "other": ("其他", "other", "misc", "miscellaneous"),
-}
+DEFAULT_CRAWLER_CONTENT_TYPE = SkillContentType.REMOTE_REFERENCE
 
 
 class SkillCrawlerSyncError(RuntimeError):
@@ -323,12 +88,7 @@ class SkillCrawlerSyncItem(BaseModel):
         normalized = dict(value)
         if str(normalized.get("content_type") or "").strip():
             return normalized
-        skill_markdown = normalized.get("skill_markdown")
-        normalized["content_type"] = (
-            SkillContentType.MARKDOWN_FILE.value
-            if isinstance(skill_markdown, str) and skill_markdown.strip()
-            else SkillContentType.REMOTE_REFERENCE.value
-        )
+        normalized["content_type"] = SkillContentType.REMOTE_REFERENCE.value
         return normalized
 
     @field_validator("slug")
@@ -474,6 +234,12 @@ class _SkillValues(TypedDict):
     content_type: SkillContentType
     skill_markdown: str | None
     published_at: NotRequired[datetime | None]
+    tag_cn_names: NotRequired[Mapping[str, str]]
+
+
+class SkillTagTranslator(Protocol):
+    def resolve_cn_name(self, tag_slug: str) -> str | None:
+        ...
 
 
 def _json_default(value: object) -> str:
@@ -484,77 +250,6 @@ def _json_default(value: object) -> str:
 
 def default_skill_crawler_snapshot_dir() -> Path:
     return Path(tempfile.gettempdir()) / DEFAULT_SNAPSHOT_DIR_NAME
-
-
-class _InferredCategory(TypedDict):
-    slug: str
-    name: str
-
-
-def _normalize_match_text(value: object) -> str:
-    return str(value or "").strip().lower()
-
-
-def _split_category_slug(slug: str) -> list[str]:
-    return [part for part in slug.replace("_", "-").replace(":", "-").split("-") if part]
-
-
-def _load_skill_categories(session: SessionLike) -> list[SkillCategory]:
-    stmt = select(SkillCategory).order_by(SkillCategory.position.asc(), SkillCategory.name.asc())
-    return list(session.scalars(stmt).all())
-
-
-def _score_local_category(category: SkillCategory, category_words: list[str]) -> int:
-    score = 0
-    slug = _normalize_match_text(category.slug)
-    name = _normalize_match_text(category.name)
-    slug_parts = _split_category_slug(slug)
-    match_words = [word for word in (_normalize_match_text(word) for word in category_words) if word]
-    synonyms = LOCAL_CATEGORY_MATCH_WORDS_BY_SLUG.get(slug, ())
-
-    for index, word in enumerate(match_words):
-        weight = max(1, len(match_words) - index)
-        if word == slug:
-            score += 120 * weight
-        if word == name:
-            score += 100 * weight
-        if word in slug_parts:
-            score += 80 * weight
-        if word and (word in name or word in slug):
-            score += 30 * weight
-        if word in synonyms:
-            score += 60 * weight
-        for synonym in synonyms:
-            normalized_synonym = _normalize_match_text(synonym)
-            if word and normalized_synonym and (word in normalized_synonym or normalized_synonym in word):
-                score += 15 * weight
-    return score
-
-
-def infer_skill_category_from_library(session: SessionLike, item: SkillCrawlerSyncItem) -> list[_InferredCategory]:
-    categories = _load_skill_categories(session)
-    if not categories:
-        logger.warning("skip skill category binding because local skill category library is empty")
-        return []
-
-    scored: list[tuple[int, int, SkillCategory]] = []
-    for index, category in enumerate(categories):
-        score = _score_local_category(category, item.categories)
-        if score > 0:
-            scored.append((score, index, category))
-
-    if scored:
-        _, _, category = min(scored, key=lambda value: (-value[0], value[1], value[2].slug))
-        return [{"slug": category.slug, "name": category.name}]
-
-    fallback = next((category for category in categories if category.slug == DEFAULT_CATEGORY_SLUG), None)
-    if fallback is None:
-        logger.warning(
-            "skip skill category binding because no category words matched and fallback category is missing",
-            extra={"skill_slug": item.slug, "fallback_category": DEFAULT_CATEGORY_SLUG},
-        )
-        return []
-    return [{"slug": fallback.slug, "name": fallback.name}]
 
 
 class SkillCrawlerClient:
@@ -641,20 +336,28 @@ class SkillCrawlerSyncService:
 
     client: SkillCrawlerClient
     snapshot_dir: Path
+    translator: SkillTagTranslator
 
-    def __init__(self, client: SkillCrawlerClient, snapshot_dir: str | Path | None) -> None:
+    def __init__(
+        self,
+        client: SkillCrawlerClient,
+        snapshot_dir: str | Path | None,
+        translator: SkillTagTranslator | None = None,
+    ) -> None:
         self.client = client
         self.snapshot_dir = (
             default_skill_crawler_snapshot_dir()
             if snapshot_dir is None or str(snapshot_dir).strip() == ""
             else Path(snapshot_dir)
         )
+        self.translator = translator or SkillTagTranslationService()
 
     @classmethod
     def from_config(cls, *, base_url: str | None = None, token: str | None = None) -> SkillCrawlerSyncService:
         return cls(
             client=SkillCrawlerClient.from_config(base_url=base_url, token=token),
             snapshot_dir=dify_config.SKILL_CRAWLER_SYNC_SNAPSHOT_DIR,
+            translator=SkillTagTranslationService(),
         )
 
     def sync(
@@ -681,6 +384,7 @@ class SkillCrawlerSyncService:
         try:
             fetched_count = sum(len(page.get("data", [])) for page in raw_pages if isinstance(page.get("data"), list))
             valid_items, skipped_count = self._validate_and_deduplicate(raw_pages)
+            tag_cn_names = self._resolve_tag_cn_names(session, valid_items)
             category_counter = Counter[str]()
             tag_counter = Counter[str]()
             for item in valid_items:
@@ -697,7 +401,7 @@ class SkillCrawlerSyncService:
                 snapshot_path=snapshot_path,
             )
             for item in valid_items:
-                self._upsert_item(session, item=item, result=result)
+                self._upsert_item(session, item=item, result=result, tag_cn_names=tag_cn_names)
         except SkillCrawlerSyncError as exc:
             exc.snapshot_path = exc.snapshot_path or snapshot_path
             raise
@@ -753,6 +457,7 @@ class SkillCrawlerSyncService:
         *,
         item: SkillCrawlerSyncItem,
         result: SkillCrawlerSyncResult,
+        tag_cn_names: Mapping[str, str] | None = None,
     ) -> None:
         existing = session.scalar(select(Skill).where(Skill.slug == item.slug))
         if item.status == "deleted":
@@ -763,6 +468,8 @@ class SkillCrawlerSyncService:
 
         if existing is None:
             values = self._to_skill_values(session, item)
+            if tag_cn_names:
+                values["tag_cn_names"] = tag_cn_names
             AdminSkillService.create_skill(session, values)
             result.imported_count += 1
             return
@@ -792,6 +499,42 @@ class SkillCrawlerSyncService:
             "skill_markdown": item.skill_markdown,
             "published_at": None,
         }
+
+    def _resolve_tag_cn_names(
+        self,
+        session: SessionLike,
+        items: list[SkillCrawlerSyncItem],
+    ) -> dict[str, str]:
+        current_tag_slugs = {tag_slug for item in items for tag_slug in item.tags}
+        stmt = select(SkillTag).where(SkillTag.cn_name.is_(None))
+        if current_tag_slugs:
+            stmt = select(SkillTag).where(
+                or_(SkillTag.slug.in_(current_tag_slugs), SkillTag.cn_name.is_(None))
+            )
+        existing_tags = list(session.scalars(stmt).all())
+        existing_tags_by_slug = {tag.slug: tag for tag in existing_tags}
+        tag_slugs = set(current_tag_slugs)
+        tag_slugs.update(existing_tags_by_slug)
+
+        resolved: dict[str, str] = {}
+        for tag_slug in sorted(tag_slugs):
+            existing_tag = existing_tags_by_slug.get(tag_slug)
+            if existing_tag is not None and existing_tag.cn_name:
+                resolved[tag_slug] = existing_tag.cn_name
+                continue
+            cn_name = self.translator.resolve_cn_name(tag_slug)
+            if cn_name:
+                resolved[tag_slug] = cn_name
+
+        updated = False
+        for tag in existing_tags:
+            cn_name = resolved.get(tag.slug)
+            if cn_name and not tag.cn_name:
+                tag.cn_name = cn_name
+                updated = True
+        if updated:
+            session.commit()
+        return resolved
 
     @staticmethod
     def _existing_skill_stats_update_values(skill: Skill, item: SkillCrawlerSyncItem) -> dict[str, int]:

@@ -1277,6 +1277,10 @@ class CeleryScheduleTasksConfig(BaseSettings):
         description="Local directory for raw Skill crawler synchronization JSON snapshots",
         default="",
     )
+    GOOGLE_TRANSLATE_API_KEY: str = Field(
+        description="Google Translation API key for Skill tag Chinese name translation",
+        default="",
+    )
     ENABLE_CLEAN_OAUTH_ACCESS_TOKENS_TASK: bool = Field(
         description="Enable scheduled cleanup of revoked/expired OAuth access-token rows past retention.",
         default=True,

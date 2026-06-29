@@ -11,6 +11,18 @@ from services import skill_crawler_sync_service as sync_module
 from services.skill_crawler_sync_service import SkillCrawlerClient, SkillCrawlerSyncItem, SkillCrawlerSyncService
 
 
+class _FakeTranslator:
+    def __init__(self) -> None:
+        self.resolved_tags: list[str] = []
+
+    def resolve_cn_name(self, tag_slug: str) -> str | None:
+        self.resolved_tags.append(tag_slug)
+        return {
+            "automation": "自动化",
+            "github": "github",
+        }.get(tag_slug)
+
+
 def _category(slug: str, name: str) -> SimpleNamespace:
     return SimpleNamespace(slug=slug, name=name)
 
@@ -162,6 +174,15 @@ def test_response_github_stars_field_maps_to_local_github_stars() -> None:
     assert skill_values["github_stars"] == 66
 
 
+def test_missing_content_type_defaults_to_remote_reference_even_with_markdown() -> None:
+    values = _make_item().model_dump(mode="json")
+    values.pop("content_type")
+
+    item = SkillCrawlerSyncItem.model_validate(values)
+
+    assert item.content_type == SkillContentType.REMOTE_REFERENCE
+
+
 def test_content_type_from_crawler_response_maps_to_skill_version_values() -> None:
     session = _session_with_categories([_category("other", "其他")])
 
@@ -251,6 +272,18 @@ def test_new_pulled_skill_defaults_to_draft() -> None:
 
     assert values["publication_status"] == SkillPublicationStatus.DRAFT
     assert values["published_at"] is None
+
+
+def test_new_pulled_skill_preserves_original_description() -> None:
+    session = _session_with_categories([_category("other", "其他")])
+
+    values = SkillCrawlerSyncService(
+        client=MagicMock(),
+        snapshot_dir=None,
+        translator=_FakeTranslator(),
+    )._to_skill_values(session, _make_item(description="Build workflow automations."))
+
+    assert values["description"] == "Build workflow automations."
 
 
 def test_validate_keeps_latest_duplicate_slug_by_updated_at() -> None:
@@ -384,6 +417,52 @@ def test_existing_skill_stats_update_preserves_publication_status(monkeypatch: p
     update_values = update_skill.call_args.args[2]
     assert "publication_status" not in update_values
     assert "published_at" not in update_values
+
+
+def test_new_skill_passes_resolved_tag_cn_names_to_admin_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _session_with_categories([_category("other", "其他")])
+    session.scalar.return_value = None
+    create_skill = MagicMock()
+    monkeypatch.setattr(sync_module.AdminSkillService, "create_skill", create_skill)
+
+    SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=None)._upsert_item(
+        session,
+        item=_make_item(tags=["automation", "github"]),
+        result=sync_module.SkillCrawlerSyncResult(),
+        tag_cn_names={"automation": "自动化", "github": "github"},
+    )
+
+    values = create_skill.call_args.args[1]
+    assert values["tag_cn_names"] == {"automation": "自动化", "github": "github"}
+
+
+def test_sync_resolves_current_and_existing_empty_tag_cn_names(tmp_path) -> None:
+    existing_tag = SimpleNamespace(slug="automation", cn_name=None)
+    session = MagicMock()
+    session.scalars.return_value.all.return_value = [existing_tag]
+    translator = _FakeTranslator()
+    service = SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=tmp_path, translator=translator)
+
+    resolved = service._resolve_tag_cn_names(session, [_make_item(tags=["automation", "github"])])
+
+    assert resolved == {"automation": "自动化", "github": "github"}
+    assert existing_tag.cn_name == "自动化"
+    assert translator.resolved_tags == ["automation", "github"]
+    session.commit.assert_called_once()
+
+
+def test_sync_reuses_existing_tag_cn_name_without_translation(tmp_path) -> None:
+    existing_tag = SimpleNamespace(slug="automation", cn_name="自动化")
+    session = MagicMock()
+    session.scalars.return_value.all.return_value = [existing_tag]
+    translator = _FakeTranslator()
+    service = SkillCrawlerSyncService(client=MagicMock(), snapshot_dir=tmp_path, translator=translator)
+
+    resolved = service._resolve_tag_cn_names(session, [_make_item(tags=["automation"])])
+
+    assert resolved == {"automation": "自动化"}
+    assert translator.resolved_tags == []
+    session.commit.assert_not_called()
 
 
 def test_existing_skill_updates_only_install_count_and_github_stars(monkeypatch: pytest.MonkeyPatch) -> None:

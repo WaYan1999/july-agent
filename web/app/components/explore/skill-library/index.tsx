@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import type { Skill, SkillRecommendationGroups, SkillTaxonomy } from '@/models/skill'
 import { Button } from '@langgenius/dify-ui/button'
 import { cn } from '@langgenius/dify-ui/cn'
@@ -18,8 +19,9 @@ import { Carousel } from '@/app/components/base/carousel'
 import Loading from '@/app/components/base/loading'
 import { Markdown } from '@/app/components/base/markdown'
 import { useMarketplaceContainerScroll } from '@/app/components/plugins/marketplace/hooks'
-import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, getSkillDownloadUrl, recordSkillCopy } from '@/service/skills'
+import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, recordSkillCopy } from '@/service/skills'
 import { getSkillSourceTypeLabel } from './source-type'
+import { getDisplaySourceUrl, stripSkillMetadataBlock } from './utils'
 
 const DEFAULT_LIMIT = 30
 const SKILL_GRID_CLASS_NAME = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
@@ -64,6 +66,10 @@ function isGenericTaxonomy(item: SkillTaxonomy) {
   })
 }
 
+function getTaxonomyDisplayName(item: SkillTaxonomy) {
+  return item.cn_name?.trim() || item.name?.trim() || item.slug
+}
+
 function SkillIcon({ skill }: { skill: Skill }) {
   if (skill.icon_url) {
     return (
@@ -85,17 +91,56 @@ function SkillIcon({ skill }: { skill: Skill }) {
   )
 }
 
-function TaxonomyPills({ items, limit = 3 }: { items: SkillTaxonomy[], limit?: number }) {
+function SkillHeroIcon({ skill }: { skill: Skill }) {
+  if (skill.icon_url) {
+    return (
+      <img
+        src={skill.icon_url}
+        alt=""
+        className="size-14 shrink-0 rounded-xl object-cover shadow-xs"
+      />
+    )
+  }
+
+  return (
+    <div
+      className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-divider-subtle bg-background-default text-text-accent shadow-xs"
+      aria-hidden="true"
+    >
+      <span className="i-custom-public-agent-building-blocks size-7" />
+    </div>
+  )
+}
+
+function TaxonomyPills({
+  items,
+  limit = 3,
+  emptyLabel,
+  pillClassName,
+}: {
+  items: SkillTaxonomy[]
+  limit?: number
+  emptyLabel?: string
+  pillClassName?: string
+}) {
   const visibleItems = items.filter(item => !isGenericTaxonomy(item)).slice(0, limit)
 
-  if (!visibleItems.length)
+  if (!visibleItems.length) {
+    if (emptyLabel) {
+      return (
+        <span className="system-sm-regular text-text-quaternary">
+          {emptyLabel}
+        </span>
+      )
+    }
     return null
+  }
 
   return (
     <div className="flex min-h-6 flex-wrap items-center gap-1">
       {visibleItems.map(item => (
-        <span key={item.slug} className="max-w-24 truncate rounded-md bg-background-section px-2 py-0.5 system-xs-medium text-text-tertiary">
-          {item.name}
+        <span key={item.slug} className={cn('max-w-24 truncate rounded-md bg-background-section px-2 py-0.5 system-xs-medium text-text-tertiary', pillClassName)}>
+          {getTaxonomyDisplayName(item)}
         </span>
       ))}
     </div>
@@ -158,7 +203,7 @@ function SkillCard({
           </div>
         </div>
       </div>
-      <p className="mx-4 mt-1 h-8 line-clamp-2 system-xs-regular text-text-secondary">
+      <p className="mx-4 mt-1 line-clamp-2 h-8 system-xs-regular text-text-secondary">
         {skill.description}
       </p>
       <div className="flex min-h-7 min-w-0 items-center gap-2 px-4 py-1 pr-5">
@@ -191,53 +236,163 @@ function ArticleMarkdown({
   isError?: boolean
 }) {
   const { t } = useTranslation()
-  if (isLoading) {
-    return (
-      <div role="status" className="space-y-3">
-        <div className="h-5 w-2/3 rounded-md bg-background-section-burn" />
-        <div className="h-4 rounded-md bg-background-section-burn" />
-        <div className="h-4 w-11/12 rounded-md bg-background-section-burn" />
-        <div className="h-4 w-4/5 rounded-md bg-background-section-burn" />
-      </div>
-    )
-  }
+  const visibleMarkdown = stripSkillMetadataBlock(markdown)
 
-  if (isError) {
-    return (
-      <div className="rounded-xl border border-dashed border-divider-subtle bg-background-section p-6 text-center system-sm-regular text-text-tertiary">
-        {t('skills.loadError', { ns: 'explore' })}
-      </div>
-    )
-  }
+  const content = (() => {
+    if (isLoading) {
+      return (
+        <div role="status" className="space-y-3">
+          <div className="h-5 w-2/3 rounded-md bg-background-section-burn" />
+          <div className="h-4 rounded-md bg-background-section-burn" />
+          <div className="h-4 w-11/12 rounded-md bg-background-section-burn" />
+          <div className="h-4 w-4/5 rounded-md bg-background-section-burn" />
+        </div>
+      )
+    }
 
-  if (!markdown) {
+    if (isError) {
+      return (
+        <div className="rounded-xl border border-dashed border-divider-subtle bg-background-section p-6 text-center system-sm-regular text-text-tertiary">
+          {t('skills.loadError', { ns: 'explore' })}
+        </div>
+      )
+    }
+
+    if (!visibleMarkdown) {
+      return (
+        <div className="rounded-xl border border-dashed border-divider-subtle bg-background-section p-6 text-center system-sm-regular text-text-tertiary">
+          {t('skills.emptyMarkdown', { ns: 'explore' })}
+        </div>
+      )
+    }
+
     return (
-      <div className="rounded-xl border border-dashed border-divider-subtle bg-background-section p-6 text-center system-sm-regular text-text-tertiary">
-        {t('skills.emptyMarkdown', { ns: 'explore' })}
-      </div>
+      <Markdown
+        content={visibleMarkdown}
+        className="max-w-none text-[15px]! leading-7! text-pretty"
+      />
     )
-  }
+  })()
 
   return (
-    <Markdown
-      content={markdown}
-      className="max-w-none text-[15px]! leading-7!"
-    />
+    <div className="min-w-0">
+      <div className="mb-5 flex items-center gap-2 border-b border-divider-subtle pb-3">
+        <span aria-hidden="true" className="i-ri-file-text-line size-4 text-text-tertiary" />
+        <h2 className="title-xl-semi-bold text-text-primary text-balance">SKILL.md</h2>
+      </div>
+      <div className="text-pretty">
+        {content}
+      </div>
+    </div>
+  )
+}
+
+function InstallCommandBar({
+  command,
+  onCopy,
+}: {
+  command: string
+  onCopy: () => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex max-w-[640px] items-center rounded-lg border border-divider-subtle bg-background-default shadow-xs">
+      <code className="min-w-0 flex-1 truncate px-3 py-2 font-mono system-xs-regular text-text-secondary">
+        {command}
+      </code>
+      <button
+        type="button"
+        className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-text-tertiary transition-colors hover:bg-state-base-hover hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+        aria-label={t('skills.copyInstall', { ns: 'explore' })}
+        onClick={onCopy}
+      >
+        <span aria-hidden="true" className="i-ri-file-copy-line size-4" />
+      </button>
+    </div>
+  )
+}
+
+function DetailBadge({
+  children,
+  iconClassName,
+}: {
+  children: ReactNode
+  iconClassName?: string
+}) {
+  return (
+    <span className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-lg border border-divider-subtle bg-background-default px-2.5 system-xs-medium text-text-tertiary shadow-xs">
+      {iconClassName && (
+        <span aria-hidden="true" className={cn(iconClassName, 'size-3.5 shrink-0 text-text-quaternary')} />
+      )}
+      <span className="truncate">{children}</span>
+    </span>
+  )
+}
+
+function SkillMetricList({ skill }: { skill: Skill }) {
+  const { t } = useTranslation()
+  const showInstallCount = skill.install_count > 0
+  const githubStars = skill.github_stars ?? 0
+  const showGithubStars = githubStars > 0
+
+  if (!showInstallCount && !showGithubStars)
+    return null
+
+  return (
+    <dl className="space-y-3">
+      {showInstallCount && (
+        <DetailMetaItem
+          iconClassName="i-ri-download-2-line"
+          label={t('skills.installCount', { ns: 'explore' })}
+          value={skill.install_count}
+        />
+      )}
+      {showGithubStars && (
+        <DetailMetaItem
+          iconClassName="i-ri-star-fill"
+          label={t('skills.githubStars', { ns: 'explore' })}
+          value={githubStars}
+        />
+      )}
+    </dl>
   )
 }
 
 function DetailMetaItem({
   label,
   value,
+  iconClassName,
 }: {
   label: string
   value?: string | number | null
+  iconClassName?: string
 }) {
   return (
-    <div className="min-w-0 py-3">
-      <dt className="system-xs-medium text-text-tertiary">{label}</dt>
-      <dd className="mt-1 system-sm-medium break-all text-text-secondary">{value || '-'}</dd>
+    <div className="min-w-0">
+      <dt className="flex min-w-0 items-center gap-1.5 system-xs-medium text-text-tertiary">
+        {iconClassName && (
+          <span aria-hidden="true" className={cn(iconClassName, 'size-3.5 shrink-0 text-text-quaternary')} />
+        )}
+        <span className="truncate">{label}</span>
+      </dt>
+      <dd className="mt-1 system-sm-regular break-all text-text-secondary">{value || '-'}</dd>
     </div>
+  )
+}
+
+function DetailSidebarSection({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <section className="rounded-xl border border-divider-subtle bg-background-section p-4 shadow-xs">
+      <h2 className="mb-3 title-sm-semi-bold text-text-primary text-balance">{title}</h2>
+      {children}
+    </section>
   )
 }
 
@@ -270,7 +425,12 @@ function SkillDetailDialog({
   const contentType = normalizeValue(version?.content_type)
   const markdown = version?.skill_markdown
   const authorName = detail?.author_name?.trim()
-  const showInstallCount = (detail?.install_count ?? 0) > 0
+  const installCount = detail?.install_count ?? 0
+  const githubStars = detail?.github_stars ?? 0
+  const showInstallCount = installCount > 0
+  const showGithubStars = githubStars > 0
+  const showDetailMetrics = showInstallCount || showGithubStars
+  const displaySourceUrl = getDisplaySourceUrl(detail?.source_url)
 
   const handleCopyInstall = async () => {
     if (!detail)
@@ -282,133 +442,67 @@ function SkillDetailDialog({
     toast.success(t('skills.copySuccess', { ns: 'explore' }))
   }
 
-  const handleCopyMarkdown = async () => {
-    if (!detail)
-      return
-    if (!markdown)
-      return
-    await navigator.clipboard.writeText(markdown)
-    toast.success(t('skills.copySuccess', { ns: 'explore' }))
-  }
-
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="h-[calc(100dvh-16px)] w-full max-w-[1120px] overflow-hidden p-0">
+      <DialogContent className="h-[calc(100dvh-24px)] w-full max-w-[1160px] overflow-hidden p-0">
         {detail && (
-          <div className="flex size-full min-h-0 flex-col overflow-hidden bg-background-body">
-            <div className="relative shrink-0 overflow-hidden rounded-t-xl px-5 pt-5 pb-8">
-              <div className="absolute inset-0 bg-saas-dify-blue-static" />
-              <div
-                className="absolute inset-0 bg-no-repeat opacity-80 mix-blend-lighten"
-                style={{
-                  backgroundImage: 'url(/marketplace/hero-bg.jpg)',
-                  backgroundPosition: 'center top',
-                  backgroundSize: '110% auto',
-                }}
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: 'url(/marketplace/hero-gradient-noise.svg)' }}
-              />
-
-              <div className="relative z-10 mb-8 flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2 rounded-lg border border-white/30 bg-white/15 px-2.5 py-1 text-text-primary-on-surface shadow-xs backdrop-blur-[6px]">
-                  <span aria-hidden="true" className="i-ri-article-line size-3.5 shrink-0" />
-                  <DialogTitle className="truncate system-xs-medium uppercase">
-                    {t('skills.preview', { ns: 'explore' })}
-                  </DialogTitle>
-                </div>
-                <DialogCloseButton
-                  aria-label={t('operation.close', { ns: 'common' })}
-                  className="static size-8 rounded-lg bg-white/15 text-text-primary-on-surface hover:bg-white/25"
-                />
-              </div>
-
-              <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-[760px] min-w-0">
-                  <div className="mb-5 flex items-center gap-3">
-                    <div className="rounded-2xl bg-white/15 p-2 shadow-md backdrop-blur-[6px]">
-                      <SkillIcon skill={detail} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 system-sm-medium text-text-secondary-on-surface">
+          <div className="flex size-full min-h-0 flex-col overflow-hidden bg-background-default">
+            <header className="shrink-0 border-b border-divider-subtle bg-background-section px-5 py-6 md:px-8 md:py-7">
+              <div className="mx-auto flex w-full max-w-[1080px] items-start gap-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-5">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <SkillHeroIcon skill={detail} />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5">
                         {authorName && (
-                          <>
-                            <span className="max-w-48 truncate">{authorName}</span>
-                            <span aria-hidden="true" className="text-text-secondary-on-surface/60">/</span>
-                          </>
+                          <DetailBadge iconClassName="i-ri-user-smile-line">{authorName}</DetailBadge>
                         )}
-                        <span className="max-w-80 truncate">{detail.slug}</span>
-                        {showInstallCount && (
-                          <>
-                            <span aria-hidden="true" className="text-text-secondary-on-surface/60">/</span>
-                            <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: detail.install_count })}</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="rounded-md bg-white/15 px-2 py-0.5 system-xs-medium text-text-secondary-on-surface backdrop-blur-[6px]">
+                        <DetailBadge iconClassName="i-ri-hashtag">{detail.slug}</DetailBadge>
+                        <DetailBadge iconClassName="i-ri-price-tag-3-line">
                           {getSkillSourceTypeLabel(normalizeValue(detail.source_type), t)}
-                        </span>
-                        <span className="rounded-md bg-white/15 px-2 py-0.5 system-xs-medium text-text-secondary-on-surface backdrop-blur-[6px]">
+                        </DetailBadge>
+                        <DetailBadge iconClassName="i-ri-file-text-line">
                           {getContentTypeLabel(contentType, t)}
-                        </span>
+                        </DetailBadge>
                       </div>
+                      <DialogTitle
+                        id="skill-detail-title"
+                        className="title-4xl-semi-bold text-text-primary text-balance"
+                      >
+                        {detail.name}
+                      </DialogTitle>
+                      <p className="mt-2 max-w-[68ch] body-md-regular leading-6 text-text-secondary text-pretty">
+                        {detail.description}
+                      </p>
                     </div>
                   </div>
-                  <h1 className="text-[34px] leading-[42px] font-semibold text-balance text-text-primary-on-surface md:text-[42px] md:leading-[50px]">
-                    {detail.name}
-                  </h1>
-                  <p className="mt-4 max-w-[68ch] body-md-medium leading-7 text-pretty text-text-secondary-on-surface">
-                    {detail.description}
-                  </p>
+
+                  <div className="md:pl-[72px]">
+                    {detail.install_command && (
+                      <InstallCommandBar
+                        command={detail.install_command}
+                        onCopy={handleCopyInstall}
+                      />
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:max-w-[320px] lg:justify-end">
-                  {contentType !== 'remote_reference' && (
-                    <a
-                      className="flex h-9 items-center justify-center rounded-lg bg-white px-3 system-sm-medium text-text-accent shadow-md hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
-                      href={getSkillDownloadUrl(detail.id)}
-                    >
-                      {contentType === 'markdown_file' ? t('skills.downloadMarkdown', { ns: 'explore' }) : t('skills.downloadZip', { ns: 'explore' })}
-                    </a>
-                  )}
-                  <Button
-                    type="button"
-                    variant={contentType === 'remote_reference' ? 'primary' : 'secondary'}
-                    size="small"
-                    className="h-9"
-                    disabled={!detail.install_command}
-                    onClick={handleCopyInstall}
-                  >
-                    {t('skills.copyInstall', { ns: 'explore' })}
-                  </Button>
-                  {contentType === 'markdown_file' && (
-                    <Button type="button" size="small" variant="secondary" className="h-9" disabled={!markdown} onClick={handleCopyMarkdown}>
-                      {t('skills.copyMarkdown', { ns: 'explore' })}
-                    </Button>
-                  )}
-                  {detail.source_url && (
-                    <a
-                      className="flex h-9 items-center gap-1 rounded-lg border border-white/30 bg-white/15 px-3 system-sm-medium text-text-primary-on-surface backdrop-blur-[6px] hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-hidden"
-                      href={detail.source_url}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      {t('skills.viewSource', { ns: 'explore' })}
-                      <span aria-hidden="true" className="i-ri-external-link-line size-3.5" />
-                    </a>
-                  )}
-                </div>
+                <DialogCloseButton
+                  aria-label={t('operation.close', { ns: 'common' })}
+                  className="static size-9 shrink-0 rounded-lg text-text-tertiary hover:bg-state-base-hover hover:text-text-secondary"
+                />
               </div>
-            </div>
+            </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <div className="mx-auto grid w-full max-w-[1040px] grid-cols-1 gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-6 lg:py-8">
-                <article className="min-w-0 rounded-xl bg-components-panel-bg px-5 py-6 shadow-xs md:px-8 md:py-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background-default">
+              <div className="mx-auto grid w-full max-w-[1080px] grid-cols-1 gap-7 px-5 py-7 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10 lg:px-8 lg:py-8">
+                <article
+                  aria-label={detail.name}
+                  className="min-w-0"
+                >
                   <ArticleMarkdown
                     markdown={markdown}
                     isLoading={detailQuery.isFetching}
@@ -416,38 +510,54 @@ function SkillDetailDialog({
                   />
                 </article>
 
-                <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
+                <aside
+                  aria-label={t('skills.metadata', { ns: 'explore' })}
+                  className="min-w-0 lg:sticky lg:top-6 lg:self-start"
+                >
                   <div className="space-y-3">
-                    {detail.install_command && (
-                      <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
-                        <h2 className="system-sm-semibold text-text-secondary">{t('skills.installCommand', { ns: 'explore' })}</h2>
-                        <pre className="mt-3 max-h-48 overflow-auto rounded-lg bg-background-section p-3 system-xs-regular text-text-secondary">
-                          {detail.install_command}
-                        </pre>
-                      </section>
+                    {showDetailMetrics && (
+                      <DetailSidebarSection title={t('skills.stats', { ns: 'explore' })}>
+                        <SkillMetricList skill={detail} />
+                      </DetailSidebarSection>
                     )}
 
-                    <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
-                      <h2 className="system-sm-semibold text-text-secondary">{t('skills.categories', { ns: 'explore' })}</h2>
-                      <div className="mt-3">
-                        <TaxonomyPills items={detail.categories} limit={8} />
-                      </div>
-                    </section>
+                    <DetailSidebarSection title={t('skills.tags', { ns: 'explore' })}>
+                      <TaxonomyPills
+                        items={detail.tags}
+                        limit={10}
+                        emptyLabel="-"
+                        pillClassName="max-w-36 bg-background-default"
+                      />
+                    </DetailSidebarSection>
 
-                    <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
-                      <h2 className="system-sm-semibold text-text-secondary">{t('skills.tags', { ns: 'explore' })}</h2>
-                      <div className="mt-3">
-                        <TaxonomyPills items={detail.tags} limit={10} />
-                      </div>
-                    </section>
+                    <DetailSidebarSection title={t('skills.resourceType', { ns: 'explore' })}>
+                      <div className="system-sm-regular text-text-secondary">{getContentTypeLabel(contentType, t)}</div>
+                      {version?.checksum_sha256 && (
+                        <dl className="mt-3">
+                          <DetailMetaItem label={t('skills.sha256', { ns: 'explore' })} value={version.checksum_sha256} />
+                        </dl>
+                      )}
+                    </DetailSidebarSection>
 
-                    <section className="rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg p-4 shadow-xs">
-                      <h2 className="system-sm-semibold text-text-secondary">{t('skills.audit', { ns: 'explore' })}</h2>
-                      <dl className="mt-1 divide-y divide-divider-subtle">
+                    {displaySourceUrl && detail.source_url && (
+                      <DetailSidebarSection title={t('skills.source', { ns: 'explore' })}>
+                        <a
+                          className="inline-flex max-w-full items-center gap-1 system-sm-regular text-text-accent hover:underline focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+                          href={detail.source_url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          <span className="truncate">{displaySourceUrl}</span>
+                          <span aria-hidden="true" className="i-ri-external-link-line size-3.5 shrink-0" />
+                        </a>
+                      </DetailSidebarSection>
+                    )}
+
+                    <DetailSidebarSection title={t('skills.audit', { ns: 'explore' })}>
+                      <dl className="space-y-3">
                         <DetailMetaItem label={t('skills.auditStatus', { ns: 'explore' })} value={detail.audit_status} />
-                        <DetailMetaItem label={t('skills.sha256', { ns: 'explore' })} value={version?.checksum_sha256} />
                       </dl>
-                    </section>
+                    </DetailSidebarSection>
                   </div>
                 </aside>
               </div>
@@ -803,7 +913,7 @@ export default function SkillLibrary() {
             {categories.map(item => (
               <FilterButton
                 key={item.slug}
-                label={item.name}
+                label={getTaxonomyDisplayName(item)}
                 selected={category === item.slug}
                 onClick={() => setCategory(item.slug)}
               />

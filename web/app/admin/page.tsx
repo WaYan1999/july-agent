@@ -160,6 +160,7 @@ type TaxonomyResourceName = 'skillCategories' | 'skillTags'
 type CreateTaxonomyFormValues = {
   name: string
   slug: string
+  cn_name: string
   position: string
 }
 
@@ -260,7 +261,7 @@ const adminUpdateFieldNamesByResource = {
     'position',
   ],
   skillCategories: ['name', 'slug', 'position'],
-  skillTags: ['name', 'slug'],
+  skillTags: ['name', 'slug', 'cn_name'],
   autoServices: [
     'code',
     'name',
@@ -318,7 +319,7 @@ function getItemTitle(resource: AdminResourceName, item: AdminItem) {
   if (resource === 'skills')
     return (item as AdminSkill).name || item.id
   if (resource === 'skillCategories' || resource === 'skillTags')
-    return (item as AdminSkillCategory | AdminSkillTag).name || item.id
+    return getTaxonomyDisplayName(item as AdminSkillCategory | AdminSkillTag) || item.id
   if (resource === 'autoServices')
     return (item as AdminAutoService).name || item.id
   if (resource === 'recommendedApps') {
@@ -433,8 +434,12 @@ function taxonomyToSlugs(items: Array<{ slug: string }>) {
   return items.map(item => item.slug)
 }
 
-function taxonomyToDisplayText(items: Array<{ name?: string | null, slug: string }>) {
-  return items.map(item => item.name || item.slug).join(', ') || '-'
+function getTaxonomyDisplayName(item: { cn_name?: string | null, name?: string | null, slug: string }) {
+  return item.cn_name?.trim() || item.name?.trim() || item.slug
+}
+
+function taxonomyToDisplayText(items: Array<{ cn_name?: string | null, name?: string | null, slug: string }>) {
+  return items.map(getTaxonomyDisplayName).join(', ') || '-'
 }
 
 function parseBackendDateTime(value: string) {
@@ -568,6 +573,7 @@ function buildCreateTaxonomyPayload(resource: TaxonomyResourceName, values: Crea
   return {
     slug: values.slug.trim(),
     name: values.name.trim(),
+    cn_name: emptyStringToNull(values.cn_name),
   } satisfies Partial<AdminSkillTag>
 }
 
@@ -633,6 +639,7 @@ function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldC
     return [
       { name: 'name', labelKey: 'fields.name', type: 'text', value: tag.name, required: true },
       { name: 'slug', labelKey: 'fields.slug', type: 'text', value: tag.slug, required: true },
+      { name: 'cn_name', labelKey: 'fields.cnName', type: 'text', value: tag.cn_name },
     ]
   }
 
@@ -901,6 +908,7 @@ const createAutoServiceInitialValues: CreateAutoServiceFormValues = {
 const createTaxonomyInitialValues: CreateTaxonomyFormValues = {
   name: '',
   slug: '',
+  cn_name: '',
   position: '0',
 }
 
@@ -1189,7 +1197,8 @@ function ResourceTable({
                     <span className="block truncate system-sm-regular text-text-secondary">{taxonomy.id}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="truncate system-sm-medium text-text-primary">{taxonomy.name}</div>
+                    <div className="truncate system-sm-medium text-text-primary">{getTaxonomyDisplayName(taxonomy)}</div>
+                    <div className="mt-1 truncate system-xs-regular text-text-tertiary">{taxonomy.slug}</div>
                   </td>
                   <td className="px-4 py-3 system-sm-regular text-text-secondary">{formatDateTime(taxonomy.created_at)}</td>
                   <td className="px-4 py-3">
@@ -1361,8 +1370,11 @@ function TaxonomyMultiField({
   })
   const options = useMemo(() => {
     const optionMap = new Map<string, TaxonomyOption>()
-    taxonomyQuery.data?.data.forEach(item => optionMap.set(item.slug, createTaxonomyOption(item.slug, item.name)))
-    selectedValues.forEach(option => optionMap.set(option.value, option))
+    taxonomyQuery.data?.data.forEach(item => optionMap.set(item.slug, createTaxonomyOption(item.slug, getTaxonomyDisplayName(item))))
+    selectedValues.forEach((option) => {
+      if (!optionMap.has(option.value))
+        optionMap.set(option.value, option)
+    })
     const trimmedSearchValue = searchValue.trim()
     if (trimmedSearchValue && !optionMap.has(trimmedSearchValue))
       optionMap.set(trimmedSearchValue, createTaxonomyOption(trimmedSearchValue))
@@ -1439,9 +1451,11 @@ function TaxonomySingleFilter({
   })
   const options = useMemo(() => {
     const optionMap = new Map<string, TaxonomyOption>()
-    taxonomyQuery.data?.data.forEach(item => optionMap.set(item.slug, createTaxonomyOption(item.slug, item.name)))
-    if (selectedOption)
-      optionMap.set(selectedOption.value, selectedOption)
+    taxonomyQuery.data?.data.forEach(item => optionMap.set(item.slug, createTaxonomyOption(item.slug, getTaxonomyDisplayName(item))))
+    if (selectedOption) {
+      if (!optionMap.has(selectedOption.value))
+        optionMap.set(selectedOption.value, selectedOption)
+    }
     const trimmedSearchValue = searchValue.trim()
     if (trimmedSearchValue && !optionMap.has(trimmedSearchValue))
       optionMap.set(trimmedSearchValue, createTaxonomyOption(trimmedSearchValue))
@@ -2177,7 +2191,7 @@ function CreateTaxonomyDialog({
     { name: 'slug', labelKey: 'fields.slug', type: 'text', value: values.slug },
     ...(resource === 'skillCategories'
       ? [{ name: 'position', labelKey: 'fields.position', type: 'number', value: values.position } as const]
-      : []),
+      : [{ name: 'cn_name', labelKey: 'fields.cnName', type: 'text', value: values.cn_name } as const]),
   ], [resource, values])
   const mutation = useMutation({
     mutationFn: () => createAdminResource(apiKey, resource, buildCreateTaxonomyPayload(resource, values)),

@@ -65,6 +65,7 @@
   "fields.maintainer": "Maintainer",
   "fields.maxActiveRequests": "Max concurrent requests",
   "fields.name": "Name",
+  "fields.cnName": "Chinese name",
   "fields.status": "Status",
   "fields.theme": "Theme",
   "fields.timezone": "Timezone",

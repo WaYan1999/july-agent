@@ -75,6 +75,7 @@ export type AdminSkillTaxonomy = {
   id?: string | null
   slug: string
   name: string
+  cn_name?: string | null
 }
 
 export type AdminSkillCategory = AdminSkillTaxonomy & {

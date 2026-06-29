@@ -56,6 +56,7 @@ class SkillTaxonomyResponse(ResponseModel):
     id: str | None = None
     slug: str
     name: str
+    cn_name: str | None = None
 
 
 class SkillResponse(ResponseModel):
@@ -155,6 +156,7 @@ def _serialize_taxonomy_items(items: Any) -> list[dict[str, object]]:
             "id": getattr(item, "id", None),
             "slug": item.slug,
             "name": item.name,
+            "cn_name": getattr(item, "cn_name", None),
         }
         for item in items or []
     ]
