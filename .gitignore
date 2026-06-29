@@ -102,6 +102,7 @@ __pypackages__/
 celerybeat-schedule
 celerybeat-schedule.db
 celerybeat.pid
+api/.tmp-monitor/
 
 # SageMath parsed files
 *.sage.py
