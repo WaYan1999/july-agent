@@ -7,7 +7,10 @@ export function getDisplaySourceUrl(sourceUrl: string | null | undefined) {
     const hasPath = url.pathname.replace(/\/+$/, '') !== ''
     if (!hasPath && !url.search && !url.hash)
       return ''
-    return sourceUrl.replace(/\/$/, '')
+    const path = url.pathname.replace(/^\/+/, '').replace(/\/$/, '')
+    if (url.hostname.toLowerCase() === 'github.com')
+      return path || ''
+    return `${url.hostname}${path ? `/${path}` : ''}${url.search}${url.hash}`
   }
   catch {
     return sourceUrl

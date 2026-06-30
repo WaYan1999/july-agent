@@ -171,6 +171,35 @@ export type AdminAutoServiceCreatePayload = {
   config?: Record<string, unknown>
 }
 
+export type AdminTranslationSettings = {
+  provider: string
+  enabled: boolean
+  api_key_configured: boolean
+  api_key_preview?: string | null
+  apps_script_configured: boolean
+  apps_script_url_preview?: string | null
+  apps_script_secret_configured: boolean
+  monthly_free_quota_chars: number
+  current_month: string
+  used_chars: number
+  remaining_chars: number
+  usage_ratio: number
+  quota_exceeded: boolean
+}
+
+export type AdminTranslationSettingsUpdatePayload = {
+  enabled?: boolean
+  google_translate_api_key?: string | null
+  apps_script_url?: string | null
+  apps_script_secret?: string | null
+  monthly_free_quota_chars?: number
+}
+
+export type AdminTranslationTestResponse = {
+  text: string
+  translated_text: string
+}
+
 export type AdminSkillCreatePayload = {
   slug: string
   name: string
@@ -225,6 +254,7 @@ export type AdminResourceItemMap = {
   skillCategories: AdminSkillCategory
   skillTags: AdminSkillTag
   autoServices: AdminAutoService
+  translationSettings: AdminTranslationSettings
 }
 
 type AdminCreateResourcePayloadMap = {
@@ -235,6 +265,7 @@ type AdminCreateResourcePayloadMap = {
   skillCategories: Partial<AdminSkillCategory>
   skillTags: Partial<AdminSkillTag>
   autoServices: AdminAutoServiceCreatePayload
+  translationSettings: AdminTranslationSettingsUpdatePayload
 }
 
 export type AdminListParams = {
@@ -377,6 +408,26 @@ export function fetchAdminResourceDetail<TResource extends AdminResourceName>(
 ) {
   const definition = getAdminResource(resource)
   return adminRequest<AdminResourceItemMap[TResource]>(`${definition.endpoint}/${id}`, { apiKey })
+}
+
+export function fetchAdminTranslationSettings(apiKey: string) {
+  return adminRequest<AdminTranslationSettings>('/translation-settings/google', { apiKey })
+}
+
+export function updateAdminTranslationSettings(apiKey: string, body: AdminTranslationSettingsUpdatePayload) {
+  return adminRequest<AdminTranslationSettings>('/translation-settings/google', {
+    apiKey,
+    method: 'PATCH',
+    body,
+  })
+}
+
+export function testAdminTranslation(apiKey: string, text: string) {
+  return adminRequest<AdminTranslationTestResponse>('/translation-settings/google/test', {
+    apiKey,
+    method: 'POST',
+    body: { text },
+  })
 }
 
 export function updateAdminResource<TResource extends AdminResourceName>(

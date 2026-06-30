@@ -7,7 +7,7 @@ import {
 } from '@remixicon/react'
 import { useTranslation } from 'react-i18next'
 import Link from '@/next/link'
-import { usePathname, useSelectedLayoutSegment } from '@/next/navigation'
+import { usePathname } from '@/next/navigation'
 
 export function ExploreNav({
   className,
@@ -16,8 +16,7 @@ export function ExploreNav({
 }) {
   const { t } = useTranslation()
   const pathname = usePathname()
-  const selectedSegment = useSelectedLayoutSegment()
-  const activated = pathname === '/' || selectedSegment === 'explore'
+  const activated = pathname === '/' || pathname.startsWith('/explore')
 
   return (
     <Link

@@ -120,10 +120,13 @@ describe('SkillLibrary recommendations', () => {
       expect(screen.getByText('Hottest Skill')).toBeInTheDocument()
       expect(screen.getByText('explore:skills.recommendations.featured')).toBeInTheDocument()
       expect(screen.getByText('explore:skills.recommendations.top20')).toBeInTheDocument()
+      expect(screen.getByText('explore:skills.recommendations.featuredDescription')).toBeInTheDocument()
+      expect(screen.getByText('explore:skills.recommendations.top20Description')).toBeInTheDocument()
+      expect(screen.queryByText('1')).not.toBeInTheDocument()
       expect(fetchSkillRecommendations).toHaveBeenCalledTimes(1)
     })
 
-    it('should hide zero install and star metrics while showing positive metrics', async () => {
+    it('should hide zero install and star metrics while showing positive icon metrics', async () => {
       vi.mocked(fetchSkillRecommendations).mockResolvedValue(createRecommendationGroups({
         featured: [
           createSkill({
@@ -152,8 +155,49 @@ describe('SkillLibrary recommendations', () => {
 
       expect(within(zeroMetricsCard).queryByText('explore:skills.metrics')).not.toBeInTheDocument()
       expect(within(zeroMetricsCard).queryByText('0')).not.toBeInTheDocument()
-      expect(within(positiveMetricsCard).getByText('explore:skills.metrics')).toBeInTheDocument()
+      expect(within(positiveMetricsCard).queryByText('explore:skills.metrics')).not.toBeInTheDocument()
+      expect(positiveMetricsCard.querySelector('.i-ri-download-2-line')).toBeInTheDocument()
+      expect(within(positiveMetricsCard).getByText('12')).toBeInTheDocument()
       expect(within(positiveMetricsCard).getByText('7')).toBeInTheDocument()
+    })
+
+    it('should paginate recommendation groups after eight skills and sort cards by GitHub Stars', async () => {
+      const top20Skills = [
+        createSkill({ id: 'stars-12', name: 'Stars 12', github_stars: 12 }),
+        createSkill({ id: 'stars-3', name: 'Stars 3', github_stars: 3 }),
+        createSkill({ id: 'stars-18', name: 'Stars 18', github_stars: 18 }),
+        createSkill({ id: 'stars-7', name: 'Stars 7', github_stars: 7 }),
+        createSkill({ id: 'stars-25', name: 'Stars 25', github_stars: 25 }),
+        createSkill({ id: 'stars-1', name: 'Stars 1', github_stars: 1 }),
+        createSkill({ id: 'stars-5', name: 'Stars 5', github_stars: 5 }),
+        createSkill({ id: 'stars-15', name: 'Stars 15', github_stars: 15 }),
+        createSkill({ id: 'stars-30', name: 'Stars 30', github_stars: 30 }),
+      ]
+      vi.mocked(fetchSkillRecommendations).mockResolvedValue(createRecommendationGroups({
+        featured: [],
+        top20: top20Skills,
+        latest: [],
+        hottest: [],
+      }))
+
+      renderSkillLibrary()
+
+      const top20Section = await screen.findByRole('region', { name: 'explore:skills.recommendations.top20' })
+      expect(within(top20Section).getByRole('button', { name: 'explore:skills.recommendations.previousGroup' })).toBeInTheDocument()
+      expect(within(top20Section).getByRole('button', { name: 'explore:skills.recommendations.nextGroup' })).toBeInTheDocument()
+
+      const cards = within(top20Section).getAllByRole('button', { name: /plugin:detailPanel\.operation\.detail:/ })
+      expect(cards.map(card => card.getAttribute('aria-label'))).toEqual([
+        'plugin:detailPanel.operation.detail: Stars 30',
+        'plugin:detailPanel.operation.detail: Stars 25',
+        'plugin:detailPanel.operation.detail: Stars 18',
+        'plugin:detailPanel.operation.detail: Stars 15',
+        'plugin:detailPanel.operation.detail: Stars 12',
+        'plugin:detailPanel.operation.detail: Stars 7',
+        'plugin:detailPanel.operation.detail: Stars 5',
+        'plugin:detailPanel.operation.detail: Stars 3',
+        'plugin:detailPanel.operation.detail: Stars 1',
+      ])
     })
 
     it('should open detail in a lightweight reading layout with metadata', async () => {
@@ -169,10 +213,11 @@ describe('SkillLibrary recommendations', () => {
         slug: 'detail-skill',
         name: 'Detail Skill',
         description: 'A focused skill detail for layout testing.',
-        source_url: 'https://github.com',
+        source_url: 'https://github.com/bytedance/deer-flow.git',
         install_command: 'july install detail-skill',
         install_count: 42,
         github_stars: 7,
+        audit_status: 'passed',
         categories: [
           {
             id: 'category-automation',
@@ -230,9 +275,12 @@ describe('SkillLibrary recommendations', () => {
       expect(screen.queryByText('name: detail-skill')).not.toBeInTheDocument()
       expect(screen.queryByText('license: MIT')).not.toBeInTheDocument()
       expect(screen.queryByText('explore:skills.preview')).not.toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: 'explore:skills.copyMarkdown' })).not.toBeInTheDocument()
-      expect(screen.queryByRole('link', { name: 'explore:skills.downloadMarkdown' })).not.toBeInTheDocument()
-      expect(screen.queryByText('https://github.com')).not.toBeInTheDocument()
+      expect(screen.queryByText('july install detail-skill')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'explore:skills.copyInstall' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'explore:skills.copyMarkdown' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'explore:skills.downloadMarkdown' })).toHaveAttribute('href', '/download/detail-skill')
+      expect(screen.getByRole('link', { name: 'bytedance/deer-flow.git' })).toHaveAttribute('href', 'https://github.com/bytedance/deer-flow.git')
+      expect(screen.queryByText('https://github.com/bytedance/deer-flow.git')).not.toBeInTheDocument()
 
       expect(screen.queryByText('Automation')).not.toBeInTheDocument()
 
@@ -245,17 +293,56 @@ describe('SkillLibrary recommendations', () => {
       expect(githubStarsLabel.closest('div')?.querySelector('.i-ri-star-fill')).toBeInTheDocument()
       expect(within(metadata).getByText('7')).toBeInTheDocument()
       expect(within(metadata).getByText('explore:skills.resourceType')).toBeInTheDocument()
+      const auditStatusLabel = within(metadata).getByText('explore:skills.auditStatus')
+      expect(auditStatusLabel.closest('div')?.querySelector('.i-ri-checkbox-circle-fill')).toBeInTheDocument()
+      expect(within(metadata).queryByText('passed')).not.toBeInTheDocument()
 
-      expect(screen.getByText('july install detail-skill')).toBeInTheDocument()
-      const copyInstallButton = screen.getByRole('button', { name: 'explore:skills.copyInstall' })
-      expect(screen.getAllByRole('button', { name: 'explore:skills.copyInstall' })).toHaveLength(1)
-
-      fireEvent.click(copyInstallButton)
+      fireEvent.click(screen.getByRole('button', { name: 'explore:skills.copyMarkdown' }))
 
       await waitFor(() => {
-        expect(writeText).toHaveBeenCalledWith('july install detail-skill')
+        expect(writeText).toHaveBeenCalledWith('# Detail Skill\n\nUse this skill for layout testing.')
       })
-      expect(recordSkillCopy).toHaveBeenCalledWith('detail-skill')
+      expect(recordSkillCopy).not.toHaveBeenCalled()
+    })
+
+    it('should show only ZIP download action for zip package detail', async () => {
+      const zipSkill = createSkill({
+        id: 'zip-skill',
+        slug: 'zip-skill',
+        name: 'ZIP Skill',
+        description: 'A packaged skill for download testing.',
+        install_command: 'july install zip-skill',
+        latest_version: {
+          id: 'zip-version',
+          content_type: 'zip_package',
+          skill_markdown: '# ZIP Skill',
+          package_filename: 'zip-skill.zip',
+          package_size: null,
+          checksum_sha256: null,
+          is_latest: true,
+          published_at: null,
+          created_at: null,
+          updated_at: null,
+        },
+      })
+      vi.mocked(fetchSkillRecommendations).mockResolvedValue(createRecommendationGroups({
+        featured: [zipSkill],
+        top20: [],
+        latest: [],
+        hottest: [],
+      }))
+      vi.mocked(fetchSkillDetail).mockResolvedValue(zipSkill)
+
+      renderSkillLibrary()
+
+      fireEvent.click(await screen.findByRole('button', { name: 'plugin:detailPanel.operation.detail: ZIP Skill' }))
+
+      expect(await screen.findByRole('article', { name: 'ZIP Skill' })).toBeInTheDocument()
+      expect(screen.queryByText('july install zip-skill')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'explore:skills.copyInstall' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'explore:skills.copyMarkdown' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'explore:skills.downloadMarkdown' })).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'explore:skills.downloadZip' })).toHaveAttribute('href', '/download/zip-skill')
     })
 
     it('should prefer Chinese taxonomy names when available', async () => {

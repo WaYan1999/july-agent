@@ -238,7 +238,7 @@ class _SkillValues(TypedDict):
 
 
 class SkillTagTranslator(Protocol):
-    def resolve_cn_name(self, tag_slug: str) -> str | None:
+    def resolve_cn_name(self, tag_slug: str, *, session: SessionLike | None = None) -> str | None:
         ...
 
 
@@ -522,7 +522,7 @@ class SkillCrawlerSyncService:
             if existing_tag is not None and existing_tag.cn_name:
                 resolved[tag_slug] = existing_tag.cn_name
                 continue
-            cn_name = self.translator.resolve_cn_name(tag_slug)
+            cn_name = self.translator.resolve_cn_name(tag_slug, session=session)
             if cn_name:
                 resolved[tag_slug] = cn_name
 

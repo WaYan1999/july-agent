@@ -144,6 +144,7 @@ from .tools import (
     ToolModelInvoke,
     WorkflowToolProvider,
 )
+from .translation import TranslationProviderConfig, TranslationUsage
 from .trigger import (
     AppTrigger,
     TriggerOAuthSystemClient,
@@ -295,6 +296,8 @@ __all__ = [
     "ToolLabelBinding",
     "ToolModelInvoke",
     "TraceAppConfig",
+    "TranslationProviderConfig",
+    "TranslationUsage",
     "TrialApp",
     "TriggerOAuthSystemClient",
     "TriggerOAuthTenantClient",

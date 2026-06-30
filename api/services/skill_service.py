@@ -91,6 +91,8 @@ class SkillService:
 
     @staticmethod
     def _apply_sort(stmt: Select[tuple[Skill]], sort: str | None):
+        if sort == "github_stars_desc":
+            return stmt.order_by(Skill.github_stars.desc(), Skill.position.asc(), Skill.published_at.desc())
         if sort == "latest":
             return stmt.order_by(Skill.published_at.desc(), Skill.created_at.desc())
         if sort == "downloads":

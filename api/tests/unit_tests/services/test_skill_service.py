@@ -56,3 +56,14 @@ def test_list_recommended_skill_groups_queries_published_groups(monkeypatch: pyt
     assert "skills.published_at desc" in statements[2]
     assert "skills.install_count desc" in statements[3]
     hydrate_taxonomy_items.assert_called_once_with(session, featured + top20 + latest + hottest)
+
+
+def test_list_published_skills_sorts_by_github_stars(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = MagicMock()
+    paginate = MagicMock()
+    monkeypatch.setattr(SkillService, "_paginate", paginate)
+
+    SkillService.list_published_skills(session, page=1, limit=20, sort="github_stars_desc")
+
+    statement = str(paginate.call_args.args[1]).lower()
+    assert "skills.github_stars desc" in statement

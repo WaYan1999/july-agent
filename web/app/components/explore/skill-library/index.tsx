@@ -13,19 +13,21 @@ import {
 import { Input } from '@langgenius/dify-ui/input'
 import { toast } from '@langgenius/dify-ui/toast'
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import Autoplay from 'embla-carousel-autoplay'
+import useEmblaCarousel from 'embla-carousel-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Carousel } from '@/app/components/base/carousel'
 import Loading from '@/app/components/base/loading'
 import { Markdown } from '@/app/components/base/markdown'
 import { useMarketplaceContainerScroll } from '@/app/components/plugins/marketplace/hooks'
-import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, recordSkillCopy } from '@/service/skills'
+import { fetchSkillDetail, fetchSkillList, fetchSkillRecommendations, getSkillDownloadUrl, recordSkillCopy } from '@/service/skills'
 import { getSkillSourceTypeLabel } from './source-type'
 import { getDisplaySourceUrl, stripSkillMetadataBlock } from './utils'
 
 const DEFAULT_LIMIT = 30
 const SKILL_GRID_CLASS_NAME = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
 const RECOMMENDATION_GRID_CLASS_NAME = SKILL_GRID_CLASS_NAME
+const RECOMMENDATION_PAGE_SIZE = 8
 const GENERIC_TAXONOMY_VALUES = new Set([
   'api',
   'apis',
@@ -68,6 +70,29 @@ function isGenericTaxonomy(item: SkillTaxonomy) {
 
 function getTaxonomyDisplayName(item: SkillTaxonomy) {
   return item.cn_name?.trim() || item.name?.trim() || item.slug
+}
+
+function sortSkillsByGithubStars(skills: Skill[]) {
+  return [...skills].sort((left, right) => {
+    const starsDelta = (right.github_stars ?? 0) - (left.github_stars ?? 0)
+    if (starsDelta !== 0)
+      return starsDelta
+
+    const positionDelta = (left.position ?? 0) - (right.position ?? 0)
+    if (positionDelta !== 0)
+      return positionDelta
+
+    return left.name.localeCompare(right.name)
+  })
+}
+
+function buildRecommendationPages(skills: Skill[]) {
+  const pages: Skill[][] = []
+
+  for (let index = 0; index < skills.length; index += RECOMMENDATION_PAGE_SIZE)
+    pages.push(skills.slice(index, index + RECOMMENDATION_PAGE_SIZE))
+
+  return pages
 }
 
 function SkillIcon({ skill }: { skill: Skill }) {
@@ -186,7 +211,10 @@ function SkillCard({
                 {authorName && (
                   <span className="shrink-0 text-text-quaternary" aria-hidden="true">/</span>
                 )}
-                <span className="shrink-0 tabular-nums">{t('skills.metrics', { ns: 'explore', count: skill.install_count })}</span>
+                <span className="flex shrink-0 items-center gap-0.5 tabular-nums" title={t('skills.installCount', { ns: 'explore' })}>
+                  <span className="i-ri-download-2-line size-3" aria-hidden="true" />
+                  {skill.install_count}
+                </span>
               </>
             )}
             {showGithubStars && (
@@ -330,6 +358,75 @@ function DetailBadge({
   )
 }
 
+function DetailActionLink({
+  href,
+  iconClassName,
+  children,
+}: {
+  href: string
+  iconClassName: string
+  children: ReactNode
+}) {
+  return (
+    <a
+      className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-components-button-secondary-border bg-components-button-secondary-bg px-3 system-sm-medium text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+      href={href}
+    >
+      <span aria-hidden="true" className={cn(iconClassName, 'size-4 shrink-0')} />
+      <span className="truncate">{children}</span>
+    </a>
+  )
+}
+
+function DetailActionPanel({
+  contentType,
+  downloadUrl,
+  markdown,
+  onCopyMarkdown,
+}: {
+  contentType: string
+  downloadUrl: string
+  markdown?: string | null
+  onCopyMarkdown: () => void
+}) {
+  const { t } = useTranslation()
+
+  if (contentType === 'markdown_file') {
+    return (
+      <DetailSidebarSection title={t('skills.actions', { ns: 'explore' })}>
+        <div className="grid gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="small"
+            className="h-9 w-full"
+            disabled={!markdown}
+            onClick={onCopyMarkdown}
+          >
+            <span aria-hidden="true" className="mr-1 i-ri-file-copy-line size-4" />
+            {t('skills.copyMarkdown', { ns: 'explore' })}
+          </Button>
+          <DetailActionLink href={downloadUrl} iconClassName="i-ri-download-2-line">
+            {t('skills.downloadMarkdown', { ns: 'explore' })}
+          </DetailActionLink>
+        </div>
+      </DetailSidebarSection>
+    )
+  }
+
+  if (contentType === 'zip_package') {
+    return (
+      <DetailSidebarSection title={t('skills.actions', { ns: 'explore' })}>
+        <DetailActionLink href={downloadUrl} iconClassName="i-ri-download-cloud-2-line">
+          {t('skills.downloadZip', { ns: 'explore' })}
+        </DetailActionLink>
+      </DetailSidebarSection>
+    )
+  }
+
+  return null
+}
+
 function SkillMetricList({ skill }: { skill: Skill }) {
   const { t } = useTranslation()
   const showInstallCount = skill.install_count > 0
@@ -381,6 +478,28 @@ function DetailMetaItem({
   )
 }
 
+function AuditStatusItem({ status }: { status?: string | null }) {
+  const { t } = useTranslation()
+  const normalizedStatus = status?.trim().toLowerCase()
+  const isPassed = normalizedStatus === 'passed' || normalizedStatus === 'approved'
+
+  return (
+    <div className="min-w-0">
+      <dt className="system-xs-medium text-text-tertiary">
+        <span className="truncate">{t('skills.auditStatus', { ns: 'explore' })}</span>
+      </dt>
+      <dd className="mt-1 flex min-w-0 items-center gap-1.5 system-sm-regular text-text-secondary">
+        {isPassed && (
+          <span aria-hidden="true" className="i-ri-checkbox-circle-fill size-3.5 shrink-0 text-text-success" />
+        )}
+        <span className="truncate">
+          {isPassed ? t('skills.auditStatusPassed', { ns: 'explore' }) : (status || '-')}
+        </span>
+      </dd>
+    </div>
+  )
+}
+
 function DetailSidebarSection({
   title,
   children,
@@ -424,6 +543,7 @@ function SkillDetailDialog({
   const version = detail?.latest_version
   const contentType = normalizeValue(version?.content_type)
   const markdown = version?.skill_markdown
+  const visibleMarkdown = stripSkillMetadataBlock(markdown)
   const authorName = detail?.author_name?.trim()
   const installCount = detail?.install_count ?? 0
   const githubStars = detail?.github_stars ?? 0
@@ -431,6 +551,8 @@ function SkillDetailDialog({
   const showGithubStars = githubStars > 0
   const showDetailMetrics = showInstallCount || showGithubStars
   const displaySourceUrl = getDisplaySourceUrl(detail?.source_url)
+  const downloadUrl = detail ? getSkillDownloadUrl(detail.id) : ''
+  const shouldShowInstallCommand = contentType === 'remote_reference'
 
   const handleCopyInstall = async () => {
     if (!detail)
@@ -439,6 +561,13 @@ function SkillDetailDialog({
       return
     await navigator.clipboard.writeText(detail.install_command)
     copyMutation.mutate(detail.id)
+    toast.success(t('skills.copySuccess', { ns: 'explore' }))
+  }
+
+  const handleCopyMarkdown = async () => {
+    if (!visibleMarkdown)
+      return
+    await navigator.clipboard.writeText(visibleMarkdown)
     toast.success(t('skills.copySuccess', { ns: 'explore' }))
   }
 
@@ -481,7 +610,7 @@ function SkillDetailDialog({
                   </div>
 
                   <div className="md:pl-[72px]">
-                    {detail.install_command && (
+                    {shouldShowInstallCommand && detail.install_command && (
                       <InstallCommandBar
                         command={detail.install_command}
                         onCopy={handleCopyInstall}
@@ -515,6 +644,13 @@ function SkillDetailDialog({
                   className="min-w-0 lg:sticky lg:top-6 lg:self-start"
                 >
                   <div className="space-y-3">
+                    <DetailActionPanel
+                      contentType={contentType}
+                      downloadUrl={downloadUrl}
+                      markdown={visibleMarkdown}
+                      onCopyMarkdown={handleCopyMarkdown}
+                    />
+
                     {showDetailMetrics && (
                       <DetailSidebarSection title={t('skills.stats', { ns: 'explore' })}>
                         <SkillMetricList skill={detail} />
@@ -555,7 +691,7 @@ function SkillDetailDialog({
 
                     <DetailSidebarSection title={t('skills.audit', { ns: 'explore' })}>
                       <dl className="space-y-3">
-                        <DetailMetaItem label={t('skills.auditStatus', { ns: 'explore' })} value={detail.audit_status} />
+                        <AuditStatusItem status={detail.audit_status} />
                       </dl>
                     </DetailSidebarSection>
                   </div>
@@ -649,97 +785,147 @@ function FilterButton({
   )
 }
 
-function RecommendationSection({
+function RecommendationCarouselSection({
   title,
+  description,
   skills,
   onOpen,
+  autoPlay = false,
 }: {
   title: string
+  description: string
   skills: Skill[]
   onOpen: (skill: Skill) => void
-}) {
-  if (!skills.length)
-    return null
-
-  return (
-    <section className="py-3">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="title-xl-semi-bold text-text-primary">{title}</h2>
-        <span className="system-xs-medium text-text-tertiary tabular-nums">{skills.length}</span>
-      </div>
-      <div className={RECOMMENDATION_GRID_CLASS_NAME}>
-        {skills.map(skill => (
-          <SkillCard
-            key={skill.id}
-            skill={skill}
-            onOpen={onOpen}
-          />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function FeaturedRecommendationSection({
-  title,
-  skills,
-  onOpen,
-}: {
-  title: string
-  skills: Skill[]
-  onOpen: (skill: Skill) => void
+  autoPlay?: boolean
 }) {
   const { t } = useTranslation()
+  const sortedSkills = useMemo(() => sortSkillsByGithubStars(skills), [skills])
+  const pages = useMemo(() => buildRecommendationPages(sortedSkills), [sortedSkills])
+  const hasMultiplePages = pages.length > 1
+  const plugins = useMemo(() => {
+    if (!autoPlay || !hasMultiplePages)
+      return []
+
+    return [
+      Autoplay({
+        delay: 5000,
+        stopOnInteraction: false,
+        stopOnMouseEnter: true,
+      }),
+    ]
+  }, [autoPlay, hasMultiplePages])
+  const [carouselRef, api] = useEmblaCarousel(
+    { align: 'start', containScroll: 'trimSnaps', loop: hasMultiplePages },
+    plugins,
+  )
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([])
+  const scrollPrev = useCallback(() => {
+    api?.scrollPrev()
+  }, [api])
+  const scrollNext = useCallback(() => {
+    api?.scrollNext()
+  }, [api])
+
+  useEffect(() => {
+    if (!api)
+      return
+
+    const handleSelect = () => {
+      setSelectedIndex(api.selectedScrollSnap())
+      setScrollSnaps(api.scrollSnapList())
+    }
+
+    handleSelect()
+    api.on('reInit', handleSelect)
+    api.on('select', handleSelect)
+
+    return () => {
+      api.off('reInit', handleSelect)
+      api.off('select', handleSelect)
+    }
+  }, [api])
 
   if (!skills.length)
     return null
 
-  const plugins = skills.length > 1
-    ? [Carousel.Plugin.Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })]
-    : undefined
-
   return (
-    <section className="py-3">
-      <Carousel
-        opts={{ align: 'start', loop: skills.length > 1 }}
-        plugins={plugins}
-        className="rounded-xl"
+    <section
+      className="py-3"
+    >
+      <div
+        className="relative"
+        role="region"
+        aria-label={title}
+        aria-roledescription="carousel"
       >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="title-xl-semi-bold text-text-primary">{title}</h2>
-          {skills.length > 1 && (
-            <div className="flex items-center gap-2">
-              <Carousel.Previous
-                className="flex size-8 items-center justify-center rounded-full border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label={t('skills.recommendations.previousFeatured', { ns: 'explore' })}
-              >
-                <span aria-hidden className="i-ri-arrow-left-s-line size-4" />
-              </Carousel.Previous>
-              <Carousel.Next
-                className="flex size-8 items-center justify-center rounded-full border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label={t('skills.recommendations.nextFeatured', { ns: 'explore' })}
-              >
-                <span aria-hidden className="i-ri-arrow-right-s-line size-4" />
-              </Carousel.Next>
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="title-xl-semi-bold text-text-primary">{title}</h2>
+            <p className="mt-1 system-xs-regular text-text-tertiary">{description}</p>
+          </div>
+          {hasMultiplePages && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                {scrollSnaps.map((snap, index) => (
+                  <button
+                    key={`${snap}-${index}`}
+                    type="button"
+                    className={cn(
+                      'h-[5px] w-[5px] rounded-full transition-all focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden',
+                      selectedIndex === index
+                        ? 'w-4 bg-components-button-primary-bg'
+                        : 'bg-components-button-secondary-border hover:bg-components-button-secondary-border-hover',
+                    )}
+                    aria-label={t('skills.recommendations.goToGroupPage', { ns: 'explore', page: index + 1 })}
+                    onClick={() => api?.scrollTo(index)}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  className="flex size-8 items-center justify-center rounded-full border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+                  aria-label={t('skills.recommendations.previousGroup', { ns: 'explore' })}
+                  onClick={scrollPrev}
+                >
+                  <span aria-hidden className="i-ri-arrow-left-s-line size-4" />
+                </button>
+                <button
+                  type="button"
+                  className="flex size-8 items-center justify-center rounded-full border-[0.5px] border-components-button-secondary-border bg-components-button-secondary-bg text-components-button-secondary-text shadow-xs transition-colors hover:bg-components-button-secondary-bg-hover disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-state-accent-solid focus-visible:outline-hidden"
+                  aria-label={t('skills.recommendations.nextGroup', { ns: 'explore' })}
+                  onClick={scrollNext}
+                >
+                  <span aria-hidden className="i-ri-arrow-right-s-line size-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
-        <Carousel.Content className="-ml-3">
-          {skills.map(skill => (
-            <Carousel.Item key={skill.id} className="basis-full pl-3 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-              <SkillCard
-                skill={skill}
-                onOpen={onOpen}
-              />
-            </Carousel.Item>
-          ))}
-        </Carousel.Content>
-        {skills.length > 1 && (
-          <div className="mt-3 flex justify-center gap-1">
-            <Carousel.Dot className="h-1.5 w-1.5 rounded-full bg-components-button-secondary-border transition-all data-[state=active]:w-5 data-[state=active]:bg-components-button-primary-bg" />
+        <div ref={carouselRef} className="overflow-hidden">
+          <div className="flex gap-3">
+            {pages.map(pageItems => (
+              <div
+                key={pageItems.map(skill => skill.id).join('-')}
+                className="w-full min-w-0 shrink-0"
+                role="group"
+                aria-roledescription="slide"
+              >
+                <div className={RECOMMENDATION_GRID_CLASS_NAME}>
+                  {pageItems.map(skill => (
+                    <SkillCard
+                      key={skill.id}
+                      skill={skill}
+                      onOpen={onOpen}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </Carousel>
+        </div>
+      </div>
     </section>
   )
 }
@@ -794,23 +980,28 @@ function SkillRecommendationGroupsView({
 
   return (
     <div className="w-full space-y-2">
-      <FeaturedRecommendationSection
+      <RecommendationCarouselSection
         title={t('skills.recommendations.featured', { ns: 'explore' })}
+        description={t('skills.recommendations.featuredDescription', { ns: 'explore' })}
         skills={groups.featured}
         onOpen={onOpen}
+        autoPlay
       />
-      <RecommendationSection
+      <RecommendationCarouselSection
         title={t('skills.recommendations.top20', { ns: 'explore' })}
+        description={t('skills.recommendations.top20Description', { ns: 'explore' })}
         skills={groups.top20}
         onOpen={onOpen}
       />
-      <RecommendationSection
+      <RecommendationCarouselSection
         title={t('skills.recommendations.latest', { ns: 'explore' })}
+        description={t('skills.recommendations.latestDescription', { ns: 'explore' })}
         skills={groups.latest}
         onOpen={onOpen}
       />
-      <RecommendationSection
+      <RecommendationCarouselSection
         title={t('skills.recommendations.hottest', { ns: 'explore' })}
+        description={t('skills.recommendations.hottestDescription', { ns: 'explore' })}
         skills={groups.hottest}
         onOpen={onOpen}
       />
@@ -833,6 +1024,7 @@ export default function SkillLibrary() {
       limit: DEFAULT_LIMIT,
       keyword,
       category,
+      sort: 'github_stars_desc',
     }),
     getNextPageParam: lastPage => lastPage.has_more ? lastPage.page + 1 : undefined,
     initialPageParam: 1,
@@ -846,6 +1038,7 @@ export default function SkillLibrary() {
   })
   const showRecommendationGroups = shouldLoadRecommendationGroups && !recommendationQuery.isError
   const skills = listQuery.data?.pages.flatMap(page => page.data) ?? []
+  const sortedSkills = useMemo(() => sortSkillsByGithubStars(skills), [skills])
   const firstPage = listQuery.data?.pages[0]
   const categoriesFromPages = listQuery.data?.pages.find(page => page.filters?.categories?.length)?.filters?.categories
   const categories = categoriesFromPages ?? cachedCategoriesRef.current
@@ -957,7 +1150,7 @@ export default function SkillLibrary() {
                 {t('skills.resultCount', { ns: 'explore', count: firstPage?.total ?? skills.length })}
               </div>
               <div className={SKILL_GRID_CLASS_NAME}>
-                {skills.map(skill => (
+                {sortedSkills.map(skill => (
                   <SkillCard
                     key={skill.id}
                     skill={skill}

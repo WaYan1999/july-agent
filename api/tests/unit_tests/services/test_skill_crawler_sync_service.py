@@ -14,9 +14,11 @@ from services.skill_crawler_sync_service import SkillCrawlerClient, SkillCrawler
 class _FakeTranslator:
     def __init__(self) -> None:
         self.resolved_tags: list[str] = []
+        self.sessions: list[object | None] = []
 
-    def resolve_cn_name(self, tag_slug: str) -> str | None:
+    def resolve_cn_name(self, tag_slug: str, *, session: object | None = None) -> str | None:
         self.resolved_tags.append(tag_slug)
+        self.sessions.append(session)
         return {
             "automation": "自动化",
             "github": "github",
@@ -448,6 +450,7 @@ def test_sync_resolves_current_and_existing_empty_tag_cn_names(tmp_path) -> None
     assert resolved == {"automation": "自动化", "github": "github"}
     assert existing_tag.cn_name == "自动化"
     assert translator.resolved_tags == ["automation", "github"]
+    assert translator.sessions == [session, session]
     session.commit.assert_called_once()
 
 

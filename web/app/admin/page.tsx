@@ -17,6 +17,7 @@ import type {
   AdminSkillCategory,
   AdminSkillCreatePayload,
   AdminSkillTag,
+  AdminTranslationSettings,
 } from '@/features/admin/service'
 import type { I18nKeysWithPrefix } from '@/types/i18n'
 import {
@@ -69,7 +70,10 @@ import {
   fetchAdminAutoServiceLogs,
   fetchAdminResourceDetail,
   fetchAdminResourceList,
+  fetchAdminTranslationSettings,
   runAdminAutoService,
+  testAdminTranslation,
+  updateAdminTranslationSettings,
   updateAdminResource,
   uploadAdminSkillAsset,
 } from '@/features/admin/service'
@@ -177,6 +181,7 @@ const adminResourceIconClassNames = {
   skillCategories: 'i-ri-folder-3-line',
   skillTags: 'i-ri-price-tag-3-line',
   autoServices: 'i-ri-timer-line',
+  translationSettings: 'i-ri-translate-2',
 } as const satisfies Record<AdminResourceName, string>
 
 const skillSourceTypeOptions = [
@@ -273,6 +278,7 @@ const adminUpdateFieldNamesByResource = {
     'cron_expression',
     'config',
   ],
+  translationSettings: [],
 } satisfies Record<AdminResourceName, readonly string[]>
 
 const fullWidthEditorFieldNames = new Set([
@@ -678,7 +684,7 @@ function buildFieldConfigs(resource: AdminResourceName, item: AdminItem): FieldC
 
 function buildPayload(resource: AdminResourceName, fields: FieldConfig[], values: Record<string, EditableFieldValue>) {
   const payload: Record<string, EditablePayloadValue> = {}
-  const updateFieldNames = adminUpdateFieldNamesByResource[resource]
+  const updateFieldNames: readonly string[] = adminUpdateFieldNamesByResource[resource]
 
   for (const field of fields) {
     if (field.includeInPayload === false)
@@ -929,6 +935,342 @@ function EmptyState({ message, action }: { message: string, action: string }) {
     <div className="flex min-h-60 flex-col items-center justify-center gap-3 p-8 text-center">
       <div className="system-md-medium text-text-secondary">{message}</div>
       <div className="system-sm-regular text-text-tertiary">{action}</div>
+    </div>
+  )
+}
+
+function formatAdminNumber(value: number | null | undefined) {
+  return new Intl.NumberFormat().format(value ?? 0)
+}
+
+function TranslationSettingsPanel({
+  apiKey,
+  settings,
+  loading,
+  fetching,
+  error,
+  onSaved,
+  onUnauthorized,
+}: {
+  apiKey: string
+  settings?: AdminTranslationSettings
+  loading: boolean
+  fetching: boolean
+  error: unknown
+  onSaved: () => void | Promise<void>
+  onUnauthorized: () => void
+}) {
+  const { t } = useTranslation('admin')
+  const [optimisticEnabled, setOptimisticEnabled] = useState<boolean | null>(null)
+  const [apiKeyDraft, setApiKeyDraft] = useState('')
+  const [appsScriptUrlDraft, setAppsScriptUrlDraft] = useState('')
+  const [appsScriptSecretDraft, setAppsScriptSecretDraft] = useState('')
+  const [quotaDraft, setQuotaDraft] = useState('500000')
+  const [testTextDraft, setTestTextDraft] = useState('Hello world')
+  const [testResult, setTestResult] = useState<string | null>(null)
+  const [testError, setTestError] = useState<string | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null)
+  const enabled = optimisticEnabled ?? settings?.enabled ?? false
+  const usedPercent = Math.round((settings?.usage_ratio ?? 0) * 100)
+  const progressWidth = `${Math.min(100, Math.max(0, usedPercent))}%`
+  const mutation = useMutation({
+    mutationFn: () => {
+      const quotaValue = Number.parseInt(quotaDraft, 10)
+      if (Number.isNaN(quotaValue) || quotaValue < 0)
+        throw new Error(t('translationSettings.invalidQuota'))
+      return updateAdminTranslationSettings(apiKey, {
+        enabled,
+        google_translate_api_key: apiKeyDraft.trim() || undefined,
+        apps_script_url: appsScriptUrlDraft.trim() || undefined,
+        apps_script_secret: appsScriptSecretDraft.trim() || undefined,
+        monthly_free_quota_chars: quotaValue,
+      })
+    },
+    onSuccess: async () => {
+      setApiKeyDraft('')
+      setAppsScriptUrlDraft('')
+      setAppsScriptSecretDraft('')
+      setOptimisticEnabled(null)
+      setLocalError(null)
+      toast.success(t('translationSettings.saveSuccess'))
+      await onSaved()
+    },
+    onError: (nextError) => {
+      if (isUnauthorizedAdminError(nextError)) {
+        onUnauthorized()
+        return
+      }
+      setLocalError(getAdminMutationErrorMessage(nextError, t('translationSettings.saveError')))
+    },
+  })
+  const enabledMutation = useMutation({
+    mutationFn: (nextEnabled: boolean) => updateAdminTranslationSettings(apiKey, {
+      enabled: nextEnabled,
+    }),
+    onSuccess: async () => {
+      setOptimisticEnabled(null)
+      setLocalError(null)
+      await onSaved()
+    },
+    onError: (nextError) => {
+      if (isUnauthorizedAdminError(nextError)) {
+        onUnauthorized()
+        return
+      }
+      setOptimisticEnabled(null)
+      setLocalError(getAdminMutationErrorMessage(nextError, t('translationSettings.saveError')))
+    },
+  })
+  const testMutation = useMutation({
+    mutationFn: () => {
+      const text = testTextDraft.trim()
+      if (!text)
+        throw new Error(t('translationSettings.testRequired'))
+      if (!settings?.enabled)
+        throw new Error(t('translationSettings.testDisabled'))
+      if (!settings.apps_script_configured && !settings.api_key_configured)
+        throw new Error(t('translationSettings.testMissingProvider'))
+      return testAdminTranslation(apiKey, text)
+    },
+    onSuccess: (response) => {
+      setTestError(null)
+      setTestResult(response.translated_text)
+    },
+    onError: (nextError) => {
+      if (isUnauthorizedAdminError(nextError)) {
+        onUnauthorized()
+        return
+      }
+      setTestResult(null)
+      setTestError(getAdminMutationErrorMessage(nextError, t('translationSettings.testError')))
+    },
+  })
+
+  useEffect(() => {
+    if (!settings)
+      return
+    setQuotaDraft(String(settings.monthly_free_quota_chars))
+  }, [settings])
+
+  if (loading)
+    return <SkeletonRows />
+
+  if (error)
+    return <EmptyState message={t('states.error')} action={t('states.retryHint')} />
+
+  if (!settings)
+    return <EmptyState message={t('states.empty')} action={t('states.emptyAction')} />
+
+  return (
+    <div className="p-4 md:p-5">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+        <form
+          className="rounded-lg border border-divider-subtle bg-background-section p-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            setLocalError(null)
+            mutation.mutate()
+          }}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="system-md-semibold text-text-primary">{t('translationSettings.configTitle')}</h3>
+              <p className="mt-1 system-sm-regular text-text-tertiary">{t('translationSettings.configDescription')}</p>
+            </div>
+            {fetching && <div role="status" className="system-xs-regular text-text-tertiary">{t('states.loading')}</div>}
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="system-sm-medium text-text-secondary md:col-span-2">
+              {t('translationSettings.enabled')}
+              <span className="mt-2 flex items-center gap-2">
+                <Switch
+                  checked={enabled}
+                  disabled={enabledMutation.isPending || mutation.isPending}
+                  onCheckedChange={(nextEnabled) => {
+                    setLocalError(null)
+                    setOptimisticEnabled(nextEnabled)
+                    enabledMutation.mutate(nextEnabled)
+                  }}
+                />
+                <span className="system-xs-regular text-text-tertiary">
+                  {enabled ? t('states.enabled') : t('states.disabled')}
+                </span>
+              </span>
+            </label>
+            <label className="system-sm-medium text-text-secondary">
+              {t('translationSettings.apiKey')}
+              <Input
+                className="mt-1"
+                type="password"
+                value={apiKeyDraft}
+                placeholder={settings.api_key_preview || t('translationSettings.apiKeyPlaceholder')}
+                onChange={(event) => {
+                  setLocalError(null)
+                  setApiKeyDraft(event.target.value)
+                }}
+              />
+              <span className="mt-1 block system-xs-regular text-text-tertiary">
+                {settings.api_key_configured ? t('translationSettings.apiKeyConfigured') : t('translationSettings.apiKeyMissing')}
+              </span>
+            </label>
+            <label className="system-sm-medium text-text-secondary">
+              {t('translationSettings.monthlyQuota')}
+              <Input
+                className="mt-1"
+                type="number"
+                min={0}
+                value={quotaDraft}
+                onChange={(event) => {
+                  setLocalError(null)
+                  setQuotaDraft(event.target.value)
+                }}
+              />
+              <span className="mt-1 block system-xs-regular text-text-tertiary">
+                {t('translationSettings.monthlyQuotaHint')}
+              </span>
+            </label>
+            <label className="system-sm-medium text-text-secondary md:col-span-2">
+              {t('translationSettings.appsScriptUrl')}
+              <Input
+                className="mt-1"
+                value={appsScriptUrlDraft}
+                placeholder={settings.apps_script_url_preview || t('translationSettings.appsScriptUrlPlaceholder')}
+                onChange={(event) => {
+                  setLocalError(null)
+                  setAppsScriptUrlDraft(event.target.value)
+                }}
+              />
+              <span className="mt-1 block system-xs-regular text-text-tertiary">
+                {settings.apps_script_configured ? t('translationSettings.appsScriptConfigured') : t('translationSettings.appsScriptMissing')}
+              </span>
+            </label>
+            <label className="system-sm-medium text-text-secondary md:col-span-2">
+              {t('translationSettings.appsScriptSecret')}
+              <Input
+                className="mt-1"
+                type="password"
+                value={appsScriptSecretDraft}
+                placeholder={t('translationSettings.appsScriptSecretPlaceholder')}
+                onChange={(event) => {
+                  setLocalError(null)
+                  setAppsScriptSecretDraft(event.target.value)
+                }}
+              />
+              <span className="mt-1 block system-xs-regular text-text-tertiary">
+                {settings.apps_script_secret_configured ? t('translationSettings.appsScriptSecretConfigured') : t('translationSettings.appsScriptSecretMissing')}
+              </span>
+            </label>
+          </div>
+
+          {localError && (
+            <div className="mt-4 rounded-lg bg-background-default p-3 system-sm-regular text-text-tertiary">
+              {localError}
+            </div>
+          )}
+
+          <div className="mt-5 flex justify-end">
+            <Button type="submit" variant="primary" loading={mutation.isPending}>
+              {t('actions.save')}
+            </Button>
+          </div>
+        </form>
+
+        <section className="rounded-lg border border-divider-subtle bg-background-section p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="system-md-semibold text-text-primary">{t('translationSettings.usageTitle')}</h3>
+              <p className="mt-1 system-sm-regular text-text-tertiary">{t('translationSettings.usageMonth', { month: settings.current_month })}</p>
+            </div>
+            <span
+              className={cn(
+                'shrink-0 rounded-md px-2 py-1 system-xs-medium',
+                settings.quota_exceeded
+                  ? 'bg-state-destructive-hover text-text-destructive'
+                  : 'bg-state-success-hover text-text-success',
+              )}
+            >
+              {settings.quota_exceeded ? t('translationSettings.quotaExceeded') : t('translationSettings.quotaAvailable')}
+            </span>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3 system-sm-medium text-text-secondary">
+                <span>{t('translationSettings.usageProgress')}</span>
+                <span className="tabular-nums">{usedPercent}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-background-default">
+                <div
+                  className={cn('h-full rounded-full', settings.quota_exceeded ? 'bg-state-destructive-solid' : 'bg-state-accent-solid')}
+                  style={{ width: progressWidth }}
+                />
+              </div>
+            </div>
+
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-lg bg-background-default p-3">
+                <dt className="system-xs-regular text-text-tertiary">{t('translationSettings.usedChars')}</dt>
+                <dd className="mt-1 title-sm-semi-bold text-text-primary tabular-nums">{formatAdminNumber(settings.used_chars)}</dd>
+              </div>
+              <div className="rounded-lg bg-background-default p-3">
+                <dt className="system-xs-regular text-text-tertiary">{t('translationSettings.remainingChars')}</dt>
+                <dd className="mt-1 title-sm-semi-bold text-text-primary tabular-nums">{formatAdminNumber(settings.remaining_chars)}</dd>
+              </div>
+              <div className="rounded-lg bg-background-default p-3">
+                <dt className="system-xs-regular text-text-tertiary">{t('translationSettings.quotaChars')}</dt>
+                <dd className="mt-1 title-sm-semi-bold text-text-primary tabular-nums">{formatAdminNumber(settings.monthly_free_quota_chars)}</dd>
+              </div>
+            </dl>
+
+            <p className="system-xs-regular text-text-tertiary">{t('translationSettings.usageHint')}</p>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-divider-subtle bg-background-section p-4 xl:col-start-2">
+          <div className="min-w-0">
+            <h3 className="system-md-semibold text-text-primary">{t('translationSettings.testTitle')}</h3>
+            <p className="mt-1 system-sm-regular text-text-tertiary">{t('translationSettings.testDescription')}</p>
+          </div>
+          <form
+            className="mt-4 space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setTestError(null)
+              testMutation.mutate()
+            }}
+          >
+            <label className="block system-sm-medium text-text-secondary">
+              {t('translationSettings.testText')}
+              <Input
+                className="mt-1"
+                value={testTextDraft}
+                maxLength={1000}
+                onChange={(event) => {
+                  setTestError(null)
+                  setTestTextDraft(event.target.value)
+                }}
+              />
+            </label>
+            <div className="flex justify-end">
+              <Button type="submit" variant="secondary" loading={testMutation.isPending}>
+                {t('translationSettings.testAction')}
+              </Button>
+            </div>
+          </form>
+          {testResult && (
+            <div className="mt-4 rounded-lg bg-background-default p-3">
+              <div className="system-xs-regular text-text-tertiary">{t('translationSettings.testResult')}</div>
+              <div className="mt-1 system-sm-medium text-text-primary">{testResult}</div>
+            </div>
+          )}
+          {testError && (
+            <div className="mt-4 rounded-lg bg-background-default p-3 system-sm-regular text-text-tertiary">
+              {testError}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }
@@ -2668,7 +3010,13 @@ export default function AdminPage() {
       filters: activeSkillFilters,
       sort: activeSort,
     }) as Promise<AdminPagination<AdminItem>>,
-    enabled: Boolean(apiKey),
+    enabled: Boolean(apiKey && resource !== 'translationSettings'),
+    retry: false,
+  })
+  const translationSettingsQuery = useQuery<AdminTranslationSettings>({
+    queryKey: ['admin', 'translation-settings', apiKey],
+    queryFn: () => fetchAdminTranslationSettings(apiKey),
+    enabled: Boolean(apiKey && resource === 'translationSettings'),
     retry: false,
   })
   const currentPageSkillIds = useMemo(() => {
@@ -2697,9 +3045,9 @@ export default function AdminPage() {
   })
 
   useEffect(() => {
-    if (isUnauthorizedAdminError(listQuery.error))
+    if (isUnauthorizedAdminError(listQuery.error) || isUnauthorizedAdminError(translationSettingsQuery.error))
       clearApiKey()
-  }, [clearApiKey, listQuery.error])
+  }, [clearApiKey, listQuery.error, translationSettingsQuery.error])
 
   useEffect(() => {
     if (resource !== 'skills') {
@@ -2812,75 +3160,91 @@ export default function AdminPage() {
                 </div>
               </header>
 
-              <form
-                className="flex flex-wrap items-end gap-3 border-b border-divider-subtle bg-background-section px-4 py-3 md:px-5"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  handleApplyFilters()
-                }}
-              >
-                <label className="min-w-56 flex-[1_1_24rem] system-sm-medium text-text-secondary">
-                  {t('filters.search')}
-                  <Input
-                    className="mt-1"
-                    value={keywordDraft}
-                    placeholder={resource === 'skills' ? t('filters.skillNameSearchPlaceholder') : t('filters.searchPlaceholder')}
-                    onChange={event => setKeywordDraft(event.target.value)}
-                  />
-                </label>
-                {resource === 'skills' && (
-                  <SkillFilterControls apiKey={apiKey} values={skillFilterDraft} onChange={setSkillFilterDraft} />
-                )}
-                <div className="ml-auto flex gap-2">
-                  <Button type="submit" variant="primary">
-                    {t('filters.query')}
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={handleResetFilters}>
-                    {t('filters.reset')}
-                  </Button>
-                </div>
-              </form>
-
-              <div className="flex items-center justify-between border-b border-divider-subtle px-4 py-3 md:px-5">
-                <div className="system-sm-medium text-text-secondary">
-                  {t('table.total', { total })}
-                </div>
-                {listQuery.isFetching && <div role="status" className="system-xs-regular text-text-tertiary">{t('states.loading')}</div>}
-              </div>
-
-              {listQuery.isLoading && <SkeletonRows />}
-              {listQuery.error && (
-                <EmptyState message={t('states.error')} action={t('states.retryHint')} />
-              )}
-              {!listQuery.isLoading && !listQuery.error && data.length === 0 && (
-                <EmptyState message={t('states.empty')} action={t('states.emptyAction')} />
-              )}
-              {!listQuery.isLoading && !listQuery.error && data.length > 0 && (
-                <ResourceTable
-                  resource={resource}
-                  data={data}
-                  selectedSkillIds={selectedCurrentPageSkillIds}
-                  onSelectedSkillIdsChange={setSelectedSkillIds}
-                  onSelect={setSelectedItem}
-                  onDelete={setDeleteItem}
-                  onRunAutoService={setRunAutoServiceItem}
-                  onViewAutoServiceLogs={setAutoServiceLogsItem}
+              {resource === 'translationSettings' ? (
+                <TranslationSettingsPanel
+                  apiKey={apiKey}
+                  settings={translationSettingsQuery.data}
+                  loading={translationSettingsQuery.isLoading}
+                  fetching={translationSettingsQuery.isFetching}
+                  error={translationSettingsQuery.error}
+                  onSaved={async () => {
+                    await translationSettingsQuery.refetch()
+                  }}
+                  onUnauthorized={handleUnauthorized}
                 />
-              )}
+              ) : (
+                <>
+                  <form
+                    className="flex flex-wrap items-end gap-3 border-b border-divider-subtle bg-background-section px-4 py-3 md:px-5"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      handleApplyFilters()
+                    }}
+                  >
+                    <label className="min-w-56 flex-[1_1_24rem] system-sm-medium text-text-secondary">
+                      {t('filters.search')}
+                      <Input
+                        className="mt-1"
+                        value={keywordDraft}
+                        placeholder={resource === 'skills' ? t('filters.skillNameSearchPlaceholder') : t('filters.searchPlaceholder')}
+                        onChange={event => setKeywordDraft(event.target.value)}
+                      />
+                    </label>
+                    {resource === 'skills' && (
+                      <SkillFilterControls apiKey={apiKey} values={skillFilterDraft} onChange={setSkillFilterDraft} />
+                    )}
+                    <div className="ml-auto flex gap-2">
+                      <Button type="submit" variant="primary">
+                        {t('filters.query')}
+                      </Button>
+                      <Button type="button" variant="secondary" onClick={handleResetFilters}>
+                        {t('filters.reset')}
+                      </Button>
+                    </div>
+                  </form>
 
-              <div className="flex items-center justify-between border-t border-divider-subtle px-4 py-3 md:px-5">
-                <div className="system-xs-regular text-text-tertiary">
-                  {t('pagination.page', { page })}
-                </div>
-                <div className="flex gap-2">
-                  <Button size="small" variant="secondary" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}>
-                    {t('pagination.prev')}
-                  </Button>
-                  <Button size="small" variant="secondary" disabled={!listQuery.data?.has_more} onClick={() => setPage(current => current + 1)}>
-                    {t('pagination.next')}
-                  </Button>
-                </div>
-              </div>
+                  <div className="flex items-center justify-between border-b border-divider-subtle px-4 py-3 md:px-5">
+                    <div className="system-sm-medium text-text-secondary">
+                      {t('table.total', { total })}
+                    </div>
+                    {listQuery.isFetching && <div role="status" className="system-xs-regular text-text-tertiary">{t('states.loading')}</div>}
+                  </div>
+
+                  {listQuery.isLoading && <SkeletonRows />}
+                  {listQuery.error && (
+                    <EmptyState message={t('states.error')} action={t('states.retryHint')} />
+                  )}
+                  {!listQuery.isLoading && !listQuery.error && data.length === 0 && (
+                    <EmptyState message={t('states.empty')} action={t('states.emptyAction')} />
+                  )}
+                  {!listQuery.isLoading && !listQuery.error && data.length > 0 && (
+                    <ResourceTable
+                      resource={resource}
+                      data={data}
+                      selectedSkillIds={selectedCurrentPageSkillIds}
+                      onSelectedSkillIdsChange={setSelectedSkillIds}
+                      onSelect={setSelectedItem}
+                      onDelete={setDeleteItem}
+                      onRunAutoService={setRunAutoServiceItem}
+                      onViewAutoServiceLogs={setAutoServiceLogsItem}
+                    />
+                  )}
+
+                  <div className="flex items-center justify-between border-t border-divider-subtle px-4 py-3 md:px-5">
+                    <div className="system-xs-regular text-text-tertiary">
+                      {t('pagination.page', { page })}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="small" variant="secondary" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))}>
+                        {t('pagination.prev')}
+                      </Button>
+                      <Button size="small" variant="secondary" disabled={!listQuery.data?.has_more} onClick={() => setPage(current => current + 1)}>
+                        {t('pagination.next')}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
           </div>
         </section>

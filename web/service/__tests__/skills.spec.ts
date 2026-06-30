@@ -38,10 +38,11 @@ describe('skills service', () => {
       limit: 30,
       keyword: ' react ',
       category: '',
+      sort: 'github_stars_desc',
     })).resolves.toEqual(emptyPagination)
 
     expect(fetch).toHaveBeenCalledWith(
-      '/console/api/explore/skills?page=1&limit=30&keyword=+react+',
+      '/console/api/explore/skills?page=1&limit=30&keyword=+react+&sort=github_stars_desc',
       { credentials: 'include' },
     )
   })

@@ -29,6 +29,7 @@ RESOURCE_MODULES: tuple[str, ...] = (
     "controllers.admin.auto_services",
     "controllers.admin.recommended_apps",
     "controllers.admin.skills",
+    "controllers.admin.translation_settings",
 )
 
 for module_name in RESOURCE_MODULES:

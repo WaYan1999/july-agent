@@ -1,6 +1,6 @@
 import type { I18nKeysWithPrefix } from '@/types/i18n'
 
-export type AdminResourceName = 'accounts' | 'recommendedApps' | 'apps' | 'skills' | 'skillCategories' | 'skillTags' | 'autoServices'
+export type AdminResourceName = 'accounts' | 'recommendedApps' | 'apps' | 'skills' | 'skillCategories' | 'skillTags' | 'autoServices' | 'translationSettings'
 
 type AdminResourceTextKey = I18nKeysWithPrefix<'admin', 'resources.'>
 type AdminNavigationTextKey = I18nKeysWithPrefix<'admin', 'nav.'>
@@ -81,6 +81,15 @@ export const adminResources = [
       deleteKey: 'resources.autoServices.deleteAction',
     },
   },
+  {
+    name: 'translationSettings',
+    endpoint: '/translation-settings/google',
+    meta: {
+      titleKey: 'resources.translationSettings.title',
+      descriptionKey: 'resources.translationSettings.description',
+      deleteKey: 'resources.translationSettings.deleteAction',
+    },
+  },
 ] as const satisfies readonly AdminResourceDefinition[]
 
 export const adminResourceGroups = [
@@ -94,7 +103,7 @@ export const adminResourceGroups = [
   },
   {
     titleKey: 'nav.system',
-    resources: ['recommendedApps', 'autoServices'],
+    resources: ['recommendedApps', 'autoServices', 'translationSettings'],
   },
 ] as const satisfies readonly (
   | {
